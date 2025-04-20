@@ -12,6 +12,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      SERVICE_ID: fb872640-8aac-48b1-827b-917a61646816
 
     steps:
       - name: Checkout code
@@ -44,7 +48,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      # Option 1: Install dependencies at workspace root and use workspace commands
       - name: Install all dependencies
         run: |
           pnpm install --frozen-lockfile
@@ -53,15 +56,7 @@ jobs:
         run: |
           pnpm --filter calorie-cam-backend build
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
       - name: Deploy to Railway
         run: |
           cd apps/calorie-cam/backend
-          # First try to link the project
-          railway link || echo "Could not link project automatically"
-          # Then deploy regardless
-          railway up --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          railway up --service=$SERVICE_ID

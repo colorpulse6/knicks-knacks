@@ -48,6 +48,8 @@ jobs:
         run: |
           cd apps/calorie-cam/backend
           pnpm install --frozen-lockfile
+          ls -la node_modules # Verify node_modules exists
+          ls -la node_modules/@types # Verify type declarations
 
       - name: Build application
         run: |

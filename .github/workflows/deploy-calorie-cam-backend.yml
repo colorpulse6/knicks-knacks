@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
     paths:
       - "apps/calorie-cam/backend/**"
       - ".github/workflows/deploy-calorie-cam-backend.yml"
@@ -12,7 +11,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    container: ghcr.io/railwayapp/cli:latest
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       SERVICE_ID: fb872640-8aac-48b1-827b-917a61646816
@@ -55,6 +53,9 @@ jobs:
       - name: Build backend
         run: |
           pnpm --filter calorie-cam-backend build
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
 
       - name: Deploy to Railway
         run: |

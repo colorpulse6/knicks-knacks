@@ -7,6 +7,7 @@ import foodRoutes from "./routes/food";
 // Load environment variables
 dotenv.config();
 
+// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -19,7 +20,7 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/api", foodRoutes);
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (req: express.Request, res: express.Response) => {
   res.status(200).json({ status: "ok", message: "CalorieCam API is running" });
 });
 

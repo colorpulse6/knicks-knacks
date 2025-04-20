@@ -53,23 +53,15 @@ jobs:
         run: |
           pnpm --filter calorie-cam-backend build
 
-      # Alternative option if workspace commands don't work
-      # - name: Install dependencies (alternative)
-      #   run: |
-      #     cd apps/calorie-cam/backend
-      #     pnpm install --frozen-lockfile --shamefully-hoist
-      #
-      # - name: Build application (alternative)
-      #   run: |
-      #     cd apps/calorie-cam/backend
-      #     pnpm build
-
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
         run: |
           cd apps/calorie-cam/backend
-          railway up
+          # First try to link the project
+          railway link || echo "Could not link project automatically"
+          # Then deploy regardless
+          railway up --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

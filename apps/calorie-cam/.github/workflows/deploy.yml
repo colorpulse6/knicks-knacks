@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - "apps/calorie-cam/backend/**"
       - "apps/calorie-cam/.github/workflows/deploy.yml"
@@ -21,18 +22,24 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.6.12
+          run_install: false
+
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
       - name: Install dependencies
         run: |
           cd apps/calorie-cam/backend
-          npm install
+          pnpm install
 
       - name: Build application
         run: |
           cd apps/calorie-cam/backend
-          npm run build
+          pnpm build
 
       - name: Deploy to Railway
         run: |

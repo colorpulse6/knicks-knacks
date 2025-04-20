@@ -1,0 +1,95 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# CalorieCam Frontend (Mobile)
+## Rule Type: Agent Requested
+
+Build the CalorieCam frontend as a mobile app using **Expo with React Native** and **TypeScript**. The app must integrate with GPT-4o via the backend, use Supabase for optional user auth and food log storage, and reuse shared packages from the monorepo.
+
+---
+
+## ⚙️ Stack & Setup
+
+- Use **TypeScript** throughout the mobile codebase.
+- Scaffold with `npx create-expo-app@latest --template expo-template-blank-typescript`.
+- Install dependencies:
+
+```bash
+pnpm add @supabase/supabase-js @tanstack/react-query @tanstack/react-form zustand zod dayjs remeda tailwindcss-react-native clsx expo-camera expo-image-picker expo-secure-store
+pnpm add -D typescript @types/react @types/react-native
+```
+
+---
+
+## 🧱 Directory Structure
+
+```
+/apps/calorie-cam/mobile
+  /components       # Local app-specific components
+  /screens          # Page views
+  /hooks            # Custom React hooks
+  /lib              # Supabase client, API helpers
+  /types            # Local or shared types
+  App.tsx
+  tailwind.config.ts
+  tsconfig.json
+  .env
+```
+
+---
+
+## 🧩 Shared Packages Integration
+
+- Reuse components from `/packages/ui`:
+  - `Button`, `Card`, `Modal`, `Input`, `LoadingSpinner`, etc.
+- Reuse utility functions or types from `/packages/shared`.
+- Create reusable components in `/packages/ui` if they might be shared with other apps.
+- All components must use Tailwind (`tailwindcss-react-native`) and support dark mode.
+
+---
+
+## 🧠 App Behavior
+
+- On launch:
+  - Load Supabase session from `Expo SecureStore` (if any).
+  - Initialize TanStack Query client.
+
+- Main features:
+  - Capture or select food image (using `expo-camera` or `expo-image-picker`)
+  - POST to backend (`/api/upload-food-image`)
+  - Display returned nutrition data (or GPT humor)
+
+---
+
+## 🔐 Optional Auth
+
+- Allow users to login using Supabase Auth (email/password).
+- If logged in:
+  - Send `Authorization: Bearer <token>` to backend.
+  - Save food logs to Supabase linked to user ID.
+- If not logged in:
+  - Still allow food scanning and display results locally.
+- Token stored using `Expo SecureStore`.
+
+---
+
+## 📊 UI Views
+
+- **Home Screen**:
+  - Take or upload a photo
+  - Show results and macros (calories, protein, etc.)
+- **History (if logged in)**:
+  - List of scanned items by date
+- **Login/Logout Screen**:
+  - Minimal email + password login
+- **Humor Modal**:
+  - Show funny GPT-4o result when non-food is detected
+
+---
+
+## 🧪 Testing
+
+- Use **React Testing Library** for components
+- Snapshot test shared UI components from `/packages/ui`

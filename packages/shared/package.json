@@ -1,0 +1,24 @@
+{
+  "name": "@knicks-knacks/shared",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "remeda": "^1.19.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@knicks-knacks/eslint-config": "workspace:*",
+    "eslint": "^8.38.0",
+    "typescript": "^5.0.4",
+    "tsup": "^6.7.0"
+  }
+}

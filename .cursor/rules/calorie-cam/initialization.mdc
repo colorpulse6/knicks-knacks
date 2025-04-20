@@ -1,0 +1,85 @@
+---
+description: Scaffold the full CalorieCam directory structure, set up shared tools, and prepare for backend/frontend development.
+globs: 
+alwaysApply: false
+---
+# CalorieCam Initialization Rule
+## Rule Type: Agent Requested
+
+This rule defines the precise steps to initialize the CalorieCam app within the monorepo. Cursor agents must follow these steps exactly when requested:
+
+---
+
+## 📁 Scaffold Directories
+
+Create the following directory structure in the monorepo:
+
+/apps/calorie-cam
+/mobile          # Expo-managed React Native app
+/backend         # Express API backend (Railway)
+/tests           # App-specific unit/integration tests
+
+---
+
+## ⚙️ Setup Mobile Frontend
+
+- Initialize Expo project (`npx create-expo-app mobile`) in `/mobile`.
+- Add dependencies:
+
+expo-camera expo-image-picker expo-secure-store @tanstack/react-query @tanstack/react-form zustand tailwind-rn clsx dayjs remeda zod
+
+- Configure Tailwind with shared `/packages/config` and `/packages/ui`.
+
+---
+
+## 🚧 Setup Backend
+
+- Initialize Node.js backend with Express in `/backend`.
+- Install backend dependencies:
+
+express cors dotenv supabase @supabase/supabase-js openai zod
+
+- Configure backend `.env` for Supabase and GPT-4o (OpenAI) API keys.
+
+---
+
+## 🗄️ Setup Supabase
+
+- Create a dedicated Supabase project and database for CalorieCam.
+- Create tables using schema from `data-models.mdc`.
+- Enable Supabase Auth (optional).
+
+---
+
+## 🔄 GPT-4o Integration
+
+- Set up GPT-4o via OpenAI Node SDK.
+- Prepare a humorous and accurate prompt for calorie counting and non-food detection.
+
+---
+
+## 🚀 CI/CD & Deployment Configuration
+
+- Set up Railway for backend deployment with GitHub Actions integration.
+- Set up Expo OTA and EAS Build for mobile deployment.
+
+---
+
+## 🧪 Testing Setup
+
+- Backend: Vitest unit tests in `/tests/backend`.
+- Frontend: React Testing Library unit tests in `/tests/mobile`.
+
+---
+
+## 📖 Documentation & Polish
+
+- Create detailed `README.md` including setup, deployment steps, and screenshots.
+
+---
+
+<!--
+Agent, build the CalorieCam app using all rules in `.cursor/rules/calorie-cam`.
+Set up the mobile app with Expo, the backend with Express and GPT-4o, 
+use the provided Supabase schema, and follow the implementation plan.
+-->

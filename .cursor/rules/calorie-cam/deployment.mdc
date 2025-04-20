@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# CalorieCam Deployment
+## Rule Type: Always
+
+### Backend (Railway):
+- Auto-deploy via GitHub Actions on push to `main`.
+- Environment variables stored securely on Railway (GPT-4o keys, Supabase URL/keys).
+
+### Mobile App (Expo):
+- OTA updates via Expo on merge to `main`.
+- Optional EAS builds for App Store/Play Store.
+
+### Storage (Supabase):
+- Store images securely via Supabase Storage bucket.
+- Images linked via URLs stored in Supabase tables.

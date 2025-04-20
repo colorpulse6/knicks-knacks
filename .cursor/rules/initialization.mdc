@@ -1,0 +1,116 @@
+---
+description: This rule defines the initial scaffold for the monorepo. When requested, agents should use this to create the complete folder structure, configuration files, and shared packages necessary to begin building apps.
+globs: 
+alwaysApply: false
+---
+# Initialization Rule
+## Rule Type: Agent Requested
+
+This rule defines the initial scaffold for the monorepo. When requested, agents should use this to create the complete folder structure, configuration files, and shared packages necessary to begin building apps.
+
+---
+
+## 📁 Folder Structure
+
+Create the following directory layout at the root of the monorepo:
+/apps
+/packages
+
+Inside each:
+
+### `/apps/`
+Empty for now — app-specific scaffolding will be handled separately.
+
+### `/packages/`
+- `/ui`: Cross-platform UI component library (React + React Native)
+- `/shared`: Utilities, types, hooks
+- `/config`: Shared configs (Tailwind, TS, PostCSS)
+- `/eslint-config`: Shared ESLint rules
+
+---
+
+## ⚙️ Tooling Setup
+
+1. **Initialize repo with PNPM workspaces + TurboRepo**
+   - `pnpm init`
+   - Install Turbo: `pnpm add -D turbo`
+   - Add `turbo.json` with workspace globs:
+     ```json
+     {
+       "$schema": "https://turborepo.org/schema.json",
+       "pipeline": {
+         "build": {
+           "dependsOn": ["^build"],
+           "outputs": [".next/**", "dist/**"]
+         },
+         "dev": {
+           "cache": false
+         },
+         "lint": {},
+         "test": {}
+       }
+     }
+     ```
+
+2. **Configure root `package.json`**
+   - Add `workspaces`:
+     ```json
+     "workspaces": [
+       "apps/*",
+       "packages/*"
+     ]
+     ```
+
+---
+
+## 📦 Shared Package Setup
+
+### `/packages/config/`
+- Add:
+  - `tailwind.config.js` (uses theme from design rule)
+  - `tsconfig.base.json`
+  - `postcss.config.js`
+- Export them via index files for easy reuse
+
+### `/packages/eslint-config/`
+- Export custom ESLint config (extends Next.js, React, TypeScript)
+- Example:
+  ```js
+  module.exports = {
+    root: true,
+    extends: [
+      'next',
+      'turbo',
+      'prettier',
+      'eslint:recommended',
+      'plugin:@typescript-eslint/recommended',
+    ],
+    plugins: ['@typescript-eslint'],
+    parser: '@typescript-eslint/parser',
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn'],
+    },
+  };
+
+  /packages/ui/
+	•	Create first shared component: Button.tsx
+	•	Ensure components are compatible with both web and mobile using react-native-web
+
+🧪 Base Dev Commands
+At the root, add the following scripts to package.json:
+"scripts": {
+  "dev": "turbo run dev",
+  "build": "turbo run build",
+  "lint": "turbo run lint",
+  "test": "turbo run test"
+}
+
+🧰 Final Notes
+	•	Do not initialize apps in /apps/ during this step.
+	•	This rule only sets up the shared foundation — used before building any specific app.
+	•	Agents should confirm all shared tooling works by testing dev and lint scripts.
+
+<!--
+Prompt:
+Agent, initialize the monorepo using the initialization rule.
+-->

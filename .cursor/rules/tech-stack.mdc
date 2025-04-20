@@ -1,0 +1,90 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Tech Stack Rules
+## Rule Type: Always
+
+This monorepo must always use the following modern, consistent stack across all apps unless explicitly overridden for a specific use case:
+
+---
+
+## 🧱 Core Architecture
+
+- **Monorepo Manager**: TurboRepo
+- **Package Manager**: PNPM
+- **Type System**: TypeScript (strict mode)
+- **UI Framework**: React 18+
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand (lightweight) + TanStack Query (async)
+- **Monorepo Structure**: `/apps`, `/packages` with isolated apps and shared tooling
+
+---
+
+## 🌐 Web Frontend
+
+- **Framework**: Next.js (preferred) or Vite (for small/utility apps)
+- **Forms**: TanStack Forms (preferred), React Hook Form (fallback)
+- **Routing**: Next.js App Router or Expo Router
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Themes**: Tailwind dark/light mode via `class` strategy
+- **Mobile Web Support**: Via responsive Tailwind and react-native-web (if needed)
+
+---
+
+## 📱 Mobile
+
+- **Framework**: React Native
+- **Tooling**: Expo (OTA + EAS)
+- **Forms**: TanStack Forms
+- **APIs**: Supabase client, TanStack Query
+
+---
+
+## 🧠 Utility Libraries
+
+- **Date Utils**: `dayjs` (preferred for its lightweight size)
+- **Functional Utils**: `remeda` (typed and tree-shakable alternative to lodash)
+- **Validation**: `zod` (schemas for API, forms, and data)
+- **Class Merging**: `clsx`, `tailwind-variants` (optional)
+- **Env Handling**: `dotenv`, `envsafe`, or `zod-env`
+
+---
+
+## 🧰 Backend
+
+- **Language**: Node.js
+- **Framework**: Express or tRPC (based on app needs)
+- **Auth**: Supabase Auth (JWT-based)
+- **Database**: Supabase (PostgreSQL), optional Prisma client
+- **API Types**: REST or tRPC endpoints
+
+---
+
+## 🧪 Testing
+
+- **Unit & Integration**: Vitest
+- **UI**: React Testing Library
+- **E2E (Web)**: Playwright
+- **E2E (Mobile)**: Detox (optional)
+- **Mocking**: MSW (for API mocking in frontend tests)
+
+---
+
+## 🚀 Deployment & CI
+
+- **Web**: Vercel
+- **Backend**: Railway
+- **Mobile**: Expo OTA + optional EAS builds
+- **CI/CD**: GitHub Actions (for linting, testing, deploys)
+
+---
+
+## 🧩 Shared Tools
+
+- **UI Components**: `/packages/ui` — shared, reusable React & RN components
+- **Linting**: ESLint with shared config in `/packages/eslint-config`
+- **Config**: Shared Tailwind, TS, PostCSS config in `/packages/config`
+- **Types/Utils**: Reused in `/packages/shared` and `/packages/utilities`

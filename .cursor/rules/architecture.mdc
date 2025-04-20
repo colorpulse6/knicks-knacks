@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Architecture Rules
+## Rule Type: Always
+
+- Use **monorepo** structure clearly organized by `apps` and `packages` directories.
+
+```
+/apps
+  /<app-name>
+    /web         # Web frontend (Next.js or Vite)
+    /mobile      # Mobile frontend (Expo/React Native)
+    /backend     # Express-based API
+    /tests       # App-specific tests
+
+/packages
+  /ui            # Shared UI components (cross-platform: React + RN)
+  /eslint-config # Central ESLint rules
+  /utilities     # Common utilities
+  /shared        # Common hooks, types
+  /config        # Shared TS config, Tailwind config, PostCSS, etc.
+  ```
+
+- All apps are self-contained and deployable.
+- Shared packages are reused across apps.
+- Each app must have a `README.md`, `package.json`, and local `.env` file.
+- Backend folders may use REST or tRPC, with JWT auth (via Supabase).
+- All web and mobile clients use TanStack Query for data fetching.
+- Each shared package must be typed and versioned locally.

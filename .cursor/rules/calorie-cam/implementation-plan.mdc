@@ -1,0 +1,45 @@
+---
+description: Step-by-step plan for building the CalorieCam mobile app and backend using Supabase, GPT-4o, and Railway.
+globs: 
+alwaysApply: false
+---
+# CalorieCam Implementation Plan
+## Rule Type: Agent Requested
+
+Cursor agents must implement CalorieCam following this step-by-step plan precisely:
+
+1. **Scaffold the App**
+   - Create dirs (`/mobile`, `/backend`, `/tests`).
+   - Initialize Expo project in `/mobile`.
+   - Initialize Express app in `/backend`.
+
+2. **Supabase Setup**
+   - Create dedicated Supabase project & schema (defined in data-models.mdc).
+   - Enable optional Supabase Auth.
+
+3. **Backend API**
+   - Implement GPT-4o integration route for image processing (`/api/upload-food-image`).
+   - Connect backend securely to Supabase.
+
+4. **Frontend**
+   - Set up Expo Camera/ImagePicker.
+   - Integrate TanStack Query for API calls.
+   - Display GPT-4o results clearly, with optional humor for non-food uploads.
+
+5. **Testing**
+   - Backend: Vitest or Jest unit tests.
+   - Mobile frontend: React Testing Library unit tests.
+
+6. **Deployment**
+   - Deploy backend to Railway.
+   - Configure Expo OTA and EAS for mobile deployment.
+
+7. **Documentation & Polish**
+   - Add README, env setup instructions, and screenshots.
+
+### Note on Auth:
+Use the simplest possible Supabase Auth:
+- Optional login via email/password only.
+- JWT stored securely on device using Expo SecureStore.
+- No password reset, profile, or OAuth required.
+- Only use login to associate users with food logs.

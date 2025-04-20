@@ -1,0 +1,42 @@
+name: Deploy CalorieCam Backend to Railway
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/calorie-cam/backend/**"
+      - "apps/calorie-cam/.github/workflows/deploy.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Install dependencies
+        run: |
+          cd apps/calorie-cam/backend
+          npm install
+
+      - name: Build application
+        run: |
+          cd apps/calorie-cam/backend
+          npm run build
+
+      - name: Deploy to Railway
+        run: |
+          cd apps/calorie-cam/backend
+          railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

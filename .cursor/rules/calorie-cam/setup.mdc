@@ -1,0 +1,100 @@
+---
+description: Automates Supabase CLI setup, schema migration, local development, and deployment linking for CalorieCam.
+globs: 
+alwaysApply: false
+---
+# CalorieCam Setup Automation
+## Rule Type: Agent Requested
+
+This rule automates the local and remote Supabase project setup process for the CalorieCam app, using the Supabase CLI. Agents must follow these steps when asked to configure the Supabase environment or prepare the database schema for development or deployment.
+
+---
+
+## 🧱 Step 1: Install Supabase CLI
+
+If not already installed:
+
+```bash
+npm install -g supabase
+```
+
+---
+
+## 🗂 Step 2: Initialize Supabase Locally
+
+Inside the monorepo root or `/apps/calorie-cam/backend/`:
+
+```bash
+supabase init
+```
+
+Creates:
+
+```
+/supabase
+  /migrations
+  config.toml
+```
+
+---
+
+## ✍️ Step 3: Add Database Schema
+
+Generate a migration file and paste in the current schema from `data-models.mdc`:
+
+```bash
+supabase migration new init-schema
+```
+
+Paste your schema into the generated file under `/supabase/migrations`.
+
+---
+
+## 🧪 Step 4: Run Supabase Locally
+
+```bash
+supabase start
+```
+
+This starts a local Supabase instance with:
+- Postgres
+- Supabase Studio (GUI)
+- Auth and Storage
+
+---
+
+## 🚀 Step 5: Deploy to Remote Supabase Project
+
+1. In the Supabase dashboard, manually create a project if not already done.
+2. Link CLI to that project:
+
+```bash
+supabase link --project-ref your-project-ref
+```
+
+3. Push the schema:
+
+```bash
+supabase db push
+```
+
+---
+
+## 🧩 Step 6: Configure Environment Variables
+
+Add the following to the CalorieCam mobile app's `.env` file:
+
+```
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+These should be used to initialize the Supabase client using `@supabase/supabase-js`.
+
+---
+
+## ✅ Summary
+
+- This rule ensures consistent local and remote Supabase environments
+- Handles schema versioning and auth setup
+- No sensitive API keys should be committed

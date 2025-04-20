@@ -1,0 +1,80 @@
+---
+description: Use this plan when requested to scaffold or build an app in the monorepo, following each phase in order unless instructed otherwise.
+globs: 
+alwaysApply: false
+---
+# Implementation Plan
+## Rule Type: Agent Requested
+
+This rule defines a repeatable, multi-phase plan for implementing new apps within the monorepo. It provides structure and consistency for creating high-quality, full-stack applications using the shared architecture, tech stack, and design rules already defined.
+
+When requested, agents should follow these phases:
+
+---
+
+## 📦 Phase 1: Scaffold the App
+
+- Create new directory under `/apps/<app-name>`
+- If applicable, create the following subdirs:
+  - `/web`: Next.js or Vite web client
+  - `/mobile`: Expo-managed React Native app
+  - `/backend`: Express or tRPC API
+  - `/tests`: Integration/E2E tests
+- Add app-specific `README.md` and `package.json`
+- Set up `.env` for local dev
+- Register the app in `turbo.json` if needed
+
+---
+
+## 🧱 Phase 2: Database & Auth
+
+- Create a **dedicated Supabase project** for the app
+- Design schema using Supabase Studio or SQL migration
+- Set up Supabase Auth (email + password or OAuth)
+- Configure `.env` with Supabase keys
+
+---
+
+## ⚙️ Phase 3: Backend Development
+
+- Create Express or tRPC server in `/backend`
+- Set up routes, controllers, services, and middleware
+- Add JWT validation using Supabase auth
+- Integrate with Supabase DB using Supabase JS client
+
+---
+
+## 🎨 Phase 4: Frontend Development
+
+- Scaffold UI using `/packages/ui` components
+- Integrate Supabase client
+- Use **TanStack Query** for all data fetching
+- Implement responsive layout and dark mode
+
+---
+
+## 🧪 Phase 5: Testing
+
+- Unit test shared logic with **Vitest**
+- Component test UI with **Testing Library**
+- Use **Playwright** for E2E (web) or **Detox** (mobile)
+- Confirm linting passes with `/packages/eslint-config`
+
+---
+
+## 🚀 Phase 6: Deployment
+
+- Web: Deploy to **Vercel**
+- Backend: Deploy to **Railway**
+- Mobile:
+  - OTA updates via Expo
+  - Optional: use **EAS Build** for app store deployment
+
+---
+
+## 🛠 Phase 7: Docs, Monitoring & Cleanup
+
+- Add screenshots/GIFs to `README.md`
+- Describe tech stack, setup, and deployment
+- Optional: Add Sentry for error monitoring
+- Confirm all rules from `/rules/` are followed

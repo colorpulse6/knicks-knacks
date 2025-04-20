@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# CalorieCam Architecture
+## Rule Type: Always
+
+/apps/calorie-cam
+/mobile            # React Native Expo frontend
+/backend           # Express backend (hosted on Railway)
+/tests             # Unit and integration tests
+
+- **Mobile**: Expo-managed React Native app.
+  - TanStack Query for data fetching.
+  - TanStack Forms for form management.
+  - Zustand for lightweight state management.
+  - Expo SecureStore for local auth storage (optional).
+  - Images processed by GPT-4o via backend API.
+
+- **Backend**: Express server deployed on Railway.
+  - Exposes REST endpoints for image uploads.
+  - Communicates securely with GPT-4o.
+  - Stores results in Supabase.
+  - JWT Auth via Supabase Auth (optional, user tracking only if logged in).

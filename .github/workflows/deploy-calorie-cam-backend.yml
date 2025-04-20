@@ -7,7 +7,7 @@ on:
       - master
     paths:
       - "apps/calorie-cam/backend/**"
-      - "apps/calorie-cam/.github/workflows/deploy.yml"
+      - ".github/workflows/deploy-calorie-cam-backend.yml"
 
 jobs:
   deploy:

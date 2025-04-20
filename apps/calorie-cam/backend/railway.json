@@ -10,5 +10,8 @@
     "healthcheckTimeout": 10,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
+  },
+  "nixpacks": {
+    "packageManager": "pnpm"
   }
 }

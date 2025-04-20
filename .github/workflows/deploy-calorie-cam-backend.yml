@@ -44,17 +44,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install dependencies
+      # Option 1: Install dependencies at workspace root and use workspace commands
+      - name: Install all dependencies
         run: |
-          cd apps/calorie-cam/backend
           pnpm install --frozen-lockfile
-          ls -la node_modules # Verify node_modules exists
-          ls -la node_modules/@types # Verify type declarations
 
-      - name: Build application
+      - name: Build backend
         run: |
-          cd apps/calorie-cam/backend
-          pnpm build
+          pnpm --filter calorie-cam-backend build
+
+      # Alternative option if workspace commands don't work
+      # - name: Install dependencies (alternative)
+      #   run: |
+      #     cd apps/calorie-cam/backend
+      #     pnpm install --frozen-lockfile --shamefully-hoist
+      #
+      # - name: Build application (alternative)
+      #   run: |
+      #     cd apps/calorie-cam/backend
+      #     pnpm build
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli

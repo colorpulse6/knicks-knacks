@@ -8,26 +8,51 @@ import {
   Alert,
   ScrollView,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { clearFoodLogs } from "../services/api";
+import { useTheme } from "../hooks/useTheme";
+
+const queryKeys = {
+  foodLogs: ["foodLogs"],
+};
 
 const SettingsScreen = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, toggleTheme, isLoadingTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const appVersion = "1.0.0"; // This would be dynamic in a real app
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // In a real app, this would trigger your theme change
-  };
+  const queryClient = useQueryClient();
 
   const toggleNotifications = () => {
     setNotificationsEnabled(!notificationsEnabled);
     // In a real app, this would update notification settings
   };
 
+  const clearHistoryMutation = useMutation({
+    mutationFn: clearFoodLogs,
+    onSuccess: (data: { message: string }) => {
+      Alert.alert(
+        "Success",
+        data.message || "Your food history has been cleared."
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.foodLogs });
+    },
+    onError: (error: Error) => {
+      console.error("Clear history error:", error);
+      Alert.alert(
+        "Error",
+        error.message || "Failed to clear history. Please try again."
+      );
+    },
+  });
+
   const clearHistory = () => {
+    if (clearHistoryMutation.isPending) return;
+
     Alert.alert(
       "Clear History",
       "Are you sure you want to clear your food history? This action cannot be undone.",
@@ -40,8 +65,7 @@ const SettingsScreen = () => {
           text: "Clear",
           style: "destructive",
           onPress: () => {
-            // In a real app, this would clear the food history
-            Alert.alert("Success", "Your food history has been cleared.");
+            clearHistoryMutation.mutate();
           },
         },
       ]
@@ -59,42 +83,79 @@ const SettingsScreen = () => {
     type: "toggle" | "button" = "button",
     value?: boolean
   ) => {
+    const isDarkModeLoading = title === "Dark Mode" && isLoadingTheme;
+    const isClearingHistory =
+      title === "Clear History" && clearHistoryMutation.isPending;
+    const isDisabled = isDarkModeLoading || isClearingHistory;
+    const showActivityIndicator = isDarkModeLoading || isClearingHistory;
+
     return (
       <TouchableOpacity
-        style={styles.settingItem}
-        onPress={action}
-        disabled={type === "toggle"}
+        style={[styles.settingItem, theme === "dark" && styles.settingItemDark]}
+        onPress={!isDisabled ? action : undefined}
+        disabled={isDisabled || (type === "toggle" && isDisabled)}
       >
         <View style={styles.settingItemLeft}>
-          <Ionicons name={icon} size={24} color="#4f46e5" style={styles.icon} />
-          <Text style={styles.settingTitle}>{title}</Text>
+          <Ionicons
+            name={icon}
+            size={24}
+            color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+            style={styles.icon}
+          />
+          <Text
+            style={[
+              styles.settingTitle,
+              theme === "dark" && styles.settingTitleDark,
+            ]}
+          >
+            {title}
+          </Text>
         </View>
-        {type === "toggle" ? (
+        {showActivityIndicator ? (
+          <ActivityIndicator size="small" color="#4f46e5" />
+        ) : type === "toggle" ? (
           <Switch
             value={value}
             onValueChange={action}
             trackColor={{ false: "#d1d5db", true: "#c7d2fe" }}
             thumbColor={value ? "#4f46e5" : "#f4f3f4"}
+            ios_backgroundColor="#d1d5db"
+            disabled={isDisabled}
           />
         ) : (
-          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={theme === "dark" ? "#9ca3af" : "#9ca3af"}
+          />
         )}
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+    <SafeAreaView
+      style={[styles.container, theme === "dark" && styles.containerDark]}
+    >
+      <Text style={[styles.title, theme === "dark" && styles.titleDark]}>
+        Settings
+      </Text>
       <ScrollView style={styles.scrollView}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={[styles.section, theme === "dark" && styles.sectionDark]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              theme === "dark" && styles.sectionTitleDark,
+            ]}
+          >
+            Preferences
+          </Text>
           {renderSettingItem(
             "Dark Mode",
             "moon",
-            toggleDarkMode,
+            toggleTheme,
             "toggle",
-            darkMode
+            theme === "dark"
           )}
           {renderSettingItem(
             "Notifications",
@@ -105,21 +166,42 @@ const SettingsScreen = () => {
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data</Text>
+        <View style={[styles.section, theme === "dark" && styles.sectionDark]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              theme === "dark" && styles.sectionTitleDark,
+            ]}
+          >
+            Data
+          </Text>
           {renderSettingItem("Clear History", "trash", clearHistory)}
           {renderSettingItem("Export Data", "download", () => {})}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
+        <View style={[styles.section, theme === "dark" && styles.sectionDark]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              theme === "dark" && styles.sectionTitleDark,
+            ]}
+          >
+            Support
+          </Text>
           {renderSettingItem("Contact Us", "mail", contactSupport)}
           {renderSettingItem("Privacy Policy", "document-text", () => {})}
           {renderSettingItem("Terms of Service", "document", () => {})}
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.versionText}>Version {appVersion}</Text>
+          <Text
+            style={[
+              styles.versionText,
+              theme === "dark" && styles.versionTextDark,
+            ]}
+          >
+            Version {appVersion}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -131,12 +213,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f9fafb",
   },
+  containerDark: {
+    backgroundColor: "#111827",
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 16,
     color: "#4f46e5",
+  },
+  titleDark: {
+    color: "#c7d2fe", // Lighter indigo for dark mode
   },
   scrollView: {
     flex: 1,
@@ -153,12 +241,20 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginHorizontal: 16,
   },
+  sectionDark: {
+    backgroundColor: "#1f2937", // Dark background for sections
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#6b7280",
     marginHorizontal: 16,
     marginVertical: 12,
+  },
+  sectionTitleDark: {
+    color: "#9ca3af", // Lighter text for dark mode
   },
   settingItem: {
     flexDirection: "row",
@@ -168,6 +264,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
+  },
+  settingItemDark: {
+    borderBottomColor: "#374151", // Darker border for dark mode
   },
   settingItemLeft: {
     flexDirection: "row",
@@ -180,6 +279,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#111827",
   },
+  settingTitleDark: {
+    color: "#f9fafb", // Light text for dark mode
+  },
   footer: {
     alignItems: "center",
     marginVertical: 24,
@@ -187,6 +289,9 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 14,
     color: "#9ca3af",
+  },
+  versionTextDark: {
+    color: "#6b7280", // Slightly darker text in dark mode
   },
 });
 

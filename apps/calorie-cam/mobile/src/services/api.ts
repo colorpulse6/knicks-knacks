@@ -117,3 +117,44 @@ export const getFoodLogs = async () => {
     throw error;
   }
 };
+
+/**
+ * Clears all food logs.
+ * Assumes DELETE /api/food-logs endpoint exists on the server.
+ * @returns Success message or relevant data from the server
+ */
+export const clearFoodLogs = async (): Promise<{ message: string }> => {
+  try {
+    // TODO: Add authentication headers if needed
+    const response = await fetch(`${API_URL}/food-logs`, {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        // 'Authorization': `Bearer YOUR_TOKEN_HERE` // If auth is needed
+      },
+    });
+
+    if (!response.ok) {
+      // Try to parse error message from server if possible
+      let errorDetails = `Server responded with status: ${response.status}`;
+      try {
+        const errorBody = await response.json();
+        errorDetails = errorBody.message || errorDetails;
+      } catch (parseError) {
+        // Ignore if response body is not JSON
+      }
+      throw new Error(errorDetails);
+    }
+
+    // Handle successful response (e.g., 204 No Content or a success message)
+    if (response.status === 204) {
+      return { message: "History cleared successfully." };
+    }
+    // If server sends a JSON body on success:
+    // return await response.json();
+    return { message: "History cleared successfully." }; // Default success
+  } catch (error) {
+    console.error("Error clearing food logs:", error);
+    throw error; // Re-throw to be caught by the mutation's onError
+  }
+};

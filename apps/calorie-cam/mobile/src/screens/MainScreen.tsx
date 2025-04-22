@@ -11,17 +11,24 @@ import {
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadFoodImage } from "../services/api";
 import NutritionCard from "../components/NutritionCard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FoodAnalysisResult } from "../types";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { RootTabParamList } from "../../App";
+import { useTheme } from "../hooks/useTheme";
 
 type MainScreenProps = BottomTabScreenProps<RootTabParamList, "Camera">;
 
+// Define query keys
+const queryKeys = {
+  foodLogs: ["foodLogs"],
+};
+
 const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
+  const { theme } = useTheme(); // Get the current theme
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] =
     useState<FoodAnalysisResult | null>(null);
@@ -31,11 +38,16 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   // Use the permissions hook
   const [permission, requestPermission] = useCameraPermissions();
 
+  // Get query client instance
+  const queryClient = useQueryClient();
+
   // Handle image upload and analysis
   const analysisMutation = useMutation({
     mutationFn: uploadFoodImage,
     onSuccess: (data) => {
       setAnalysisResult(data);
+      // Invalidate the food logs query to trigger a refetch on the history screen
+      queryClient.invalidateQueries({ queryKey: queryKeys.foodLogs });
     },
     onError: (error) => {
       Alert.alert(
@@ -102,8 +114,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   if (!permission) {
     // Permissions are still loading
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#4f46e5" />
+      <View
+        style={[styles.container, theme === "dark" && styles.containerDark]}
+      >
+        <ActivityIndicator
+          size="large"
+          color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+        />
       </View>
     );
   }
@@ -111,8 +128,15 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   if (!permission.granted) {
     // Permissions are not granted yet
     return (
-      <View style={styles.container}>
-        <Text style={styles.permissionText}>
+      <View
+        style={[styles.container, theme === "dark" && styles.containerDark]}
+      >
+        <Text
+          style={[
+            styles.permissionText,
+            theme === "dark" && styles.permissionTextDark,
+          ]}
+        >
           We need your permission to show the camera
         </Text>
         <TouchableOpacity
@@ -126,8 +150,12 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>CalorieCam</Text>
+    <SafeAreaView
+      style={[styles.container, theme === "dark" && styles.containerDark]}
+    >
+      <Text style={[styles.title, theme === "dark" && styles.titleDark]}>
+        CalorieCam
+      </Text>
 
       {!capturedImage ? (
         <View style={styles.cameraContainer}>
@@ -152,13 +180,28 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
           </CameraView>
         </View>
       ) : (
-        <ScrollView style={styles.resultContainer}>
+        <ScrollView
+          style={[
+            styles.resultContainer,
+            theme === "dark" && styles.resultContainerDark,
+          ]}
+        >
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
 
           {analysisMutation.isPending ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4f46e5" />
-              <Text style={styles.loadingText}>Analyzing your food...</Text>
+              <ActivityIndicator
+                size="large"
+                color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+              />
+              <Text
+                style={[
+                  styles.loadingText,
+                  theme === "dark" && styles.loadingTextDark,
+                ]}
+              >
+                Analyzing your food...
+              </Text>
             </View>
           ) : analysisMutation.isSuccess && analysisResult ? (
             <>
@@ -192,12 +235,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  containerDark: {
+    backgroundColor: "#111827",
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 16,
     color: "#4f46e5",
+  },
+  titleDark: {
+    color: "#c7d2fe",
   },
   cameraContainer: {
     flex: 1,
@@ -239,6 +288,10 @@ const styles = StyleSheet.create({
   resultContainer: {
     flex: 1,
     padding: 16,
+    backgroundColor: "#f9fafb",
+  },
+  resultContainerDark: {
+    backgroundColor: "#111827",
   },
   loadingContainer: {
     alignItems: "center",
@@ -249,6 +302,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: "#4f46e5",
+  },
+  loadingTextDark: {
+    color: "#c7d2fe",
   },
   errorText: {
     color: "red",
@@ -281,6 +337,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontSize: 16,
     color: "#111827",
+  },
+  permissionTextDark: {
+    color: "#f9fafb",
   },
   permissionButton: {
     backgroundColor: "#4f46e5",

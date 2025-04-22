@@ -20,7 +20,7 @@
     "lucide-react": "^0.294.0"
   },
   "devDependencies": {
-    "@knicks-knacks/eslint-config": "workspace:*",
+    "@knicks-knacks/eslint-config": "^0.0.1",
     "@types/react": "^18.2.0",
     "@types/react-native": "~0.72.2",
     "eslint": "^8.38.0",

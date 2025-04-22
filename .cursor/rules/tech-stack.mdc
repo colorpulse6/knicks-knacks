@@ -13,7 +13,7 @@ This monorepo must always use the following modern, consistent stack across all 
 ## 🧱 Core Architecture
 
 - **Monorepo Manager**: TurboRepo
-- **Package Manager**: PNPM
+- **Package Manager**: YARN
 - **Type System**: TypeScript (strict mode)
 - **UI Framework**: React 18+
 - **Styling**: Tailwind CSS
@@ -22,6 +22,19 @@ This monorepo must always use the following modern, consistent stack across all 
 
 ---
 
+## 📦 Package Manager
+
+- **Primary Package Manager**: Yarn (v1.x)
+  - PNPM is not used despite being in the standard stack because it has compatibility issues with Expo and Turborepo
+  - All workspace references use standard Yarn workspace syntax instead of PNPM-style `workspace:*` references
+  - Workspace dependencies should be referenced as direct version numbers (e.g., `"^0.0.1"`)
+
+- **Workspace Configuration**:
+  - App packages should follow the naming pattern `@calorie-cam/<app-name>` 
+  - Shared packages follow `@knicks-knacks/<package-name>`
+  - Both must be referenced in root `package.json` under `workspaces` field
+
+---
 ## 🌐 Web Frontend
 
 - **Framework**: Next.js (preferred) or Vite (for small/utility apps)

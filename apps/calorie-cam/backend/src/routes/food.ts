@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { analyzeFood } from "../controllers/food.controller";
+import { analyzeFood, getFoodLogs } from "../controllers/food.controller";
 
 const router = Router();
 
@@ -12,6 +12,9 @@ const upload = multer({
 });
 
 // Route for analyzing food images
-router.post("/upload-food-image", upload.single("image"), analyzeFood);
+router.post("/upload-food-image", upload.single("image") as any, analyzeFood);
+
+// Route for fetching food logs
+router.get("/food-logs", getFoodLogs);
 
 export default router;

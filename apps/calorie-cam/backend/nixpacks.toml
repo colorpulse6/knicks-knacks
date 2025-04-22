@@ -1,5 +1,5 @@
 [phases.setup]
-packageManager = "pnpm"
+packageManager = "yarn"
 
 [phases.install]
-cmds = ["pnpm install --no-frozen-lockfile"] 
+cmds = ["yarn install --frozen-lockfile"] 

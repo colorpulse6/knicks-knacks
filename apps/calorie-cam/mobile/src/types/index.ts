@@ -11,3 +11,15 @@ export interface FoodAnalysisResult {
   };
   imageUrl: string;
 }
+
+export interface FoodLog {
+  id: string;
+  user_id?: string;
+  image_url: string;
+  food_name: string;
+  calories?: number;
+  proteins?: number;
+  fats?: number;
+  carbs?: number;
+  logged_at: string;
+}

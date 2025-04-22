@@ -150,3 +150,39 @@ export const analyzeFood = async (
     res.status(500).json({ error: "Error analyzing food image" });
   }
 };
+
+/**
+ * Retrieves food logs from Supabase
+ */
+export const getFoodLogs = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.query.userId as string | undefined;
+
+    // Query to get food logs
+    let query = supabase
+      .from("food_logs")
+      .select("*")
+      .order("logged_at", { ascending: false });
+
+    // If userId is provided, filter by user
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching food logs:", error);
+      res.status(500).json({ error: "Failed to fetch food logs" });
+      return;
+    }
+
+    res.status(200).json(data || []);
+  } catch (error) {
+    console.error("Error fetching food logs:", error);
+    res.status(500).json({ error: "Failed to fetch food logs" });
+  }
+};

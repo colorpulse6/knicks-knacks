@@ -32,7 +32,9 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build backend
-        run: yarn workspace @calorie-cam/backend build
+        run: |
+          cd apps/calorie-cam/backend
+          yarn build
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli

@@ -1,8 +1,11 @@
 {
-  "name": "calorie-cam-backend",
+  "name": "@calorie-cam/backend",
   "version": "1.0.0",
   "description": "Backend server for CalorieCam - a food calorie tracking app",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",

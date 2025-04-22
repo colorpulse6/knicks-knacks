@@ -27,7 +27,19 @@ app.get("/health", (req: express.Request, res: express.Response) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Health check available at http://localhost:${PORT}/health`);
+
+  // Show the correct URL based on environment
+  if (process.env.RAILWAY_STATIC_URL) {
+    console.log(
+      `Health check available at ${process.env.RAILWAY_STATIC_URL}/health`
+    );
+  } else if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    console.log(
+      `Health check available at https://${process.env.RAILWAY_PUBLIC_DOMAIN}/health`
+    );
+  } else {
+    console.log(`Health check available at http://localhost:${PORT}/health`);
+  }
 });
 
 export default app;

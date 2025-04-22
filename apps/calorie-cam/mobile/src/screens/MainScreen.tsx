@@ -9,34 +9,45 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { Camera, CameraType } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadFoodImage } from "../services/api";
 import NutritionCard from "../components/NutritionCard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FoodAnalysisResult } from "../types";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { RootTabParamList } from "../../App";
+import { useTheme } from "../hooks/useTheme";
 
-const MainScreen = () => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+type MainScreenProps = BottomTabScreenProps<RootTabParamList, "Camera">;
+
+// Define query keys
+const queryKeys = {
+  foodLogs: ["foodLogs"],
+};
+
+const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
+  const { theme } = useTheme(); // Get the current theme
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] =
     useState<FoodAnalysisResult | null>(null);
-  const cameraRef = useRef<Camera>(null);
+  const [cameraType, setCameraType] = useState<"front" | "back">("back");
+  const cameraRef = useRef(null);
 
-  // Request camera permission when component mounts
-  React.useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    })();
-  }, []);
+  // Use the permissions hook
+  const [permission, requestPermission] = useCameraPermissions();
+
+  // Get query client instance
+  const queryClient = useQueryClient();
 
   // Handle image upload and analysis
   const analysisMutation = useMutation({
     mutationFn: uploadFoodImage,
     onSuccess: (data) => {
       setAnalysisResult(data);
+      // Invalidate the food logs query to trigger a refetch on the history screen
+      queryClient.invalidateQueries({ queryKey: queryKeys.foodLogs });
     },
     onError: (error) => {
       Alert.alert(
@@ -51,6 +62,7 @@ const MainScreen = () => {
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
+        // @ts-ignore - Ignoring TypeScript errors for the camera ref
         const photo = await cameraRef.current.takePictureAsync();
         setCapturedImage(photo.uri);
         analysisMutation.mutate(photo.uri);
@@ -65,7 +77,7 @@ const MainScreen = () => {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: "images",
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -88,29 +100,66 @@ const MainScreen = () => {
     setAnalysisResult(null);
   };
 
-  if (hasPermission === null) {
+  // Toggle camera type (front/back)
+  const toggleCameraType = () => {
+    setCameraType(cameraType === "back" ? "front" : "back");
+  };
+
+  // View history after analysis
+  const viewHistory = () => {
+    navigation.navigate("History");
+  };
+
+  // Check permission status from the hook
+  if (!permission) {
+    // Permissions are still loading
     return (
-      <View style={styles.container}>
-        <Text>Requesting camera permission...</Text>
+      <View
+        style={[styles.container, theme === "dark" && styles.containerDark]}
+      >
+        <ActivityIndicator
+          size="large"
+          color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+        />
       </View>
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
+    // Permissions are not granted yet
     return (
-      <View style={styles.container}>
-        <Text>No access to camera. Please enable camera permissions.</Text>
+      <View
+        style={[styles.container, theme === "dark" && styles.containerDark]}
+      >
+        <Text
+          style={[
+            styles.permissionText,
+            theme === "dark" && styles.permissionTextDark,
+          ]}
+        >
+          We need your permission to show the camera
+        </Text>
+        <TouchableOpacity
+          style={styles.permissionButton}
+          onPress={requestPermission}
+        >
+          <Text style={styles.buttonText}>Grant Permission</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>CalorieCam</Text>
+    <SafeAreaView
+      style={[styles.container, theme === "dark" && styles.containerDark]}
+    >
+      <Text style={[styles.title, theme === "dark" && styles.titleDark]}>
+        CalorieCam
+      </Text>
 
       {!capturedImage ? (
         <View style={styles.cameraContainer}>
-          <Camera style={styles.camera} type={CameraType.back} ref={cameraRef}>
+          <CameraView style={styles.camera} facing={cameraType} ref={cameraRef}>
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={pickImage}>
                 <Text style={styles.buttonText}>Gallery</Text>
@@ -121,20 +170,49 @@ const MainScreen = () => {
               >
                 <Text style={styles.buttonText}>Capture</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={toggleCameraType}
+              >
+                <Text style={styles.buttonText}>Flip</Text>
+              </TouchableOpacity>
             </View>
-          </Camera>
+          </CameraView>
         </View>
       ) : (
-        <ScrollView style={styles.resultContainer}>
+        <ScrollView
+          style={[
+            styles.resultContainer,
+            theme === "dark" && styles.resultContainerDark,
+          ]}
+        >
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
 
           {analysisMutation.isPending ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4f46e5" />
-              <Text style={styles.loadingText}>Analyzing your food...</Text>
+              <ActivityIndicator
+                size="large"
+                color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+              />
+              <Text
+                style={[
+                  styles.loadingText,
+                  theme === "dark" && styles.loadingTextDark,
+                ]}
+              >
+                Analyzing your food...
+              </Text>
             </View>
           ) : analysisMutation.isSuccess && analysisResult ? (
-            <NutritionCard result={analysisResult} />
+            <>
+              <NutritionCard result={analysisResult} />
+              <TouchableOpacity
+                style={styles.historyButton}
+                onPress={viewHistory}
+              >
+                <Text style={styles.buttonText}>View History</Text>
+              </TouchableOpacity>
+            </>
           ) : (
             <Text style={styles.errorText}>
               Something went wrong with the analysis.
@@ -154,6 +232,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  containerDark: {
+    backgroundColor: "#111827",
   },
   title: {
     fontSize: 28,
@@ -161,6 +244,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 16,
     color: "#4f46e5",
+  },
+  titleDark: {
+    color: "#c7d2fe",
   },
   cameraContainer: {
     flex: 1,
@@ -202,6 +288,10 @@ const styles = StyleSheet.create({
   resultContainer: {
     flex: 1,
     padding: 16,
+    backgroundColor: "#f9fafb",
+  },
+  resultContainerDark: {
+    backgroundColor: "#111827",
   },
   loadingContainer: {
     alignItems: "center",
@@ -212,6 +302,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: "#4f46e5",
+  },
+  loadingTextDark: {
+    color: "#c7d2fe",
   },
   errorText: {
     color: "red",
@@ -230,6 +323,29 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  historyButton: {
+    backgroundColor: "#4f46e5",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  permissionText: {
+    textAlign: "center",
+    marginBottom: 20,
+    fontSize: 16,
+    color: "#111827",
+  },
+  permissionTextDark: {
+    color: "#f9fafb",
+  },
+  permissionButton: {
+    backgroundColor: "#4f46e5",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
   },
 });
 

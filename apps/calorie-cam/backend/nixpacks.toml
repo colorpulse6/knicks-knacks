@@ -1,5 +1,6 @@
 [phases.setup]
 packageManager = "yarn"
+packages = ["nodejs-18_x", "yarn"]
 
 [phases.install]
 cmds = ["yarn install --frozen-lockfile"] 

@@ -1,11 +1,12 @@
+# Use phases-based config to ensure yarn is installed
 [nodejs]
-version = "18"
+version = "20"
 
 [setup]
 packages = ["nodejs", "yarn-1x"]
 
 [install]
-command = "yarn install --frozen-lockfile"
+command = "yarn install "
 
 [build]
 command = "yarn build"

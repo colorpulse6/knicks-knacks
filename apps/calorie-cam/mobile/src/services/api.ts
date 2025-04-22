@@ -15,7 +15,7 @@ const API_URLS = {
     ios: "http://localhost:3000/api",
     // For physical devices in development, use your computer's local IP address
     // Replace with your actual local IP address when testing on physical devices
-    physical: "http://192.168.1.X:3000/api", // Update this with your actual IP
+    physical: "http://192.168.2.106:3000/api", // Update this with your actual IP
   },
   // Production endpoint
   production: "https://calorie-cam-production.up.railway.app/api",
@@ -24,15 +24,21 @@ const API_URLS = {
 // Determine the appropriate API URL based on environment and platform
 let API_URL: string;
 if (isDevelopment) {
-  // When running on a physical device, use the physical device URL
-  const isPhysicalDevice =
-    !Constants.executionEnvironment ||
+  // Check if running in Expo Go ('storeClient') or as a standalone build
+  const isExpoGoOrStandalone =
+    Constants.executionEnvironment === "storeClient" ||
     Constants.executionEnvironment === "standalone";
 
-  if (isPhysicalDevice) {
+  // Determine if it's likely a physical device environment
+  // This includes Expo Go, standalone builds, or cases where executionEnvironment might be undefined
+  const isPhysicalDeviceEnvironment =
+    isExpoGoOrStandalone || !Constants.executionEnvironment; // Fallback for older versions or edge cases
+
+  if (isPhysicalDeviceEnvironment) {
+    // Use the local network IP for physical devices (including Expo Go)
     API_URL = API_URLS.development.physical;
   } else {
-    // When in simulator/emulator, use the appropriate platform-specific URL
+    // Otherwise, assume simulator/emulator and use platform-specific localhost address
     API_URL =
       Platform.OS === "android"
         ? API_URLS.development.android
@@ -46,7 +52,7 @@ if (isDevelopment) {
 console.log(
   `Using API URL: ${API_URL} (${
     isDevelopment ? "development" : "production"
-  } mode on ${Platform.OS})`
+  } mode on ${Platform.OS}, env: ${Constants.executionEnvironment})` // Added env for debugging
 );
 
 /**
@@ -89,6 +95,25 @@ export const uploadFoodImage = async (
     return await response.json();
   } catch (error) {
     console.error("Error uploading image:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches the food logs from the API
+ * @returns Array of food log entries
+ */
+export const getFoodLogs = async () => {
+  try {
+    const response = await fetch(`${API_URL}/food-logs`);
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching food logs:", error);
     throw error;
   }
 };

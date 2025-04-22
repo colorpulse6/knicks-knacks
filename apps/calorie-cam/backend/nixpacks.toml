@@ -1,12 +1,8 @@
-[phases.setup]
-nixPkgs = ["nodejs", "yarn"]
-nixOverlays = []
+   [nodejs]
+   version = "20"
 
-[phases.install]
-cmds = ["yarn install"]
+   [build]
+   command = "yarn build"
 
-[phases.build]
-cmds = ["yarn build"]
-
-[phases.start]
-cmds = ["node dist/server.js"]
+   [start]
+   command = "yarn start"

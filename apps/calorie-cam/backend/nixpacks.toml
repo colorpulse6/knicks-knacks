@@ -6,7 +6,7 @@ version = "20"
 packages = ["nodejs", "yarn-1x"]
 
 [install]
-command = "yarn install "
+command = "yarn install"
 
 [build]
 command = "yarn build"

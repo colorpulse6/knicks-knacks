@@ -1,6 +1,14 @@
-[phases.setup]
-packageManager = "yarn"
-packages = ["nodejs-18_x", "yarn"]
+[nodejs]
+version = "18"
 
-[phases.install]
-cmds = ["yarn install --frozen-lockfile"] 
+[setup]
+packages = ["nodejs", "yarn-1x"]
+
+[install]
+command = "yarn install --frozen-lockfile"
+
+[build]
+command = "yarn build"
+
+[start]
+command = "yarn start"

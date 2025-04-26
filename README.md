@@ -92,6 +92,7 @@ yarn dev
 
 # The server will run on http://localhost:3000
 # Health check available at http://localhost:3000/health
+# Production health check available at https://calorie-cam-production.up.railway.app/health
 ```
 
 ### Running the Mobile App

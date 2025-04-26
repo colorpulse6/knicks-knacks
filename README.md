@@ -72,7 +72,7 @@ If you encounter dependency resolution issues:
 
 ## CalorieCam App
 
-CalorieCam is a mobile application that analyzes food images and provides nutritional information using GPT-4o.
+CalorieCam is a mobile application that analyzes food images and provides nutritional information using GPT-4o and Supabase. See [`/apps/calorie-cam/README.md`](apps/calorie-cam/README.md) for full setup and usage details.
 
 ### Running the Backend
 
@@ -92,6 +92,7 @@ yarn dev
 
 # The server will run on http://localhost:3000
 # Health check available at http://localhost:3000/health
+# Production health check available at https://calorie-cam-production.up.railway.app/health
 ```
 
 ### Running the Mobile App
@@ -119,32 +120,10 @@ npx expo start --ios     # Start in iOS simulator
 npx expo start --android # Start in Android emulator
 ```
 
-### Shortcut Commands
-
-For convenience, you can use these shortcuts from the monorepo root:
-
-```bash
-# Start the backend
-yarn calorie-cam:backend
-
-# Start the mobile app
-yarn calorie-cam:mobile
-
-# Show instructions for running both
-yarn calorie-cam:dev
-```
-
 ### Deployment
 
-The backend is automatically deployed to Railway when changes are pushed to the `main` branch.
-
-```bash
-# The production backend is available at:
-https://calorie-cam-production.up.railway.app
-
-# Health check endpoint:
-https://calorie-cam-production.up.railway.app/health
-```
+- Backend: Deployed automatically to Railway on main branch push.
+- Mobile: Use Expo EAS for builds and OTA updates. See `/apps/calorie-cam/README.md` for detailed deployment steps.
 
 ## Development Workflow
 
@@ -166,9 +145,10 @@ yarn test
 
 - **Monorepo Management**: TurboRepo
 - **Package Manager**: Yarn (instead of PNPM due to Expo compatibility)
+- **Backend**: Node.js, Express, OpenAI API (GPT-4o), Supabase (PostgreSQL)
+- **Mobile**: React Native (Expo), TypeScript, TanStack Query, Tailwind CSS
 - **Web**: React, Next.js, Vite
-- **Mobile**: React Native, Expo
-- **Backend**: Node.js, Express
+- **Shared Packages**: UI library (`/packages/ui`), shared hooks/types (`/packages/shared`), ESLint config, and build config
 - **Styling**: Tailwind CSS
 - **State**: Zustand, TanStack Query
 - **Database**: Supabase (PostgreSQL)
@@ -176,3 +156,9 @@ yarn test
 - **Code Quality**: TypeScript (strict mode), ESLint, Prettier
 - **Testing**: Vitest, Testing Library, Playwright
 - **Icons**: Lucide React
+
+## Additional Notes
+
+- Use Yarn workspaces for dependency management and script execution.
+- If you encounter dependency issues, try `yarn clean` and then `yarn install`.
+- For more details on each package, see their respective directories.

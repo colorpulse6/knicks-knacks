@@ -13,7 +13,6 @@ This rule automates the local and remote Supabase project setup process for the 
 ## 🧱 Step 1: Install Supabase CLI
 
 If not already installed:
-
 ```bash
 npm install -g supabase
 ```
@@ -22,31 +21,23 @@ npm install -g supabase
 
 ## 🗂 Step 2: Initialize Supabase Locally
 
-Inside the monorepo root or `/apps/calorie-cam/backend/`:
-
+Inside `/apps/calorie-cam/`:
 ```bash
 supabase init
 ```
-
-Creates:
-
-```
-/supabase
-  /migrations
-  config.toml
-```
+Creates `/supabase` with `/migrations` and `config.toml`.  
+Commit this directory to version control.
 
 ---
 
 ## ✍️ Step 3: Add Database Schema
 
-Generate a migration file and paste in the current schema from `data-models.mdc`:
-
+Generate a migration file and paste in the schema from `data-models.mdc`:
 ```bash
 supabase migration new init-schema
 ```
-
-Paste your schema into the generated file under `/supabase/migrations`.
+Paste your schema into the generated file under `/supabase/migrations`.  
+Keep this in sync with `data-models.mdc`.
 
 ---
 
@@ -55,46 +46,48 @@ Paste your schema into the generated file under `/supabase/migrations`.
 ```bash
 supabase start
 ```
-
 This starts a local Supabase instance with:
 - Postgres
 - Supabase Studio (GUI)
-- Auth and Storage
 
 ---
 
-## 🚀 Step 5: Deploy to Remote Supabase Project
+## 🌐 Step 5: Configure Environment Variables
 
-1. In the Supabase dashboard, manually create a project if not already done.
-2. Link CLI to that project:
+- Copy `.env.example` to `.env` in both `/backend` and `/mobile`.
+- Fill in `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` from the Supabase dashboard.
+- Ensure these match your local or remote project as appropriate.
 
+---
+
+## 🚀 Step 6: Deploy Schema to Remote Supabase
+
+To apply migrations to production:
 ```bash
-supabase link --project-ref your-project-ref
+supabase db push --project-ref <your-project-ref>
 ```
-
-3. Push the schema:
-
-```bash
-supabase db push
-```
+Or run the SQL migration manually in the Supabase dashboard.  
+Verify tables and storage buckets exist in the Supabase UI.
 
 ---
 
-## 🧩 Step 6: Configure Environment Variables
+## 🔗 Step 7: Link Backend and Mobile
 
-Add the following to the CalorieCam mobile app's `.env` file:
-
-```
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-These should be used to initialize the Supabase client using `@supabase/supabase-js`.
+- Ensure backend `.env` is set with correct Supabase values.
+- In mobile, set API URLs and Supabase keys in `.env`.
 
 ---
 
-## ✅ Summary
+## 🛠 Troubleshooting
 
-- This rule ensures consistent local and remote Supabase environments
-- Handles schema versioning and auth setup
-- No sensitive API keys should be committed
+- If you get port conflicts, stop other local Postgres/Supabase instances.
+- If migration fails, check for syntax errors or out-of-sync schema.
+- For connection/auth errors, double-check all environment variables.
+
+---
+
+## 📝 Notes
+
+- Always commit `/supabase/migrations` and `config.toml` to version control.
+- Keep `data-models.mdc` and migration files in sync.
+- For more, see Supabase CLI docs: https://supabase.com/docs/guides/cli

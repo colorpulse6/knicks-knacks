@@ -9,37 +9,55 @@ alwaysApply: false
 Cursor agents must implement CalorieCam following this step-by-step plan precisely:
 
 1. **Scaffold the App**
-   - Create dirs (`/mobile`, `/backend`, `/tests`).
-   - Initialize Expo project in `/mobile`.
-   - Initialize Express app in `/backend`.
+   - Create dirs (`/mobile`, `/backend`, `/tests`) under `/apps/calorie-cam`.
+   - Initialize Expo project in `/apps/calorie-cam/mobile` using TypeScript template:
+     - `npx create-expo-app@latest --template expo-template-blank-typescript`
+   - Initialize Express app in `/apps/calorie-cam/backend` with TypeScript.
+     - Use `ts-node` for dev, `tsup` for builds.
+   - Set up Yarn workspaces if not already done.
 
 2. **Supabase Setup**
-   - Create dedicated Supabase project & schema (defined in data-models.mdc).
-   - Enable optional Supabase Auth.
+   - Create dedicated Supabase project.
+   - Apply schema using `/apps/calorie-cam/supabase/deploy.sh` or SQL migrations.
+   - Enable optional Supabase Auth (email/password).
+   - Create storage bucket for food images.
+   - Save project URL, anon key, and service key for backend/mobile env.
 
 3. **Backend API**
-   - Implement GPT-4o integration route for image processing (`/api/upload-food-image`).
-   - Connect backend securely to Supabase.
+   - Implement `/api/upload-food-image` POST route in `/src/routes/food.ts`.
+   - Integrate OpenAI GPT-4o using `openai` npm package.
+   - Validate and parse responses with Zod.
+   - Store food log results in Supabase (`food_logs` table).
+   - Add `/health` endpoint for status checks.
+   - Use `.env` for all secrets and URLs.
 
 4. **Frontend**
-   - Set up Expo Camera/ImagePicker.
-   - Integrate TanStack Query for API calls.
-   - Display GPT-4o results clearly, with optional humor for non-food uploads.
+   - Set up camera/image picker using `expo-camera` and `expo-image-picker`.
+   - Use TanStack Query for API calls and caching.
+   - Store JWT in `Expo SecureStore`.
+   - Display nutrition results or humor modal.
+   - Implement Home, History, Login/Logout, and Humor screens in `/src/screens`.
+   - Use `/src/services` for API and Supabase helpers.
+   - All UI components must use Tailwind (via `tailwindcss-react-native`).
 
 5. **Testing**
-   - Backend: Vitest or Jest unit tests.
-   - Mobile frontend: React Testing Library unit tests.
+   - Backend: Write unit tests with Vitest for GPT logic and Supabase integration.
+   - Frontend: Use React Testing Library for components.
+   - Mock OpenAI and Supabase for predictable test outputs.
 
 6. **Deployment**
-   - Deploy backend to Railway.
-   - Configure Expo OTA and EAS for mobile deployment.
+   - Backend: Deploy to Railway, set all required env vars in dashboard.
+   - Mobile: Set up Expo account, enable OTA updates, configure EAS builds.
+   - Document deployment steps in README and deployment.mdc.
 
 7. **Documentation & Polish**
-   - Add README, env setup instructions, and screenshots.
+   - Add or update README in root and `/apps/calorie-cam`.
+   - Include `.env.example` files for both backend and mobile.
+   - Add screenshots/gifs of app in use.
+   - Update .cursor rules for backend, frontend, deployment, data models, etc.
 
 ### Note on Auth:
-Use the simplest possible Supabase Auth:
-- Optional login via email/password only.
-- JWT stored securely on device using Expo SecureStore.
-- No password reset, profile, or OAuth required.
-- Only use login to associate users with food logs.
+- Use the simplest possible Supabase Auth:
+  - Optional login via email/password only.
+  - JWT stored securely on device using Expo SecureStore.
+  - No password reset, profile, or OAuth required.

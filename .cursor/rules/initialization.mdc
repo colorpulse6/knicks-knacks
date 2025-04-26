@@ -31,9 +31,16 @@ Empty for now — app-specific scaffolding will be handled separately.
 
 ## ⚙️ Tooling Setup
 
-1. **Initialize repo with PNPM workspaces + TurboRepo**
-   - `pnpm init`
-   - Install Turbo: `pnpm add -D turbo`
+1. **Initialize repo with Yarn workspaces + TurboRepo**
+   - `yarn init -y`
+   - Add workspaces to root `package.json`:
+     ```json
+     {
+       "private": true,
+       "workspaces": ["apps/*", "packages/*"]
+     }  
+     ```
+   - Install TurboRepo: `yarn add -D turbo`
    - Add `turbo.json` with workspace globs:
      ```json
      {
@@ -43,23 +50,32 @@ Empty for now — app-specific scaffolding will be handled separately.
            "dependsOn": ["^build"],
            "outputs": [".next/**", "dist/**"]
          },
-         "dev": {
-           "cache": false
+         "lint": {
+           "outputs": []
          },
-         "lint": {},
-         "test": {}
+         "test": {
+           "outputs": []
+         }
        }
      }
      ```
 
-2. **Configure root `package.json`**
-   - Add `workspaces`:
-     ```json
-     "workspaces": [
-       "apps/*",
-       "packages/*"
-     ]
+2. **Set up .gitignore**
+   - Ignore all build outputs, node_modules, .env files:
+     ```gitignore
+     node_modules/
+     .env
+     .env.*
+     dist/
+     .next/
+     .turbo/
+     yarn.lock
+     *.log
      ```
+
+3. **Create README.md and .env.example**
+   - Add a `README.md` at the root and in each package/app when created.
+   - Add a `.env.example` at the root and in each app/package; never commit secrets.
 
 ---
 
@@ -91,10 +107,11 @@ Empty for now — app-specific scaffolding will be handled separately.
       '@typescript-eslint/no-unused-vars': ['warn'],
     },
   };
+  ```
 
-  /packages/ui/
-	•	Create first shared component: Button.tsx
-	•	Ensure components are compatible with both web and mobile using react-native-web
+### `/packages/ui/`
+  • Create first shared component: Button.tsx
+  • Ensure components are compatible with both web and mobile using react-native-web
 
 🧪 Base Dev Commands
 At the root, add the following scripts to package.json:
@@ -106,9 +123,18 @@ At the root, add the following scripts to package.json:
 }
 
 🧰 Final Notes
-	•	Do not initialize apps in /apps/ during this step.
-	•	This rule only sets up the shared foundation — used before building any specific app.
-	•	Agents should confirm all shared tooling works by testing dev and lint scripts.
+  • Do not initialize apps in /apps/ during this step.
+  • This rule only sets up the shared foundation — used before building any specific app.
+  • Agents should confirm all shared tooling works by testing dev and lint scripts.
+
+📝 Notes
+
+- **Yarn** is required for all package management due to Expo compatibility (do not use PNPM or npm).
+- All apps and packages must follow the `/apps` and `/packages` structure above.
+- Each app/package must include a `README.md`, `package.json`, and `.env.example`.
+- Shared config (Tailwind, TS, etc.) lives in `/packages/config`.
+- Update `turbo.json` and root `package.json` workspaces when adding new apps/packages.
+- All code, config, and shared packages are version controlled.
 
 <!--
 Prompt:

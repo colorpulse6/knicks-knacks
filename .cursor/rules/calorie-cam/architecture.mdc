@@ -1,5 +1,5 @@
 ---
-description: 
+description: CalorieCam app architecture, directory structure, and technology decisions.
 globs: 
 alwaysApply: true
 ---
@@ -7,19 +7,40 @@ alwaysApply: true
 ## Rule Type: Always
 
 /apps/calorie-cam
-/mobile            # React Native Expo frontend
-/backend           # Express backend (hosted on Railway)
-/tests             # Unit and integration tests
+  /mobile            # Expo-managed React Native frontend (all code in /src)
+  /backend           # Express backend (TypeScript, hosted on Railway)
+  /supabase          # Supabase migrations/scripts
+  /tests             # Unit and integration tests
 
+/packages
+  /ui                # Shared UI components (React + RN)
+  /shared            # Shared hooks, types, logic
+  /config            # Shared Tailwind, TS, and other config
+
+- **Yarn** is required for all package management due to Expo compatibility (do not use PNPM or npm).
 - **Mobile**: Expo-managed React Native app.
-  - TanStack Query for data fetching.
-  - TanStack Forms for form management.
-  - Zustand for lightweight state management.
+  - All code in `/mobile/src`.
+  - Uses TanStack Query (data fetching), TanStack Forms (forms), Zustand (state).
+  - Tailwind via `tailwindcss-react-native` with config from `/packages/config`.
   - Expo SecureStore for local auth storage (optional).
+  - .env files for Supabase/Backend URLs and keys.
   - Images processed by GPT-4o via backend API.
 
-- **Backend**: Express server deployed on Railway.
-  - Exposes REST endpoints for image uploads.
-  - Communicates securely with GPT-4o.
+- **Backend**: Express server (TypeScript) deployed on Railway.
+  - Exposes REST endpoints for image uploads and `/health` status.
+  - Communicates securely with GPT-4o (OpenAI).
   - Stores results in Supabase.
   - JWT Auth via Supabase Auth (optional, user tracking only if logged in).
+  - .env for Supabase and OpenAI keys.
+
+- **Testing**:
+  - Backend: Vitest tests in `/tests/backend`.
+  - Mobile: React Testing Library tests in `/tests/mobile`.
+  - All tests live under `/tests`.
+
+- **Shared Packages**:
+  - `/packages/ui`: Cross-platform UI components.
+  - `/packages/shared`: Hooks, types, utilities.
+  - `/packages/config`: Centralized Tailwind, TS, and other config.
+
+- All code, config, and migrations are version controlled. Each app/package has its own `README.md` and `.env.example`.

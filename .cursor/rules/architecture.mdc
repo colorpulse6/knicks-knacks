@@ -1,32 +1,36 @@
 ---
-description: 
+description: Monorepo architecture and organization rules for all apps and packages.
 globs: 
 alwaysApply: true
 ---
 # Architecture Rules
 ## Rule Type: Always
 
-- Use **monorepo** structure clearly organized by `apps` and `packages` directories.
+- Use a **monorepo** structure organized by `apps` (deployable products) and `packages` (shared code):
 
 ```
 /apps
   /<app-name>
     /web         # Web frontend (Next.js or Vite)
-    /mobile      # Mobile frontend (Expo/React Native)
-    /backend     # Express-based API
+    /mobile      # Mobile frontend (Expo/React Native, with /src subdirs)
+    /backend     # Express-based API (TypeScript)
+    /supabase    # Project-specific migrations/scripts (optional)
     /tests       # App-specific tests
 
 /packages
   /ui            # Shared UI components (cross-platform: React + RN)
   /eslint-config # Central ESLint rules
   /utilities     # Common utilities
-  /shared        # Common hooks, types
+  /shared        # Common hooks, types, logic
   /config        # Shared TS config, Tailwind config, PostCSS, etc.
-  ```
+```
 
-- All apps are self-contained and deployable.
-- Shared packages are reused across apps.
-- Each app must have a `README.md`, `package.json`, and local `.env` file.
-- Backend folders may use REST or tRPC, with JWT auth (via Supabase).
-- All web and mobile clients use TanStack Query for data fetching.
-- Each shared package must be typed and versioned locally.
+- All apps are self-contained, independently deployable, and use Yarn (or PNPM) workspaces.
+- Each app and package must include a `README.md`, `package.json`, and `.env.example` file.
+- Shared packages are reused across apps; all must be fully typed (TypeScript) and versioned locally.
+- Backend may use REST or tRPC, with JWT auth (via Supabase).
+- All web and mobile clients use TanStack Query for data fetching/mutations.
+- Each app includes a `/tests` directory and uses consistent testing tools (Vitest, React Testing Library, etc.).
+- Linting and formatting are centralized via `/packages/eslint-config` and `/packages/config`.
+- Environment variables are managed via `.env` and `.env.example` files—never commit secrets.
+- All deployment processes (Railway, Expo EAS, Vercel, Netlify) are documented in each app's README.

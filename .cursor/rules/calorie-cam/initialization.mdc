@@ -12,71 +12,81 @@ This rule defines the precise steps to initialize the CalorieCam app within the 
 
 ## 📁 Scaffold Directories
 
-Create the following directory structure in the monorepo:
+Create the following structure in the monorepo:
 
 /apps/calorie-cam
-/mobile          # Expo-managed React Native app
-/backend         # Express API backend (Railway)
-/tests           # App-specific unit/integration tests
+  /mobile       # Expo-managed React Native app (with /src subdirs)
+  /backend      # Express API backend (Railway, TypeScript)
+  /supabase     # Supabase migrations/scripts
+  /tests        # App-specific unit/integration tests
+
+/packages
+  /ui           # Shared UI components
+  /shared       # Shared hooks/types
+  /config       # Shared config (Tailwind, TS, etc.)
 
 ---
 
 ## ⚙️ Setup Mobile Frontend
 
-- Initialize Expo project (`npx create-expo-app mobile`) in `/mobile`.
-- Add dependencies:
-
-expo-camera expo-image-picker expo-secure-store @tanstack/react-query @tanstack/react-form zustand tailwind-rn clsx dayjs remeda zod
-
-- Configure Tailwind with shared `/packages/config` and `/packages/ui`.
+- Initialize Expo project with TypeScript:  
+  `npx create-expo-app@latest --template expo-template-blank-typescript mobile`
+- Add dependencies (using Yarn or PNPM as per monorepo):
+  - expo-camera expo-image-picker expo-secure-store @tanstack/react-query @tanstack/react-form zustand tailwindcss-react-native clsx dayjs remeda zod
+- All app code lives under `/src` (e.g., `/src/components`, `/src/screens`, `/src/services`, `/src/types`)
+- Reference Tailwind config from `/packages/config/tailwind.config.js`
+- Add `.env.example` and `.env` for API URLs and Supabase keys
 
 ---
 
 ## 🚧 Setup Backend
 
-- Initialize Node.js backend with Express in `/backend`.
-- Install backend dependencies:
-
-express cors dotenv supabase @supabase/supabase-js openai zod
-
-- Configure backend `.env` for Supabase and GPT-4o (OpenAI) API keys.
+- Initialize Node.js backend with Express and TypeScript in `/backend`
+- Install dependencies:
+  - express cors dotenv openai @supabase/supabase-js zod
+  - Dev: typescript ts-node @types/express @types/node
+- Add `.env.example` and `.env` for Supabase and GPT-4o (OpenAI) API keys
+- Add `/health` endpoint for status checks
 
 ---
 
 ## 🗄️ Setup Supabase
 
-- Create a dedicated Supabase project and database for CalorieCam.
-- Create tables using schema from `data-models.mdc`.
-- Enable Supabase Auth (optional).
+- Create a dedicated Supabase project and database for CalorieCam
+- Apply schema using `/apps/calorie-cam/supabase/deploy.sh` or SQL migrations
+- Create storage bucket for food images
+- Enable Supabase Auth (email/password)
+- Save project URL, anon key, and service key for backend/mobile
 
 ---
 
 ## 🔄 GPT-4o Integration
 
-- Set up GPT-4o via OpenAI Node SDK.
-- Prepare a humorous and accurate prompt for calorie counting and non-food detection.
+- Set up GPT-4o via OpenAI Node SDK in backend
+- Prepare prompt templates for calorie counting and non-food detection
+- Store OpenAI API key in backend `.env`
 
 ---
 
 ## 🚀 CI/CD & Deployment Configuration
 
-- Set up Railway for backend deployment with GitHub Actions integration.
-- Set up Expo OTA and EAS Build for mobile deployment.
+- Set up Railway for backend deployment, connect GitHub, set env vars in dashboard
+- Set up Expo OTA and EAS Build for mobile deployment, link to Expo account
+- Document deployment steps in README and deployment.mdc
 
 ---
 
 ## 🧪 Testing Setup
 
-- Backend: Vitest unit tests in `/tests/backend`.
-- Frontend: React Testing Library unit tests in `/tests/mobile`.
+- Backend: Vitest unit tests in `/tests/backend` (mock OpenAI/Supabase)
+- Frontend: React Testing Library unit tests in `/tests/mobile` (mock API)
 
 ---
 
 ## 📖 Documentation & Polish
 
-- Create detailed `README.md` including setup, deployment steps, and screenshots.
-
----
+- Create detailed `README.md` including setup, deployment steps, and screenshots
+- Provide `.env.example` files for backend and mobile
 
 <!--
 Agent, build the CalorieCam app using all rules in `.cursor/rules/calorie-cam`.

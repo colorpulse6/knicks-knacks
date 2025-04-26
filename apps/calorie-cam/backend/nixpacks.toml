@@ -27,4 +27,32 @@ cmds = [
   # Remove the || true here too for consistency, though the node command would fail anyway
   "ls -la dist",
   "node dist/server.js"
+][phases.setup]
+nixPkgs = ["nodejs", "yarn"]
+nixOverlays = []
+cmds = ["echo Setup phase in $(pwd)", "ls -la"]
+
+[phases.install]
+cmds = [
+  "echo Install phase in $(pwd)",
+  "ls -la",
+  "yarn install"
+]
+
+[phases.build]
+cmds = [
+  "echo Build phase in $(pwd)...",
+  "ls -la",
+  "yarn build",
+  "echo Build command finished. Checking for dist directory...",
+  "ls -la",
+  "ls -la dist"
+]
+
+[phases.start]
+cmds = [
+  "echo Start phase in $(pwd)...",
+  "ls -la",
+  "ls -la dist",
+  "node dist/server.js"
 ]

@@ -6,7 +6,7 @@ nixOverlays = []
 cmds = ["yarn install"]
 
 [phases.build]
-cmds = ["yarn build"]
+cmds = ["echo Building project...", "yarn build", "ls -l dist || true"]
 
 [phases.start]
-cmds = ["node dist/server.js"]
+cmds = ["echo Starting server...", "ls -l dist || true", "node dist/server.js"]

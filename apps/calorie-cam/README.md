@@ -25,6 +25,16 @@ CalorieCam is a mobile application that uses AI (GPT-4o) to analyze food images 
 - OpenAI API (GPT-4o)
 - Supabase for database and storage
 
+## Directory Structure
+
+```
+apps/
+  calorie-cam/
+    backend/   # Express.js API, OpenAI integration, Supabase
+    mobile/    # Expo/React Native app
+    supabase/  # DB schema, migrations, deploy scripts
+```
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -112,6 +122,21 @@ CalorieCam is a mobile application that uses AI (GPT-4o) to analyze food images 
 
 5. Use the Expo Go app to scan the QR code and run the app on your device
 
+## Environment Variables
+
+- See `.env.example` in both `backend` and `mobile` for required variables.
+- For backend, set your Supabase and OpenAI keys.
+- For mobile, set your backend API URL and Supabase keys.
+
+## Useful Scripts
+
+- **Backend:**
+  - `npm run dev` — Start backend in dev mode
+  - `npm run build` — Build backend
+- **Mobile:**
+  - `npm run start` — Start Expo server
+  - `eas build --profile <profile> --platform <ios|android>` — Build app with EAS
+
 ## Deployment
 
 ### Supabase Deployment
@@ -182,6 +207,19 @@ The repository includes GitHub Actions workflows for automating deployment:
 1. Add your Railway token as a GitHub secret named `RAILWAY_TOKEN`
 2. Enable GitHub Actions for your repository
 3. Push changes to the main branch to trigger automatic deployments
+
+## Development Tips
+
+- To test mobile on a device, ensure your backend is accessible from your device (use your computer's local IP for the API URL).
+- You can run both backend and mobile concurrently for full-stack testing.
+- For troubleshooting, check logs in your terminal and ensure all env variables are set.
+
+## Links
+
+- [Supabase](https://supabase.com)
+- [Railway](https://railway.app)
+- [Expo](https://expo.dev)
+- [OpenAI](https://platform.openai.com)
 
 ## Development Notes
 

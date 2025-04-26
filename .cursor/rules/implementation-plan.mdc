@@ -6,6 +6,13 @@ alwaysApply: false
 # Implementation Plan
 ## Rule Type: Agent Requested
 
+> **Note:**  
+> - Use **Yarn** for all package management (required for Expo compatibility; do not use PNPM or npm).
+> - All apps must follow the monorepo structure: `/apps/<app-name>/{web,mobile,backend,supabase,tests}` and use shared code from `/packages`.
+> - Each app/package must include a `README.md`, `package.json`, and `.env.example` (never commit secrets).
+> - Shared config (Tailwind, TS, etc.) lives in `/packages/config`.
+> - Update `turbo.json` or workspace config when adding new apps/packages.
+
 This rule defines a repeatable, multi-phase plan for implementing new apps within the monorepo. It provides structure and consistency for creating high-quality, full-stack applications using the shared architecture, tech stack, and design rules already defined.
 
 When requested, agents should follow these phases:
@@ -19,6 +26,7 @@ When requested, agents should follow these phases:
   - `/web`: Next.js or Vite web client
   - `/mobile`: Expo-managed React Native app
   - `/backend`: Express or tRPC API
+  - `/supabase`: Project-specific migrations/scripts
   - `/tests`: Integration/E2E tests
 - Add app-specific `README.md` and `package.json`
 - Set up `.env` for local dev

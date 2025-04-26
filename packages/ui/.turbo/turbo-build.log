@@ -1,0 +1,16 @@
+yarn run v1.22.19
+$ tsup src/index.tsx --format cjs,esm --dts --external react
+CLI Building entry: src/index.tsx
+CLI Using tsconfig: tsconfig.json
+CLI tsup v6.7.0
+CLI Target: node14
+CJS Build start
+ESM Build start
+ESM dist/index.mjs 1.78 KB
+ESM ⚡️ Build success in 13ms
+CJS dist/index.js 3.61 KB
+CJS ⚡️ Build success in 13ms
+DTS Build start
+DTS ⚡️ Build success in 1200ms
+DTS dist/index.d.ts 330.00 B
+Done in 1.77s.

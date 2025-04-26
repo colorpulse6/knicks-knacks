@@ -1,0 +1,70 @@
+---
+description: Scaffold the full Leaf directory structure, set up shared tools, and prepare for backend/frontend development.
+globs: 
+alwaysApply: false
+---
+# Leaf Initialization Rule
+## Rule Type: Agent Requested
+
+**How to Use:**
+Use this rule when initializing the Leaf app in the monorepo. Follow each step precisely to ensure a consistent, maintainable structure and setup. This rule should be referenced when starting a new environment or onboarding a new developer.
+
+---
+
+## 📁 Scaffold Directories
+
+Create the following structure in the monorepo:
+
+/apps/leaf
+  /mobile       # Expo-managed React Native app (with /src subdirs)
+  /backend      # Express API backend (TypeScript)
+  /supabase     # Supabase migrations/scripts
+  /tests        # App-specific unit/integration tests
+
+/packages
+  /ui           # Shared UI components
+  /shared       # Shared hooks/types
+  /config       # Shared config (Tailwind, TS, etc.)
+
+---
+
+## ⚙️ Setup Mobile Frontend
+
+- Initialize Expo project with TypeScript:  
+  `npx create-expo-app@latest --template expo-template-blank-typescript mobile`
+- Add dependencies (using Yarn):
+  - @tanstack/react-query @tanstack/react-form zustand tailwindcss-react-native clsx dayjs remeda zod
+- All app code lives under `/src` (e.g., `/src/components`, `/src/screens`, `/src/services`, `/src/types`)
+- Reference Tailwind config from `/packages/config/tailwind.config.js`
+- Add `.env.example` and `.env` for API URLs and Open Library keys if needed
+
+---
+
+## ⚙️ Setup Backend
+
+- Initialize Express app in `/backend` with TypeScript
+- Add dependencies: express cors zod axios dotenv
+- All code in `/src`
+- Add `.env.example` and `.env` for API keys and URLs
+
+---
+
+## 🗄️ Setup Supabase
+
+- Initialize Supabase project for book/user data
+- All migrations/scripts in `/supabase`
+- Sync schema with `data-models.mdc`
+
+---
+
+## 🧪 Setup Tests
+
+- Place all tests in `/tests` (unit/integration for backend, frontend)
+
+---
+
+## ✅ Finalize
+
+- Commit all new directories and boilerplate to version control
+- Confirm all `.env` files are present and correct
+- Ready for development!

@@ -1,0 +1,32 @@
+---
+description: Backend rules for the Leaf app. Covers API design, integration patterns, error handling, and conventions.
+globs: 
+  alwaysApply: true
+---
+# Leaf Backend Rules
+## Rule Type: Always
+
+**How to Use:**
+Reference these rules when building or refactoring backend features for Leaf. Ensures consistent API design, error handling, and integration patterns.
+
+## API Design
+- Use RESTful endpoints with clear resource-based URLs (e.g., `/books`, `/progress`, `/recommendations`).
+- All endpoints return JSON responses.
+- Use HTTP status codes appropriately (200, 201, 400, 401, 404, 500).
+- Validate all input using Zod schemas.
+- Use async/await for all asynchronous operations.
+
+## Integration
+- Integrate with Supabase for user, book, and progress storage.
+- Integrate with Open Library API for book metadata and recommendations.
+- Store all secrets and URLs in `.env` files (never in code).
+
+## Error Handling
+- Catch and handle all errors, returning structured JSON error responses: `{ error: string }`.
+- Log errors to the console for debugging.
+
+## Conventions
+- Use TypeScript for all backend code.
+- Organize code under `/src` by feature (e.g., `/src/routes/books.ts`, `/src/routes/progress.ts`).
+- Use ES modules (`import/export`).
+- Write unit tests for all business logic (in `/tests/backend`).

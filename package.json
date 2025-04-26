@@ -20,5 +20,9 @@
   "devDependencies": {
     "turbo": "^1.10.16"
   },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@1.22.19",
+  "main": "index.js",
+  "repository": "https://github.com/colorpulse6/knicks-knacks.git",
+  "author": "<colorpulse@gmail.com>",
+  "license": "MIT"
 }

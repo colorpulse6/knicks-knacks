@@ -1,29 +1,30 @@
 [phases.setup]
 nixPkgs = ["nodejs", "yarn"]
 nixOverlays = []
-cmds = ["pwd", "ls -la"]
+cmds = ["echo Setup phase in $(pwd)", "ls -la"]
 
 [phases.install]
 cmds = [
-  "pwd",
+  "echo Install phase in $(pwd)",
   "ls -la",
   "yarn install"
 ]
 
 [phases.build]
 cmds = [
-  "echo Building project...",
-  "pwd",
-  "ls -la",
-  "yarn build",
-  "ls -l dist || true"
+  "echo Build phase in $(pwd)...",
+  "ls -la", # List files before build
+  "yarn build", # Execute tsc via yarn
+  "echo Build command finished. Checking for dist directory...",
+  "ls -la" # List files again to see if dist was created
+  "ls -la dist"  # Explicitly list dist. THIS WILL FAIL if dist doesn't exist.
 ]
 
 [phases.start]
 cmds = [
-  "echo Starting server...",
-  "pwd",
-  "ls -la",
-  "ls -l dist || true",
+  "echo Start phase in $(pwd)...",
+  "ls -la", # List files at start
+  # Remove the || true here too for consistency, though the node command would fail anyway
+  "ls -la dist",
   "node dist/server.js"
 ]

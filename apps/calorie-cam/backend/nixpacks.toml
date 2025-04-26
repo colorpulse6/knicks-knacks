@@ -1,12 +1,29 @@
 [phases.setup]
 nixPkgs = ["nodejs", "yarn"]
 nixOverlays = []
+cmds = ["pwd", "ls -la"]
 
 [phases.install]
-cmds = ["yarn install"]
+cmds = [
+  "pwd",
+  "ls -la",
+  "yarn install"
+]
 
 [phases.build]
-cmds = ["echo Building project...", "yarn build", "ls -l dist || true"]
+cmds = [
+  "echo Building project...",
+  "pwd",
+  "ls -la",
+  "yarn build",
+  "ls -l dist || true"
+]
 
 [phases.start]
-cmds = ["echo Starting server...", "ls -l dist || true", "node dist/server.js"]
+cmds = [
+  "echo Starting server...",
+  "pwd",
+  "ls -la",
+  "ls -l dist || true",
+  "node dist/server.js"
+]

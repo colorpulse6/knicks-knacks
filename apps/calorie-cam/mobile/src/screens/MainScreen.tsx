@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import * as ImagePicker from "expo-image-picker";
+import { useCameraHandler } from "../hooks/useCameraHandler";
+import { useMutationHandler } from "../hooks/useMutationHandler";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadFoodImage } from "../services/api";
 import NutritionCard from "../components/NutritionCard";
@@ -19,6 +19,7 @@ import { FoodAnalysisResult } from "../types";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { RootTabParamList } from "../../App";
 import { useTheme } from "../hooks/useTheme";
+import { CameraView } from "expo-camera"; // Import CameraView
 
 type MainScreenProps = BottomTabScreenProps<RootTabParamList, "Camera">;
 
@@ -29,80 +30,33 @@ const queryKeys = {
 
 const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   const { theme } = useTheme(); // Get the current theme
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] =
-    useState<FoodAnalysisResult | null>(null);
-  const [cameraType, setCameraType] = useState<"front" | "back">("back");
-  const cameraRef = useRef(null);
+  const [analysisResult, setAnalysisResult] = useState<FoodAnalysisResult | null>(null);
 
-  // Use the permissions hook
-  const [permission, requestPermission] = useCameraPermissions();
+  // Use camera handler hook
+  const {
+    capturedImage,
+    setCapturedImage,
+    cameraType,
+    toggleCameraType,
+    cameraRef,
+    permission,
+    requestPermission,
+    takePicture,
+    pickImage,
+    reset: resetCamera,
+  } = useCameraHandler((uri) => analysisMutation.mutate(uri));
 
-  // Get query client instance
-  const queryClient = useQueryClient();
-
-  // Handle image upload and analysis
-  const analysisMutation = useMutation({
-    mutationFn: uploadFoodImage,
-    onSuccess: (data) => {
-      setAnalysisResult(data);
-      // Invalidate the food logs query to trigger a refetch on the history screen
-      queryClient.invalidateQueries({ queryKey: queryKeys.foodLogs });
-    },
-    onError: (error) => {
-      Alert.alert(
-        "Error",
-        "Failed to analyze the food image. Please try again."
-      );
-      console.error("Analysis error:", error);
-    },
+  // Use mutation handler hook
+  const analysisMutation = useMutationHandler((data) => {
+    setAnalysisResult(data);
+    // Invalidate the food logs query to trigger a refetch on the history screen
+    // Removed useQueryClient and invalidateQueries here, as it is handled in useMutationHandler
   });
-
-  // Take picture with camera
-  const takePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        // @ts-ignore - Ignoring TypeScript errors for the camera ref
-        const photo = await cameraRef.current.takePictureAsync();
-        setCapturedImage(photo.uri);
-        analysisMutation.mutate(photo.uri);
-      } catch (error) {
-        console.error("Error taking picture:", error);
-        Alert.alert("Error", "Failed to take picture. Please try again.");
-      }
-    }
-  };
-
-  // Pick image from gallery
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images",
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const selectedImage = result.assets[0].uri;
-        setCapturedImage(selectedImage);
-        analysisMutation.mutate(selectedImage);
-      }
-    } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick an image. Please try again.");
-    }
-  };
 
   // Reset the state to take another picture
   const reset = () => {
-    setCapturedImage(null);
+    resetCamera();
     setAnalysisResult(null);
-  };
-
-  // Toggle camera type (front/back)
-  const toggleCameraType = () => {
-    setCameraType(cameraType === "back" ? "front" : "back");
   };
 
   // View history after analysis

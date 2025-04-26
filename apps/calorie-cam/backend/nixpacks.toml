@@ -1,58 +1,18 @@
 [phases.setup]
+# Define necessary system packages. Node.js and Yarn are essential.
 nixPkgs = ["nodejs", "yarn"]
-nixOverlays = []
-cmds = ["echo Setup phase in $(pwd)", "ls -la"]
 
 [phases.install]
-cmds = [
-  "echo Install phase in $(pwd)",
-  "ls -la",
-  "yarn install"
-]
+# Command to install dependencies. Nixpacks might auto-detect this
+# if yarn.lock exists, but being explicit is clear.
+cmds = ["yarn install"]
 
 [phases.build]
-cmds = [
-  "echo Build phase in $(pwd)...",
-  "ls -la", # List files before build
-  "yarn build", # Execute tsc via yarn
-  "echo Build command finished. Checking for dist directory...",
-  "ls -la" # List files again to see if dist was created
-  "ls -la dist"  # Explicitly list dist. THIS WILL FAIL if dist doesn't exist.
-]
+# Command to build the project. Your package.json defines this as 'tsc'.
+cmds = ["yarn build"]
 
 [phases.start]
-cmds = [
-  "echo Start phase in $(pwd)...",
-  "ls -la", # List files at start
-  # Remove the || true here too for consistency, though the node command would fail anyway
-  "ls -la dist",
-  "node dist/server.js"
-][phases.setup]
-nixPkgs = ["nodejs", "yarn"]
-nixOverlays = []
-cmds = ["echo Setup phase in $(pwd)", "ls -la"]
-
-[phases.install]
-cmds = [
-  "echo Install phase in $(pwd)",
-  "ls -la",
-  "yarn install"
-]
-
-[phases.build]
-cmds = [
-  "echo Build phase in $(pwd)...",
-  "ls -la",
-  "yarn build",
-  "echo Build command finished. Checking for dist directory...",
-  "ls -la",
-  "ls -la dist"
-]
-
-[phases.start]
-cmds = [
-  "echo Start phase in $(pwd)...",
-  "ls -la",
-  "ls -la dist",
-  "node dist/server.js"
-]
+# The command to run the built application.
+# Using 'cmd' for a single start command (common in newer Nixpacks).
+# If this causes issues, we can revert to cmds = ["node dist/server.js"].
+cmd = "node dist/server.js"

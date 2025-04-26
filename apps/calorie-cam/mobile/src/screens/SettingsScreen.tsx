@@ -12,9 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { clearFoodLogs } from "../services/api";
 import { useTheme } from "../hooks/useTheme";
+import { useClearHistoryHandler } from "../hooks/useClearHistory";
 
 const queryKeys = {
   foodLogs: ["foodLogs"],
@@ -25,30 +24,12 @@ const SettingsScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const appVersion = "1.0.0"; // This would be dynamic in a real app
 
-  const queryClient = useQueryClient();
-
   const toggleNotifications = () => {
     setNotificationsEnabled(!notificationsEnabled);
     // In a real app, this would update notification settings
   };
 
-  const clearHistoryMutation = useMutation({
-    mutationFn: clearFoodLogs,
-    onSuccess: (data: { message: string }) => {
-      Alert.alert(
-        "Success",
-        data.message || "Your food history has been cleared."
-      );
-      queryClient.invalidateQueries({ queryKey: queryKeys.foodLogs });
-    },
-    onError: (error: Error) => {
-      console.error("Clear history error:", error);
-      Alert.alert(
-        "Error",
-        error.message || "Failed to clear history. Please try again."
-      );
-    },
-  });
+  const clearHistoryMutation = useClearHistoryHandler();
 
   const clearHistory = () => {
     if (clearHistoryMutation.isPending) return;

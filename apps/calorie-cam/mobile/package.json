@@ -45,6 +45,7 @@
     "@babel/core": "^7.25.2",
     "@tsconfig/react-native": "^3.0.5",
     "@types/react": "~18.3.12",
+    "babel-plugin-syntax-hermes-parser": "^0.28.1",
     "typescript": "^5.3.3"
   },
   "private": true

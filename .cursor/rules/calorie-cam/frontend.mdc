@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description: CalorieCam mobile frontend rules, aligned with project structure and best practices.
+globs:
 alwaysApply: false
 ---
 # CalorieCam Frontend (Mobile)
@@ -17,6 +17,8 @@ Build the CalorieCam frontend as a mobile app using **Expo with React Native** a
 - Install dependencies:
 
 ```bash
+yarn install   # from monorepo root or mobile directory
+# or, if using pnpm:
 pnpm add @supabase/supabase-js @tanstack/react-query @tanstack/react-form zustand zod dayjs remeda tailwindcss-react-native clsx expo-camera expo-image-picker expo-secure-store
 pnpm add -D typescript @types/react @types/react-native
 ```
@@ -27,16 +29,17 @@ pnpm add -D typescript @types/react @types/react-native
 
 ```
 /apps/calorie-cam/mobile
-  /components       # Local app-specific components
-  /screens          # Page views
-  /hooks            # Custom React hooks
-  /lib              # Supabase client, API helpers
-  /types            # Local or shared types
+  /src
+    /components       # Local app-specific components
+    /screens          # Page views
+    /hooks            # Custom React hooks
+    /services         # Supabase client, API helpers
+    /types            # Local or shared types
   App.tsx
-  tailwind.config.ts
   tsconfig.json
   .env
 ```
+- Tailwind config may be shared via `/packages/config/tailwind.config.js`.
 
 ---
 
@@ -85,7 +88,16 @@ pnpm add -D typescript @types/react @types/react-native
 - **Login/Logout Screen**:
   - Minimal email + password login
 - **Humor Modal**:
-  - Show funny GPT-4o result when non-food is detected
+  - Show humorous GPT responses for non-food images
+
+---
+
+## 🚦 Development & Testing
+
+- Use Expo Go or device simulators for development (`npx expo start`).
+- Use `.env` for API URLs and Supabase keys.
+- Test flows for both logged-in and anonymous users.
+- Ensure all UI supports dark mode and accessibility best practices.
 
 ---
 
@@ -93,3 +105,12 @@ pnpm add -D typescript @types/react @types/react-native
 
 - Use **React Testing Library** for components
 - Snapshot test shared UI components from `/packages/ui`
+
+---
+
+## 🛠️ Troubleshooting & Best Practices
+
+- If you encounter dependency issues, run `yarn clean && yarn install` from the root.
+- For API/network errors, check `.env` values and backend server status.
+- Keep shared components generic and style-agnostic when possible.
+- Document any new shared utilities or components added to `/packages/ui` or `/packages/shared`.

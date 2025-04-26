@@ -1,6 +1,10 @@
 import { Router } from "express";
 import multer from "multer";
-import { analyzeFood, getFoodLogs } from "../controllers/food.controller";
+import {
+  analyzeFood,
+  clearFoodLogs,
+  getFoodLogs,
+} from "../controllers/food.controller";
 
 const router = Router();
 
@@ -16,5 +20,8 @@ router.post("/upload-food-image", upload.single("image") as any, analyzeFood);
 
 // Route for fetching food logs
 router.get("/food-logs", getFoodLogs);
+
+// Add route for deleting food logs
+router.delete("/food-logs", clearFoodLogs);
 
 export default router;

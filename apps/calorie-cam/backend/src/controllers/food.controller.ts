@@ -186,3 +186,44 @@ export const getFoodLogs = async (
     res.status(500).json({ error: "Failed to fetch food logs" });
   }
 };
+
+/**
+ * Clears food logs from Supabase.
+ * Can optionally clear only for a specific user if userId is implemented.
+ */
+export const clearFoodLogs = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    // Optional: Implement user ID check if you want to clear only for a logged-in user
+    // const userId = req.user?.id; // Assuming you have user info attached via middleware
+    // if (!userId) {
+    //   res.status(401).json({ message: 'Unauthorized' });
+    //   return;
+    // }
+
+    const { error } = await supabase
+      .from("food_logs")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // Example: delete all rows (adjust filter as needed)
+    // .eq('user_id', userId); // Example: delete only for the authenticated user
+
+    if (error) {
+      console.error("Supabase delete error:", error);
+      // Throw the error to be caught by the generic catch block
+      throw new Error("Failed to delete food logs from database.");
+    }
+
+    // Successfully deleted
+    // Respond with 200 and a message, or 204 No Content
+    res.status(200).json({ message: "Food history cleared successfully." });
+    // Or use 204 if you prefer not sending a body: res.status(204).send();
+  } catch (error) {
+    console.error("Error clearing food logs:", error);
+    // Check if error is an instance of Error to safely access message
+    const message =
+      error instanceof Error ? error.message : "Failed to clear food history";
+    res.status(500).json({ message });
+  }
+};

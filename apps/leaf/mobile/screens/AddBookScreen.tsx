@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useAddBook } from '../hooks/useAddBook';
 import { searchBooks, getCoverUrl, OpenLibraryDoc } from '../services/openLibrary';
+import useTheme from '../hooks/useTheme';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || process.env.API_URL;
 
 export default function AddBookScreen() {
+  const { themeObj } = useTheme();
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
@@ -65,10 +67,14 @@ export default function AddBookScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: themeObj.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <TextInput
-        style={styles.input}
+        style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
         placeholder="Title"
+        placeholderTextColor={themeObj.textSecondary}
         value={title}
         onChangeText={t => {
           setTitle(t);
@@ -76,8 +82,9 @@ export default function AddBookScreen() {
         }}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
         placeholder="Author"
+        placeholderTextColor={themeObj.textSecondary}
         value={author}
         onChangeText={a => {
           setAuthor(a);
@@ -91,7 +98,7 @@ export default function AddBookScreen() {
           data={searchResults.slice(0, 5)}
           keyExtractor={item => item.key}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.searchItem} onPress={() => handleSelectBook(item)}>
+            <TouchableOpacity style={[styles.searchItem, { backgroundColor: themeObj.background, borderBottomColor: themeObj.border }]} onPress={() => handleSelectBook(item)}>
               {item.cover_i && (
                 <View style={{ marginRight: 8 }}>
                   <Image
@@ -102,15 +109,15 @@ export default function AddBookScreen() {
                 </View>
               )}
               <View>
-                <Text style={styles.searchTitle}>{item.title}</Text>
-                <Text style={styles.searchAuthor}>{item.author_name?.[0]}</Text>
+                <Text style={[styles.searchTitle, { color: themeObj.text }]}>{item.title}</Text>
+                <Text style={[styles.searchAuthor, { color: themeObj.text }]}>{item.author_name?.[0]}</Text>
               </View>
             </TouchableOpacity>
           )}
           style={{ maxHeight: 220, width: '100%' }}
         />
       )}
-      <Button title={isPending ? 'Adding...' : 'Add Book'} onPress={handleAddBook} disabled={isPending} />
+      <Button title={isPending ? 'Adding...' : 'Add Book'} onPress={handleAddBook} disabled={isPending} color={themeObj.primary} />
     </KeyboardAvoidingView>
   );
 }
@@ -118,21 +125,13 @@ export default function AddBookScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    color: '#4CAF50',
-  },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -144,16 +143,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#f9f9f9',
   },
   searchTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
   },
   searchAuthor: {
     fontSize: 14,
-    color: '#666',
   },
 });

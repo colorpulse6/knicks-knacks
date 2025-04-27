@@ -1,12 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Switch } from 'react-native';
+import useTheme from '../hooks/useTheme';
 
 export default function ProfileScreen() {
+  const { theme, themeObj, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Profile / Settings</Text>
-      {/* TODO: Add dark mode toggle and user info here */}
-      <Text style={styles.info}>Dark mode toggle coming soon!</Text>
+    <View style={[styles.container, { backgroundColor: themeObj.background }]}> 
+      <Text style={[styles.header, { color: themeObj.primary }]}>Profile / Settings</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 16 }}>
+        <Text style={[styles.info, { color: themeObj.textSecondary }]}>Dark Mode</Text>
+        <Switch
+          value={isDark}
+          onValueChange={toggleTheme}
+          trackColor={{ false: themeObj.border, true: themeObj.accent }}
+          thumbColor={isDark ? themeObj.primary : '#f4f3f4'}
+          ios_backgroundColor={themeObj.border}
+        />
+      </View>
+      {/* TODO: Add user info here */}
     </View>
   );
 }
@@ -16,17 +29,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
     padding: 20,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#4CAF50',
   },
   info: {
     fontSize: 16,
-    color: '#666',
+    marginRight: 12,
   },
 });

@@ -10,7 +10,7 @@ const API_URLS = {
     ios: 'http://localhost:4000',
     physical: 'http://192.168.2.106:4000', // Update with your local IP and port
   },
-  production: 'https://leaf-production.up.railway.app', // Update with your production URL
+  production: 'https://knick-knacks-leaf-production.up.railway.app', // Update with your production URL
 };
 
 let API_URL: string;

@@ -1,4 +1,3 @@
-// Controller for progress-related logic in Leaf app
 import { Request, Response } from 'express';
 import { supabase } from '../supabaseClient';
 

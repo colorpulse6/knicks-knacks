@@ -42,6 +42,8 @@ export async function fetchBooks() {
   const url = `${API_URL}/books?user_id=${encodeURIComponent(user_id)}`;
   const res = await fetch(url);
   if (!res.ok) {
+    const text = await res.text();
+    console.error('Failed to fetch books:', res.status, text, 'URL:', url);
     throw new Error('Failed to fetch books');
   }
   return res.json();
@@ -67,8 +69,11 @@ export async function addBook(book: {
   const user_id = await getDeviceUserId();
   const res = await fetch(`${API_URL}/books`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...book, user_id }),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-device-user-id': user_id,
+    },
+    body: JSON.stringify(book),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -94,4 +99,22 @@ export async function deleteBook(id: string) {
     throw new Error('Failed to delete book');
   }
   return true;
+}
+
+/**
+ * Initializes a user in the backend (upsert).
+ * @param {string} user_id - The device user id to initialize.
+ * @returns {Promise<void>} Resolves when the user is initialized.
+ */
+export async function initUser(user_id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Failed to initialize user:', res.status, text);
+    throw new Error('Failed to initialize user');
+  }
 }

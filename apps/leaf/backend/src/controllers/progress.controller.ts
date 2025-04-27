@@ -7,6 +7,7 @@ export const getProgress = async (req: Request, res: Response) => {
   if (user_id) query = query.eq('user_id', user_id);
   if (book_id) query = query.eq('book_id', book_id);
   const { data, error } = await query;
+  
   if (error) {
     res.status(500).json({ error: error.message });
     return;

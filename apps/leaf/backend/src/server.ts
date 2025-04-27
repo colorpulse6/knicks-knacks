@@ -9,11 +9,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/books', booksRouter);
-app.use('/progress', progressRouter);
-app.use('/users', usersRouter);
+// Mount all API routes under /api for consistency with calorie-cam
+app.use('/api/books', booksRouter);
+app.use('/api/progress', progressRouter);
+app.use('/api/users', usersRouter);
 
-app.get('/health', (_req, res) => {
+// Move healthcheck under /api as well
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 

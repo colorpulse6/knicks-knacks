@@ -18,7 +18,7 @@ const API_URLS = {
     physical: "http://192.168.2.106:3000/api", // Update this with your actual IP
   },
   // Production endpoint
-  production: "https://calorie-cam-production.up.railway.app/api",
+  production: "knicks-knacks-production.up.railway.app/api",
 };
 
 // Determine the appropriate API URL based on environment and platform

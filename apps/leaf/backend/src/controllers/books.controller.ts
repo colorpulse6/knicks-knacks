@@ -33,6 +33,7 @@ export const addBook: RequestHandler = async (req: Request, res: Response) => {
   if ('id' in insertObj) {
     delete insertObj.id;
   }
+  
   const { data, error } = await supabase
     .from('books')
     .insert([insertObj])

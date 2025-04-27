@@ -242,3 +242,31 @@
 2025-04-27T15:17:44.616798Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf-supabase"), path: AnchoredSystemPathBuf("apps/leaf/supabase") }}))
 2025-04-27T15:17:45.416134Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/context"), AnchoredSystemPathBuf("apps/leaf/mobile/src/context")}
 2025-04-27T15:17:45.416161Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:19:22.814219Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/railway.json")}
+2025-04-27T15:19:22.814237Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:19:27.515466Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/railway.json")}
+2025-04-27T15:19:27.515504Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:19:32.414259Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/nixpacks.toml")}
+2025-04-27T15:19:32.414279Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:19:49.915096Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/nixpacks.toml")}
+2025-04-27T15:19:49.915122Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:20:07.214949Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-27T15:20:07.215153Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-27T15:20:07.314713Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-27T15:20:07.314737Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-27T15:27:23.773276Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/controllers/books.controller.ts")}
+2025-04-27T15:27:23.773374Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:27:34.274094Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/routes/users.ts")}
+2025-04-27T15:27:34.274118Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:27:41.174466Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/controllers/progress.controller.ts")}
+2025-04-27T15:27:41.174544Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:40:56.855488Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/mobile/src/services/api.ts")}
+2025-04-27T15:40:56.855519Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/mobile"), path: AnchoredSystemPathBuf("apps/calorie-cam/mobile") }}))
+2025-04-27T15:41:37.654543Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/services/api.ts")}
+2025-04-27T15:41:37.654587Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:44:36.551362Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/services/api.ts")}
+2025-04-27T15:44:36.551394Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:54:04.823340Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/server.ts")}
+2025-04-27T15:54:04.823366Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:54:36.222578Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/server.ts")}
+2025-04-27T15:54:36.222634Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))

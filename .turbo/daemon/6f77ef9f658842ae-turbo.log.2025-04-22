@@ -1,0 +1,47 @@
+2025-04-22T06:37:09.618554Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/1.cookie"), AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie")}
+2025-04-22T06:37:09.618569Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-04-22T06:37:09.924875Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/3.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/2.cookie")}
+2025-04-22T06:37:09.924887Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }, WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }}))
+2025-04-22T06:37:12.219323Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/4.cookie")}
+2025-04-22T06:37:12.219333Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-04-22T06:37:12.319147Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/5.cookie"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log")}
+2025-04-22T06:37:12.319157Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-04-22T06:37:13.519180Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T06:37:13.519190Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T06:37:36.039356Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T06:37:36.039366Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T06:45:04.551319Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/package-lock.json")}
+2025-04-22T06:45:04.551330Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T06:45:10.151166Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T06:45:10.151192Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T06:45:10.178179Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-22T07:14:35.806662Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/railway.json")}
+2025-04-22T07:14:35.806679Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:17:38.305853Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/railway.json")}
+2025-04-22T07:17:38.305864Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:18:42.005603Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/railway.json")}
+2025-04-22T07:18:42.005643Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:18:42.022309Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-22T07:22:40.102942Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:22:40.102953Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:22:44.403256Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:22:44.403268Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:22:44.403285Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-22T07:23:18.203802Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/railway.json")}
+2025-04-22T07:23:18.203818Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:36:20.134245Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:36:20.134256Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:36:57.834730Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:36:57.834740Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:36:57.834753Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-22T07:47:39.335278Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:47:39.335288Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:50:26.649935Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:50:26.649946Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:50:26.735810Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:50:26.735819Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T07:50:26.735832Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-22T07:51:13.736653Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/nixpacks.toml")}
+2025-04-22T07:51:13.736673Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))
+2025-04-22T09:26:09.316800Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/calorie-cam/backend/railway.json")}
+2025-04-22T09:26:09.316810Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/backend"), path: AnchoredSystemPathBuf("apps/calorie-cam/backend") }}))

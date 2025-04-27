@@ -38,7 +38,7 @@ Empty for now — app-specific scaffolding will be handled separately.
      {
        "private": true,
        "workspaces": ["apps/*", "packages/*"]
-     }  
+     }
      ```
    - Install TurboRepo: `yarn add -D turbo`
    - Add `turbo.json` with workspace globs:

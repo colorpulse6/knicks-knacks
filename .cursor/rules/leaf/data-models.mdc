@@ -1,0 +1,45 @@
+---
+description: Data models and schema for Leaf backend and Supabase integration.
+globs:
+  alwaysApply: true
+---
+# Leaf Data Models
+## Rule Type: Always
+
+**How to Use:**
+Use these models for database schema, API contracts, and TypeScript types. Keep this file in sync with Supabase migrations and backend types.
+
+## User
+- id: string (UUID, PK)
+- email: string
+- created_at: timestamp
+
+## Book
+- id: string (UUID, PK)
+- user_id: string (FK to User)
+- title: string
+- author: string
+- cover_url: string (nullable)
+- open_library_id: string (nullable)
+- created_at: timestamp
+
+## Progress
+- id: string (UUID, PK)
+- user_id: string (FK to User)
+- book_id: string (FK to Book)
+- pages_read: int
+- chapters_read: int (nullable)
+- percent_complete: float
+- updated_at: timestamp
+
+## Recommendation
+- id: string (UUID, PK)
+- user_id: string (FK to User)
+- book_id: string (FK to Book)
+- reason: string
+- created_at: timestamp
+
+## Notes
+- All foreign keys are indexed.
+- Use snake_case for all DB columns.
+- Keep Zod schemas and Supabase migrations in sync with these models.

@@ -1,19 +1,34 @@
 ---
-description: 
-globs: 
+description: CalorieCam deployment rules for backend, mobile, and storage.
+globs:
 alwaysApply: true
 ---
 # CalorieCam Deployment
 ## Rule Type: Always
 
-### Backend (Railway):
-- Auto-deploy via GitHub Actions on push to `main`.
-- Environment variables stored securely on Railway (GPT-4o keys, Supabase URL/keys).
+### Backend (Railway)
+- Auto-deploys via GitHub Actions on push to `main`.
+- Prerequisites: Railway account, GitHub repo connected, all environment variables set (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`, `NODE_ENV`).
+- Configure secrets in Railway dashboard before first deploy.
+- Health check: https://calorie-cam-production.up.railway.app/health
+- To redeploy: re-push to `main` or trigger deploy in Railway dashboard.
+- Troubleshooting: Check build logs, verify env vars, confirm Supabase/OpenAI keys.
 
-### Mobile App (Expo):
+### Mobile App (Expo)
 - OTA updates via Expo on merge to `main`.
-- Optional EAS builds for App Store/Play Store.
+- Prerequisites: Expo account, EAS CLI (`npm install -g eas-cli`), project linked to Expo.
+- EAS builds for App Store/Play Store: `eas build --profile production --platform ios|android`.
+- Configure env vars in `eas.json` and Expo dashboard if needed.
+- To trigger OTA update: `eas update`.
+- Troubleshooting: Check Expo dashboard, verify env vars.
 
-### Storage (Supabase):
+### Storage (Supabase)
 - Store images securely via Supabase Storage bucket.
-- Images linked via URLs stored in Supabase tables.
+- Prerequisites: Supabase project set up, storage bucket created, service key set in backend env vars.
+- Migrations: run via `deploy.sh` or Supabase dashboard.
+- Troubleshooting: Check Supabase dashboard for bucket existence and permissions.
+
+### Useful Links
+- [Railway Dashboard](https://railway.app/)
+- [Expo Dashboard](https://expo.dev/)
+- [Supabase Dashboard](https://app.supabase.com/)

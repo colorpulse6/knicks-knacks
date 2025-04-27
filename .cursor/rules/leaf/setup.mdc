@@ -1,0 +1,61 @@
+---
+description: Automates Supabase CLI setup, schema migration, local development, and deployment linking for Leaf.
+globs: 
+alwaysApply: false
+---
+# Leaf Setup Automation
+## Rule Type: Agent Requested
+
+**How to Use:**
+Use this rule when setting up or updating the Supabase project for Leaf. Follow each step to ensure consistent database and local environment setup.
+
+---
+
+## 🧱 Step 1: Install Supabase CLI
+If not already installed:
+```bash
+npm install -g supabase
+```
+
+---
+
+## 🗂 Step 2: Initialize Supabase Locally
+Inside `/apps/leaf/`:
+```bash
+supabase init
+```
+Creates `/supabase` with `/migrations` and `config.toml`.  
+Commit this directory to version control.
+
+---
+
+## ✍️ Step 3: Add Database Schema
+Generate a migration file and paste in the schema from `data-models.mdc`:
+```bash
+supabase migration new init-schema
+```
+Paste your schema into the generated file under `/supabase/migrations`.  
+Keep this in sync with `data-models.mdc`.
+
+---
+
+## 🏃 Step 4: Run Local Supabase
+Start Supabase locally for development:
+```bash
+supabase start
+```
+
+---
+
+## 🔗 Step 5: Link Remote Project (Optional)
+If deploying, link to the remote Supabase project:
+```bash
+supabase link --project-ref <project-ref>
+```
+
+---
+
+## ✅ Finalize
+- Ensure all migrations are applied locally and remotely
+- Confirm all `.env` files are present and correct
+- Ready for development!

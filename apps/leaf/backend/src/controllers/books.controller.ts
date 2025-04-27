@@ -1,8 +1,7 @@
-// Controller for book-related logic in Leaf app
 import { Request, Response, RequestHandler } from 'express';
 import { supabase } from '../supabaseClient';
 
-export const getBooks: RequestHandler = async (req, res) => {
+export const getBooks: RequestHandler = async (req: Request, res:Response) => {
   const userId = req.query.user_id as string | undefined;
   let query = supabase.from('books').select('*');
   if (userId) {
@@ -17,18 +16,28 @@ export const getBooks: RequestHandler = async (req, res) => {
   return;
 };
 
-export const addBook: RequestHandler = async (req, res) => {
-  const { user_id, title, author, cover_url, open_library_id } = req.body;
-  // Only include user_id if provided
-  const insertObj: any = { title, author, cover_url, open_library_id };
-  if (user_id) {
-    insertObj.user_id = user_id;
+export const addBook: RequestHandler = async (req: Request, res: Response) => {
+  // Try to get user_id from body, else from header
+  let user_id = req.body.user_id;
+  if (!user_id) {
+    user_id = req.headers['x-device-user-id'] as string | undefined;
   }
+  const { id, title, author, cover_url, open_library_id } = req.body;
+  if (!user_id) {
+    res.status(400).json({ error: 'user_id is required (in body or x-device-user-id header)' });
+    return;
+  }
+  // Build insertObj without id
+  const insertObj: any = { user_id, title, author, cover_url, open_library_id };
+  // Remove id if present (should never be sent)
+  if ('id' in insertObj) {
+    delete insertObj.id;
+  }
+  console.log('Inserting book:', insertObj);
   const { data, error } = await supabase
     .from('books')
     .insert([insertObj])
     .select();
-
   if (error) {
     res.status(500).json({ error: error.message });
     return;
@@ -37,7 +46,7 @@ export const addBook: RequestHandler = async (req, res) => {
   return;
 };
 
-export const deleteBook: RequestHandler = async (req, res) => {
+export const deleteBook: RequestHandler = async (req:Request, res:Response) => {
   const { id } = req.params;
   if (!id) {
     res.status(400).json({ error: 'Book id is required' });

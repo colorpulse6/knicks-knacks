@@ -33,7 +33,7 @@ export default function AddBookScreen() {
     setSearchLoading(true);
     try {
       const data = await searchBooks({ title: t, author: a, limit: 10 });
-      console.log('Open Library API results:', data);
+    
       setSearchResults(data.docs || []);
     } catch (err) {
       console.error('Open Library search error:', err);

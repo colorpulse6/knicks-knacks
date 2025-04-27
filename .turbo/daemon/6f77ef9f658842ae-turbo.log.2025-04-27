@@ -228,3 +228,17 @@
 2025-04-27T15:09:26.121984Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
 2025-04-27T15:15:28.118054Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/controllers/books.controller.ts")}
 2025-04-27T15:15:28.118078Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:17:17.824710Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/supabaseClient.ts")}
+2025-04-27T15:17:17.824738Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:17:18.317086Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/supabase")}
+2025-04-27T15:17:18.317117Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:17:18.816268Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/src")}
+2025-04-27T15:17:18.816332Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:17:19.615530Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/context"), AnchoredSystemPathBuf("apps/leaf/mobile/src/context")}
+2025-04-27T15:17:19.615583Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:17:27.515625Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/supabase/migrations/002_remove_auth_users_fk.sql"), AnchoredSystemPathBuf("apps/leaf/supabase/migrations/20250427_create_users_table.sql"), AnchoredSystemPathBuf("apps/leaf/supabase/migrations/20250427_update_foreign_keys_to_users.sql")}
+2025-04-27T15:17:27.515686Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf-supabase"), path: AnchoredSystemPathBuf("apps/leaf/supabase") }}))
+2025-04-27T15:17:44.616764Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/supabase/migrations/20250427_update_foreign_keys_to_users.sql"), AnchoredSystemPathBuf("apps/leaf/supabase/migrations/20250427_create_users_table.sql"), AnchoredSystemPathBuf("apps/leaf/supabase/migrations/002_remove_auth_users_fk.sql")}
+2025-04-27T15:17:44.616798Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf-supabase"), path: AnchoredSystemPathBuf("apps/leaf/supabase") }}))
+2025-04-27T15:17:45.416134Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/context"), AnchoredSystemPathBuf("apps/leaf/mobile/src/context")}
+2025-04-27T15:17:45.416161Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))

@@ -2,6 +2,9 @@
 
 const OPEN_LIBRARY_BASE = 'https://openlibrary.org';
 
+// Update this string with your actual contact email
+const OPEN_LIBRARY_USER_AGENT = 'LeafApp/1.0 (contact: colorpulse@gmail.com)';
+
 export interface OpenLibraryDoc {
   cover_i?: number;
   has_fulltext?: boolean;
@@ -28,14 +31,22 @@ export async function searchBooks({ title, author, query, page = 1, limit = 10 }
   if (query) url += `q=${encodeURIComponent(query)}&`;
   if (page) url += `page=${page}&`;
   if (limit) url += `limit=${limit}`;
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': OPEN_LIBRARY_USER_AGENT,
+    },
+  });
   if (!res.ok) throw new Error('Failed to search Open Library');
   return res.json();
 }
 
 export async function searchAuthors(query: string) {
   const url = `${OPEN_LIBRARY_BASE}/search/authors.json?q=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': OPEN_LIBRARY_USER_AGENT,
+    },
+  });
   if (!res.ok) throw new Error('Failed to search authors');
   return res.json();
 }

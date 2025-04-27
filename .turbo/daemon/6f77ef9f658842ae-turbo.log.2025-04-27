@@ -214,3 +214,15 @@
 2025-04-27T15:04:46.024955Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
 2025-04-27T15:04:58.025279Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/screens/AddBookScreen.tsx")}
 2025-04-27T15:04:58.025346Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:08:04.222920Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/services/openLibrary.ts")}
+2025-04-27T15:08:04.222948Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:08:17.422970Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/supabase")}
+2025-04-27T15:08:17.422988Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:08:31.123219Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/backend/src/supabaseClient.ts")}
+2025-04-27T15:08:31.123237Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@leaf/backend"), path: AnchoredSystemPathBuf("apps/leaf/backend") }}))
+2025-04-27T15:08:58.821358Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/services/openLibrary.ts")}
+2025-04-27T15:08:58.821376Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:09:08.922037Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/services/openLibrary.ts")}
+2025-04-27T15:09:08.922055Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))
+2025-04-27T15:09:26.121933Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/leaf/mobile/services/openLibrary.ts")}
+2025-04-27T15:09:26.121984Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("leaf"), path: AnchoredSystemPathBuf("apps/leaf/mobile") }}))

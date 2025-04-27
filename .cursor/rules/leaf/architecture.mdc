@@ -1,0 +1,42 @@
+---
+description: Leaf app architecture, directory structure, and technology decisions.
+globs: 
+alwaysApply: true
+---
+# Leaf Architecture
+## Rule Type: Always
+
+**How to Use:**
+Reference this rule when making architectural or technology decisions, ensuring consistency and maintainability across the app. All agents must adhere to these patterns for new features and refactors.
+
+/apps/leaf
+  /mobile            # Expo-managed React Native frontend (all code in /src)
+  /backend           # Express backend (TypeScript)
+  /supabase          # Supabase migrations/scripts
+  /tests             # Unit and integration tests
+
+/packages
+  /ui                # Shared UI components (React + RN)
+  /shared            # Shared hooks, types, logic
+  /config            # Shared Tailwind, TS, and other config
+
+- **Yarn** is required for all package management (do not use PNPM or npm).
+- **Mobile**: Expo-managed React Native app.
+  - All code in `/mobile/src`.
+  - Uses TanStack Query (data fetching), TanStack Forms (forms), Zustand (state).
+  - Tailwind via `tailwindcss-react-native` with config from `/packages/config`.
+  - .env files for API URLs and Open Library keys.
+  - Book cover/image URLs handled via Open Library API.
+- **Backend**: Express server (TypeScript).
+  - Exposes REST endpoints for book tracking, progress updates, and recommendations.
+  - Integrates with Open Library API for book data.
+  - Stores user/book/progress data in Supabase.
+  - JWT Auth via Supabase Auth (optional).
+  - .env for Supabase and Open Library keys.
+- **Testing**:
+  - Backend: Vitest tests in `/tests/backend`.
+  - Mobile: React Testing Library tests in `/tests/mobile`.
+  - All tests live under `/tests`.
+- **Shared Packages**:
+  - UI components, hooks, and types are shared via `/packages/ui` and `/packages/shared`.
+  - Tailwind and TypeScript config shared via `/packages/config`.

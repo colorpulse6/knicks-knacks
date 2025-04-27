@@ -1,0 +1,53 @@
+---
+description: Step-by-step plan for building the Leaf mobile app and backend using Supabase and Open Library API.
+globs: 
+alwaysApply: false
+---
+# Leaf Implementation Plan
+## Rule Type: Agent Requested
+
+**How to Use:**
+Follow this plan step-by-step when building new features or onboarding new contributors. Ensures all agents follow a consistent, maintainable workflow.
+
+1. **Scaffold the App**
+   - Create dirs (`/mobile`, `/backend`, `/tests`) under `/apps/leaf`.
+   - Initialize Expo project in `/apps/leaf/mobile` using TypeScript template:
+     - `npx create-expo-app@latest --template expo-template-blank-typescript`
+   - Initialize Express app in `/apps/leaf/backend` with TypeScript.
+     - Use `ts-node` for dev, `tsup` for builds.
+   - Set up Yarn workspaces if not already done.
+
+2. **Supabase Setup**
+   - Create dedicated Supabase project for user/book/progress data.
+   - Apply schema using `/apps/leaf/supabase/deploy.sh` or SQL migrations.
+   - Enable optional Supabase Auth (email/password).
+   - Save project URL, anon key, and service key for backend/mobile env.
+
+3. **Backend API**
+   - Implement REST endpoints for:
+     - Adding books
+     - Updating reading progress
+     - Getting book recommendations (calls Open Library API)
+   - Integrate Open Library API using `axios` or `node-fetch`.
+   - Validate and parse responses with Zod.
+   - Store user/book/progress data in Supabase.
+   - Add `/health` endpoint for status checks.
+   - Use `.env` for all secrets and URLs.
+
+4. **Frontend**
+   - Set up forms for adding books and updating progress.
+   - Use TanStack Query for API calls and caching.
+   - Store JWT in SecureStore if using auth.
+   - Display book details, progress, and recommendations.
+   - Implement Home, Library, Progress, and Recommendations screens in `/src/screens`.
+   - Use `/src/services` for API and Supabase helpers.
+   - All UI components must use Tailwind (via `tailwindcss-react-native`).
+
+5. **Testing**
+   - Write backend tests in `/tests/backend` (Vitest).
+   - Write frontend tests in `/tests/mobile` (React Testing Library).
+
+6. **Finalize**
+   - Commit all code and configs to version control.
+   - Confirm `.env` files are present and correct.
+   - Ready for development and deployment!

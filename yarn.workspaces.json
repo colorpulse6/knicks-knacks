@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "workspaces": [
+    "apps/leaf/mobile",
+    "apps/leaf/backend",
+    "apps/leaf/supabase",
+    "apps/leaf/tests",
+    "apps/calorie-cam/mobile",
+    "apps/calorie-cam/backend",
+    "apps/calorie-cam/supabase",
+    "packages/ui",
+    "packages/shared",
+    "packages/config"
+  ]
+}

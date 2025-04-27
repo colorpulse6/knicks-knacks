@@ -1,16 +1,16 @@
-yarn run v1.22.19
-$ tsup src/index.ts --format cjs,esm --dts
-CLI Building entry: src/index.ts
-CLI Using tsconfig: tsconfig.json
-CLI tsup v6.7.0
-CLI Target: node14
-CJS Build start
-ESM Build start
-CJS dist/index.js 3.06 KB
-CJS ⚡️ Build success in 12ms
-ESM dist/index.mjs 1.31 KB
-ESM ⚡️ Build success in 12ms
-DTS Build start
-DTS ⚡️ Build success in 943ms
-DTS dist/index.d.ts 865.00 B
-Done in 1.39s.
+[2K[1G[1myarn run v1.22.19[22m
+[2K[1G[2m$ tsup src/index.ts --format cjs,esm --dts[22m
+[34mCLI[39m Building entry: src/index.ts
+[34mCLI[39m Using tsconfig: tsconfig.json
+[34mCLI[39m tsup v6.7.0
+[34mCLI[39m Target: node14
+[34mCJS[39m Build start
+[34mESM[39m Build start
+[32mCJS[39m [1mdist/index.js [22m[32m3.06 KB[39m
+[32mCJS[39m ⚡️ Build success in 53ms
+[32mESM[39m [1mdist/index.mjs [22m[32m1.31 KB[39m
+[32mESM[39m ⚡️ Build success in 54ms
+[34mDTS[39m Build start
+[32mDTS[39m ⚡️ Build success in 1301ms
+[32mDTS[39m [1mdist/index.d.ts [22m[32m865.00 B[39m
+[2K[1G✨  Done in 1.92s.

@@ -22,13 +22,50 @@ export const addBook: RequestHandler = async (req: Request, res: Response) => {
   if (!user_id) {
     user_id = req.headers['x-device-user-id'] as string | undefined;
   }
-  const { id, title, author, cover_url, open_library_id } = req.body;
+  // Destructure all possible BookInput fields
+  const {
+    id,
+    title,
+    subtitle,
+    author,
+    author_key,
+    description,
+    cover_url,
+    open_library_id,
+    isbn_10,
+    isbn_13,
+    publish_date,
+    publisher,
+    page_count,
+    subjects,
+    language,
+    series,
+    goodreads_id
+  } = req.body;
   if (!user_id) {
     res.status(400).json({ error: 'user_id is required (in body or x-device-user-id header)' });
     return;
   }
   // Build insertObj without id
-  const insertObj: any = { user_id, title, author, cover_url, open_library_id };
+  const insertObj: any = {
+    user_id,
+    title,
+    subtitle,
+    author,
+    author_key,
+    description,
+    cover_url,
+    open_library_id,
+    isbn_10,
+    isbn_13,
+    publish_date,
+    publisher,
+    page_count,
+    subjects,
+    language,
+    series,
+    goodreads_id
+  };
   // Remove id if present (should never be sent)
   if ('id' in insertObj) {
     delete insertObj.id;
@@ -47,16 +84,25 @@ export const addBook: RequestHandler = async (req: Request, res: Response) => {
 
 export const deleteBook: RequestHandler = async (req:Request, res:Response) => {
   const { id } = req.params;
-  if (!id) {
-    res.status(400).json({ error: 'Book id is required' });
+  const { user_id } = req.body;
+  console.log('[deleteBook controller] id param:', id, 'user_id:', user_id);
+  if (!id || !user_id) {
+    res.status(400).json({ error: 'Book id and user_id are required' });
     return;
   }
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('books')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user_id)
+    .select();
+  console.log('[deleteBook controller] delete result:', { data, error });
   if (error) {
     res.status(500).json({ error: error.message });
+    return;
+  }
+  if (!data || data.length === 0) {
+    res.status(404).json({ error: 'No book deleted (not found or not permitted)' });
     return;
   }
   res.status(204).send();

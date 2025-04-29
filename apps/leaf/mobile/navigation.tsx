@@ -1,13 +1,26 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AddBookScreen from './screens/AddBookScreen';
 import BooksListScreen from './screens/BooksListScreen';
+import BookDetailsScreen from './screens/BookDetailsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet } from 'react-native';
+import type { RootStackParamList } from './types/navigation';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function BooksStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="BooksList" component={BooksListScreen} options={{ title: '', headerShown: false }} />
+      <Stack.Screen name="BookDetails" component={BookDetailsScreen} options={{ title: 'Book Details' }} />
+    </Stack.Navigator>
+  );
+}
 
 export default function AppNavigation() {
   return (
@@ -19,7 +32,7 @@ export default function AppNavigation() {
             let iconName;
             if (route.name === 'AddBook') {
               iconName = 'book-outline';
-            } else if (route.name === 'BooksList') {
+            } else if (route.name === 'Books') {
               iconName = 'library-outline';
             } else if (route.name === 'Profile') {
               iconName = 'person-outline';
@@ -32,7 +45,7 @@ export default function AppNavigation() {
             let label = '';
             if (route.name === 'AddBook') {
               label = 'Add Book';
-            } else if (route.name === 'BooksList') {
+            } else if (route.name === 'Books') {
               label = 'Books List';
             } else if (route.name === 'Profile') {
               label = 'Profile';
@@ -42,7 +55,7 @@ export default function AppNavigation() {
         })}
       >
         <Tab.Screen name="AddBook" component={AddBookScreen} options={{ title: '', headerShown: false }} />
-        <Tab.Screen name="BooksList" component={BooksListScreen} options={{ title: '', headerShown: false }} />
+        <Tab.Screen name="Books" component={BooksStack} options={{ title: '', headerShown: false }} />
         <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '', headerShown: false }} />
       </Tab.Navigator>
     </NavigationContainer>

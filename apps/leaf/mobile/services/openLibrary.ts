@@ -11,11 +11,12 @@ export interface OpenLibraryDoc {
   edition_count?: number;
   title: string;
   author_name?: string[];
+  author_key: string[]; 
   first_publish_year?: number;
   key: string;
   ia?: string[];
-  author_key?: string[];
   public_scan_b?: boolean;
+  isbn?: string[];
 }
 
 export interface OpenLibrarySearchResponse {
@@ -51,8 +52,27 @@ export async function searchAuthors(query: string) {
   return res.json();
 }
 
+export async function getWorksByAuthor(authorName: string, language?: string) {
+  let url = `${OPEN_LIBRARY_BASE}/search.json?q=author:${encodeURIComponent(authorName)}`;
+  if (language) {
+    url += `&lang=${encodeURIComponent(language)}`;
+  }
+  url += '&limit=20';
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': OPEN_LIBRARY_USER_AGENT,
+    },
+  });
+  if (!res.ok) throw new Error('Failed to search Open Library by author');
+  return res.json();
+}
+
 export function getCoverUrl(coverId: string | number, size: 'S' | 'M' | 'L' = 'M') {
   return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
+}
+
+export function getCoverUrlByOlid(olid: string, size: 'S' | 'M' | 'L' = 'M') {
+  return `https://covers.openlibrary.org/b/olid/${olid}-${size}.jpg`;
 }
 
 export function getAuthorImageUrl(authorId: string) {

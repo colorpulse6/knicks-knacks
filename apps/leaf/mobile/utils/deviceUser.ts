@@ -8,7 +8,7 @@ export async function getDeviceUserId(): Promise<string> {
     deviceId = uuidv4();
     await SecureStore.setItemAsync('device_user_id', deviceId);
     console.log('[deviceUser] Generated new device user id:', deviceId);
-    // Initialize user in backend
+    // Initialize user in backend ONLY when new
     try {
       await initUser(deviceId);
       console.log('[deviceUser] User initialized in backend:', deviceId);
@@ -17,13 +17,7 @@ export async function getDeviceUserId(): Promise<string> {
     }
   } else {
     console.log('[deviceUser] Retrieved existing device user id:', deviceId);
-    // Ensure user exists in backend (idempotent)
-    try {
-      await initUser(deviceId);
-      console.log('[deviceUser] User ensured in backend:', deviceId);
-    } catch (e) {
-      console.error('[deviceUser] Failed to ensure user in backend:', e);
-    }
+    // Do NOT call initUser again
   }
   return deviceId;
 }

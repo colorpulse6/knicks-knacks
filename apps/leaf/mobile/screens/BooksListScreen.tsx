@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Image, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Image, TouchableOpacity, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchBooks, deleteBook } from '../services/api';
 import useTheme from '../hooks/useTheme';
 import dayjs from 'dayjs';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function BooksListScreen() {
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { RootStackParamList, RootTabParamList } from '../types/navigation';
+
+type BooksListScreenNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<RootStackParamList, 'BooksList'>,
+  BottomTabNavigationProp<RootTabParamList>
+>;
+
+interface BooksListScreenProps {
+  navigation: BooksListScreenNavigationProp;
+}
+
+export default function BooksListScreen({ navigation }: BooksListScreenProps) {
   const { themeObj } = useTheme();
   const [expandedYears, setExpandedYears] = useState<{ [year: string]: boolean }>({});
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const {
     data: books,
@@ -33,9 +49,20 @@ export default function BooksListScreen() {
 
   const queryClient = useQueryClient();
   const { mutate: removeBook, isPending: isDeleting } = useMutation({
-    mutationFn: (id: string) => deleteBook(id),
+    mutationFn: async ({ id, user_id }: { id: string; user_id: string }) => {
+      console.log('Attempting to delete book with id:', id, 'user_id:', user_id);
+      try {
+        return await deleteBook(id, user_id);
+      } catch (err) {
+        console.error('Delete mutation error:', err);
+        throw err;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] });
+    },
+    onError: (error, vars) => {
+      Alert.alert('Failed to delete', `Could not delete book.\n${error instanceof Error ? error.message : ''}`);
     },
   });
 
@@ -52,6 +79,26 @@ export default function BooksListScreen() {
 
   const toggleYear = (year: string) => {
     setExpandedYears((prev) => ({ ...prev, [year]: !prev[year] }));
+  };
+
+  // Handler for delete with confirmation
+  const handleDelete = (id: string, bookUserId: string, title: string) => {
+    Alert.alert(
+      'Delete Book',
+      `Are you sure you want to delete "${title}"? This action cannot be undone!`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setPendingDeleteId(id);
+            removeBook({ id, user_id: bookUserId }, { onSettled: () => setPendingDeleteId(null) });
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   if (isLoading) {
@@ -88,7 +135,12 @@ export default function BooksListScreen() {
                   <View key={month} style={{ marginBottom: 12 }}>
                     <Text style={{ color: themeObj.textSecondary, fontWeight: '600', fontSize: 16, marginTop: 8 }}>{month}</Text>
                     {groupedBooks[year][month].map((item: any) => (
-                      <View key={item.id} style={[styles.bookItem, { backgroundColor: themeObj.card, borderColor: themeObj.border }]}>
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.bookItem, { backgroundColor: themeObj.card, borderColor: themeObj.border }]}
+                        onPress={() => navigation.navigate('BookDetails', { book: item })}
+                        activeOpacity={0.85}
+                      >
                         {item.cover_url ? (
                           <Image source={{ uri: item.cover_url }} style={styles.coverImg} />
                         ) : null}
@@ -100,13 +152,14 @@ export default function BooksListScreen() {
                           </Text>
                         </View>
                         <TouchableOpacity
-                          onPress={() => removeBook(item.id)}
+                          onPress={() => handleDelete(item.id, item.user_id, item.title)}
                           style={{ marginLeft: 8, padding: 8 }}
-                          disabled={isDeleting}
+                          disabled={isDeleting || pendingDeleteId === item.id}
+                          accessibilityLabel="Delete book"
                         >
-                          <Text style={{ color: themeObj.accent, fontWeight: 'bold' }}>Delete</Text>
+                          <Ionicons name="trash-outline" size={22} color="#e53935" />
                         </TouchableOpacity>
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </View>
                 ))}

@@ -33,6 +33,26 @@ if (isDevelopment) {
   API_URL = API_URLS.production;
 }
 
+// --- BookInput type for strong typing across the app ---
+export type BookInput = {
+  title: string;
+  subtitle?: string;
+  author: string;
+  author_key?: string;
+  description?: string;
+  cover_url?: string;
+  open_library_id?: string;
+  isbn_10?: string;
+  isbn_13?: string;
+  publish_date?: string;
+  publisher?: string;
+  page_count?: number;
+  subjects?: string[];
+  language?: string;
+  series?: string;
+  goodreads_id?: string;
+};
+
 /**
  * Fetches books from the API.
  *
@@ -53,32 +73,23 @@ export async function fetchBooks() {
 /**
  * Adds a new book to the API.
  *
- * @param {Object} book - The book object to add.
- * @param {string} book.title - The title of the book.
- * @param {string} book.author - The author of the book.
- * @param {string} [book.cover_url] - The URL of the book cover.
- * @param {string} [book.open_library_id] - The Open Library ID of the book.
- *
+ * @param {BookInput} book - The book object to add.
  * @returns {Promise<Object>} A promise resolving to the added book object.
  */
-export async function addBook(book: {
-  title: string;
-  author: string;
-  cover_url?: string;
-  open_library_id?: string;
-}) {
+export async function addBook(book: BookInput) {
+  console.log("ADDING BOOK", book)
   const user_id = await getDeviceUserId();
-  const res = await fetch(`${API_URL}/books`, {
+  const url = `${API_URL}/books`;
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-device-user-id': user_id,
     },
-    body: JSON.stringify(book),
+    body: JSON.stringify({ ...book, user_id }),
   });
   if (!res.ok) {
     const text = await res.text();
-    console.error('Failed to add book:', res.status, text);
+    console.error('Failed to add book:', res.status, text, 'URL:', url);
     throw new Error('Failed to add book');
   }
   return res.json();
@@ -88,14 +99,19 @@ export async function addBook(book: {
  * Deletes a book by id from the API.
  *
  * @param {string} id - The id of the book to delete.
- *
+ * @param {string} user_id - The user_id of the book owner.
  * @returns {Promise<boolean>} A promise resolving to true if the book was deleted successfully.
  */
-export async function deleteBook(id: string) {
+export async function deleteBook(id: string, user_id: string) {
   const url = `${API_URL}/books/${id}`;
-  const res = await fetch(url, { method: 'DELETE' });
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id }),
+  });
+  const text = await res.text();
+  console.log('[deleteBook] URL:', url, 'Status:', res.status, 'Response:', text);
   if (!res.ok) {
-    const text = await res.text();
     console.error('Failed to delete book:', res.status, text);
     throw new Error('Failed to delete book');
   }

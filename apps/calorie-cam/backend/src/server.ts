@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
 import foodRoutes from "./routes/food";
 
 // Load environment variables

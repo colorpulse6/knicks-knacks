@@ -18,6 +18,7 @@ if (isDevelopment) {
   const isExpoGoOrStandalone =
     Constants.executionEnvironment === 'storeClient' ||
     Constants.executionEnvironment === 'standalone';
+    
   const isPhysicalDeviceEnvironment =
     isExpoGoOrStandalone || !Constants.executionEnvironment;
   if (isPhysicalDeviceEnvironment) {

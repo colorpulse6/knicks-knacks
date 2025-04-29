@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { useAddBook } from '../hooks/useAddBook';
 import { searchBooks, getCoverUrl, OpenLibraryDoc } from '../services/openLibrary';
 import useTheme from '../hooks/useTheme';
@@ -70,54 +70,63 @@ export default function AddBookScreen() {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: themeObj.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={64} // adjust as needed for header
     >
-      <TextInput
-        style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
-        placeholder="Title"
-        placeholderTextColor={themeObj.textSecondary}
-        value={title}
-        onChangeText={t => {
-          setTitle(t);
-          handleSearch(t, author);
-        }}
-      />
-      <TextInput
-        style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
-        placeholder="Author"
-        placeholderTextColor={themeObj.textSecondary}
-        value={author}
-        onChangeText={a => {
-          setAuthor(a);
-          handleSearch(title, a);
-        }}
-      />
-      {/* Autocomplete/Search Results */}
-      {searchLoading && <ActivityIndicator style={{marginBottom: 12}} />}
-      {searchResults.length > 0 && (title.trim() !== '' || author.trim() !== '') && (
-        <FlatList
-          data={searchResults.slice(0, 5)}
-          keyExtractor={item => item.key}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.searchItem, { backgroundColor: themeObj.background, borderBottomColor: themeObj.border }]} onPress={() => handleSelectBook(item)}>
-              {item.cover_i && (
-                <View style={{ marginRight: 8 }}>
-                  <Image
-                    source={{ uri: getCoverUrl(item.cover_i, 'S') }}
-                    style={{ width: 32, height: 48, borderRadius: 4 }}
-                    resizeMode="cover"
-                  />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={{ width: '100%' }}>
+          <TextInput
+            style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
+            placeholder="Title"
+            placeholderTextColor={themeObj.textSecondary}
+            value={title}
+            onChangeText={t => {
+              setTitle(t);
+              handleSearch(t, author);
+            }}
+          />
+          <TextInput
+            style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
+            placeholder="Author"
+            placeholderTextColor={themeObj.textSecondary}
+            value={author}
+            onChangeText={a => {
+              setAuthor(a);
+              handleSearch(title, a);
+            }}
+          />
+          {/* Autocomplete/Search Results */}
+          {searchLoading && <ActivityIndicator style={{marginBottom: 12}} />}
+        </View>
+        {searchResults.length > 0 && (title.trim() !== '' || author.trim() !== '') && (
+          <FlatList
+            data={searchResults.slice(0, 5)}
+            keyExtractor={item => item.key}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={[styles.searchItem, { backgroundColor: themeObj.background, borderBottomColor: themeObj.border }]} onPress={() => handleSelectBook(item)}>
+                {item.cover_i && (
+                  <View style={{ marginRight: 8 }}>
+                    <Image
+                      source={{ uri: getCoverUrl(item.cover_i, 'S') }}
+                      style={{ width: 32, height: 48, borderRadius: 4 }}
+                      resizeMode="cover"
+                    />
+                  </View>
+                )}
+                <View>
+                  <Text style={[styles.searchTitle, { color: themeObj.text }]}>{item.title}</Text>
+                  <Text style={[styles.searchAuthor, { color: themeObj.text }]}>{item.author_name?.[0]}</Text>
                 </View>
-              )}
-              <View>
-                <Text style={[styles.searchTitle, { color: themeObj.text }]}>{item.title}</Text>
-                <Text style={[styles.searchAuthor, { color: themeObj.text }]}>{item.author_name?.[0]}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          style={{ maxHeight: 220, width: '100%' }}
-        />
-      )}
-      <Button title={isPending ? 'Adding...' : 'Add Book'} onPress={handleAddBook} disabled={isPending} color={themeObj.primary} />
+              </TouchableOpacity>
+            )}
+            style={{ maxHeight: 220, width: '100%' }}
+            keyboardShouldPersistTaps="handled"
+          />
+        )}
+        <Button title={isPending ? 'Adding...' : 'Add Book'} onPress={handleAddBook} disabled={isPending} color={themeObj.primary} />
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -125,8 +134,8 @@ export default function AddBookScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
     padding: 20,
   },
   input: {

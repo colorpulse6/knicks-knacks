@@ -5,6 +5,7 @@ import AddBookScreen from './screens/AddBookScreen';
 import BooksListScreen from './screens/BooksListScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -27,11 +28,22 @@ export default function AppNavigation() {
           },
           tabBarActiveTintColor: '#4CAF50',
           tabBarInactiveTintColor: 'gray',
+          tabBarLabel: ({ focused, color }) => {
+            let label = '';
+            if (route.name === 'AddBook') {
+              label = 'Add Book';
+            } else if (route.name === 'BooksList') {
+              label = 'Books List';
+            } else if (route.name === 'Profile') {
+              label = 'Profile';
+            }
+            return <Text style={{ color, fontSize: 11, fontWeight: focused ? 'bold' : 'normal', marginBottom: 2 }}>{label}</Text>;
+          },
         })}
       >
-        <Tab.Screen name="AddBook" component={AddBookScreen} options={{ title: '' }} />
-        <Tab.Screen name="BooksList" component={BooksListScreen} options={{ title: '' }} />
-        <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '' }} />
+        <Tab.Screen name="AddBook" component={AddBookScreen} options={{ title: '', headerShown: false }} />
+        <Tab.Screen name="BooksList" component={BooksListScreen} options={{ title: '', headerShown: false }} />
+        <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '', headerShown: false }} />
       </Tab.Navigator>
     </NavigationContainer>
   );

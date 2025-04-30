@@ -19,6 +19,26 @@ A modern monorepo structure using TurboRepo, Next.js, Vite, React Native, and mo
   /config        # Shared TS config, Tailwind config, PostCSS, etc.
 ```
 
+## Apps in this Monorepo
+
+This monorepo contains multiple full-stack apps, each with their own mobile, backend, and (optionally) web frontends. Here are the main apps:
+
+### Leaf
+- **Description:** A mobile-first reading companion for discovering, cataloging, and sharing books. Integrates with Open Library APIs and supports social sharing.
+- **Location:** `apps/leaf`
+  - `mobile/`: React Native (Expo) app for iOS/Android
+  - `backend/`: Express API for user/book data
+  - `supabase/`: Database migrations and SQL for the backend
+
+### CalorieCam
+- **Description:** A mobile application that analyzes food images and provides nutritional information using OpenAI and Supabase.
+- **Location:** `apps/calorie-cam`
+  - `mobile/`: React Native (Expo) app for iOS/Android
+  - `backend/`: Express API for food/nutrition data
+  - `supabase/`: Database migrations and SQL for the backend
+
+See each app's own README for setup and usage details.
+
 ## Getting Started
 
 ### Prerequisites

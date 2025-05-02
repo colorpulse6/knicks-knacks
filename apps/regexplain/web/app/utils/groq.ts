@@ -6,38 +6,58 @@ function looksLikeRegex(input: string): boolean {
   return /[.*+?^${}()|[\]\\]/.test(input);
 }
 
+// Types for regex explanation results
+export interface RegexExplanation {
+  summary: string;
+  breakdown: { part: string; explanation: string }[];
+  error?: boolean;
+  notRegex?: boolean;
+  suggestion: string;
+}
+
 export async function explainRegexWithGroq({
   regex,
   apiKey,
 }: {
   regex: string;
   apiKey: string;
-}): Promise<any> {
+}): Promise<RegexExplanation> {
   if (!looksLikeRegex(regex)) {
     // Instead of calling the API, return a consistent response
     return {
       summary: "This does not appear to be a regular expression.",
       breakdown: [],
       notRegex: true,
+      suggestion: "",
     };
   }
-  const prompt = `You are a regex expert. Given the following regular expression, return ONLY a JSON object with three fields: 
-- "summary" (a one-sentence summary),
-- "breakdown" (an array of objects, each with "part" and "explanation" fields),
-- and, if the regex is invalid, a "suggestion" field with a helpful fix or advice for correcting the pattern.
+
+  const prompt = `You are a regex expert. Given the following regular expression, return ONLY a JSON object with three fields:
+- "summary" (a one-sentence summary of what the regex does, or why it's invalid),
+- "breakdown" (an array of objects, each with "part" and "explanation" fields; if invalid, this should be an empty array),
+- "suggestion" (a clear, actionable fix or advice for correcting the pattern if it's invalid; if valid, just return an empty string). Always include the suggestion field, even if the regex is valid.
 
 DO NOT include any commentary, explanation, or extra text outside the JSON.
 DO NOT wrap the JSON in code blocks or markdown.
-If the input is not a valid regular expression, reply with this exact JSON: {"summary":"This does not appear to be a regular expression.","breakdown":[],"notRegex":true, "suggestion":""}
+If the input is not a valid regular expression, your JSON MUST include a helpful suggestion for fixing it, not just an empty string.
 
-Example:
+Example (valid regex):
 {
   "summary": "This regex matches a 10-digit phone number.",
   "breakdown": [
     { "part": "^", "explanation": "Start of string" },
     { "part": "\\d{3}", "explanation": "Exactly 3 digits" }
-  ]
+  ],
+  "suggestion": ""
 }
+
+Example (invalid regex):
+{
+  "summary": "This does not appear to be a regular expression.",
+  "breakdown": [],
+  "suggestion": "Move the hyphen to the end of your character class, e.g. [abc-] instead of [a-bc]."
+}
+
 Regex: ${regex}`;
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -55,9 +75,8 @@ Regex: ${regex}`;
         },
         { role: "user", content: prompt },
       ],
-      stream: false, // Disable streaming for JSON output
-      max_tokens: 512,
-      temperature: 0.3,
+      max_tokens: 1024,
+      temperature: 0.2,
     }),
   });
 
@@ -78,14 +97,18 @@ Regex: ${regex}`;
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
+  // LOG RAW AI RESPONSE FOR DEBUGGING
+  console.log("[GROQ] Raw AI response:", content);
   // Extract the first JSON object from the response
   const match = content && content.match(/\{[\s\S]*\}/);
   if (!match) {
     // Instead of throwing, return a user-friendly fallback
     return {
-      summary: "Sorry, there was a problem explaining this regex. Please try again.",
+      summary:
+        "Sorry, there was a problem explaining this regex. Please try again.",
       breakdown: [],
       error: true,
+      suggestion: "",
     };
   }
   try {
@@ -97,13 +120,16 @@ Regex: ${regex}`;
         summary: "This does not appear to be a regular expression.",
         breakdown: [],
         notRegex: true,
+        suggestion: "",
       };
     }
     // Instead of throwing, return a user-friendly fallback
     return {
-      summary: "Sorry, there was a problem explaining this regex. Please try again.",
+      summary:
+        "Sorry, there was a problem explaining this regex. Please try again.",
       breakdown: [],
       error: true,
+      suggestion: "",
     };
   }
 }

@@ -3,7 +3,7 @@ import React from "react";
 const EXAMPLES = [
   {
     name: "Email Address",
-    pattern: "^[\\w.-]+@[\\w.-]+\\.\\w{2,}$",
+    pattern: "^[\\w-.]+@[\\w-.]+\\.\\w{2,}$",
     description: "Basic email validation",
   },
   {

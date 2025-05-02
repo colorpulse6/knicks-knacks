@@ -24,6 +24,7 @@ A modern monorepo structure using TurboRepo, Next.js, Vite, React Native, and mo
 This monorepo contains multiple full-stack apps, each with their own mobile, backend, and (optionally) web frontends. Here are the main apps:
 
 ### Leaf
+
 - **Description:** A mobile-first reading companion for discovering, cataloging, and sharing books. Integrates with Open Library APIs and supports social sharing.
 - **Location:** `apps/leaf`
   - `mobile/`: React Native (Expo) app for iOS/Android
@@ -31,11 +32,23 @@ This monorepo contains multiple full-stack apps, each with their own mobile, bac
   - `supabase/`: Database migrations and SQL for the backend
 
 ### CalorieCam
+
 - **Description:** A mobile application that analyzes food images and provides nutritional information using OpenAI and Supabase.
 - **Location:** `apps/calorie-cam`
   - `mobile/`: React Native (Expo) app for iOS/Android
   - `backend/`: Express API for food/nutrition data
   - `supabase/`: Database migrations and SQL for the backend
+
+### Regexplain
+
+- **Description:** A modern web app for explaining, breaking down, and interactively testing regular expressions. Powered by AI (Groq Llama3) for natural language explanations and a rich, interactive breakdown UI. Features include:
+  - Plain-English regex explanations
+  - Character-by-character breakdown with tooltips
+  - Live regex tester with match highlighting
+  - Smart warnings for common regex mistakes (e.g., double backslashes)
+  - Robust error handling for non-regex input
+- **Location:** `apps/regexplain/web`
+  - `web/`: Next.js (React) web frontend
 
 See each app's own README for setup and usage details.
 

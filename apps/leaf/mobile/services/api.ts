@@ -8,7 +8,7 @@ const API_URLS = {
   development: {
     android: 'http://10.0.2.2:4000', // Update port if needed
     ios: 'http://localhost:4000',
-    physical: 'http://192.168.2.106:4000', // Update with your local IP and port
+    physical: 'http://192.168.136.109:4000', // Update with your local IP and port
   },
   production: 'https://knick-knacks-leaf-production.up.railway.app', // Update with your production URL
 };

@@ -5,6 +5,7 @@ import { explainRegexWithGroq } from "./utils/groq";
 import RegexBreakdown from "./components/RegexBreakdown";
 import RegexInput from "./components/RegexInput";
 import ExplanationDisplay from "./components/ExplanationDisplay";
+import CommonPatterns from "./components/CommonPatterns";
 
 export default function Home() {
   const [regex, setRegex] = React.useState("");
@@ -45,19 +46,29 @@ export default function Home() {
         character-by-character breakdown. Powered by AI.
       </p>
       <div className="w-full max-w-xl flex flex-col gap-6">
+        <CommonPatterns onSelect={setRegex} />
         <RegexInput
           value={regex}
           onChange={setRegex}
           onExplain={handleExplain}
           disabled={isLoading}
         />
-        <ExplanationDisplay explanation={explanation} loading={isLoading} />
+        <ExplanationDisplay
+          explanation={
+            explanation
+              ? { ...explanation, error: (explanation as any).error ?? false }
+              : null
+          }
+          loading={isLoading}
+        />
         {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
         {/* Show a warning if explanation indicates not a regex */}
         {explanation && (explanation as any).notRegex && !isLoading && (
           <div className="text-yellow-700 bg-yellow-50 border border-yellow-300 rounded px-3 py-2 text-sm mt-2">
-            <b>Notice:</b> The input does not appear to be a regular expression.<br />
-            Please enter a valid regex pattern (e.g., <code>^\d+$</code> for numbers, <code>^[a-z]+$</code> for lowercase letters).
+            <b>Notice:</b> The input does not appear to be a regular expression.
+            <br />
+            Please enter a valid regex pattern (e.g., <code>^\d+$</code> for
+            numbers, <code>^[a-z]+$</code> for lowercase letters).
           </div>
         )}
         <RegexBreakdown regex={regex} />

@@ -21,7 +21,24 @@ export async function explainRegexWithGroq({
       notRegex: true,
     };
   }
-  const prompt = `You are a regex expert. Given the following regular expression, return a JSON object with two fields: "summary" (a one-sentence summary), and "breakdown" (an array of objects, each with "part" and "explanation" fields).\n\nIf the input is not a valid regular expression, reply with this exact JSON: {"summary":"This does not appear to be a regular expression.","breakdown":[],"notRegex":true}\n\nExample:\n{\n  "summary": "This regex matches a 10-digit phone number.",\n  "breakdown": [\n    { "part": "^", "explanation": "Start of string" },\n    { "part": "\\d{3}", "explanation": "Exactly 3 digits" }\n  ]\n}\nRegex: ${regex}`;
+  const prompt = `You are a regex expert. Given the following regular expression, return ONLY a JSON object with three fields: 
+- "summary" (a one-sentence summary),
+- "breakdown" (an array of objects, each with "part" and "explanation" fields),
+- and, if the regex is invalid, a "suggestion" field with a helpful fix or advice for correcting the pattern.
+
+DO NOT include any commentary, explanation, or extra text outside the JSON.
+DO NOT wrap the JSON in code blocks or markdown.
+If the input is not a valid regular expression, reply with this exact JSON: {"summary":"This does not appear to be a regular expression.","breakdown":[],"notRegex":true, "suggestion":""}
+
+Example:
+{
+  "summary": "This regex matches a 10-digit phone number.",
+  "breakdown": [
+    { "part": "^", "explanation": "Start of string" },
+    { "part": "\\d{3}", "explanation": "Exactly 3 digits" }
+  ]
+}
+Regex: ${regex}`;
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -64,7 +81,12 @@ export async function explainRegexWithGroq({
   // Extract the first JSON object from the response
   const match = content && content.match(/\{[\s\S]*\}/);
   if (!match) {
-    throw new Error("No JSON object found in model response: " + content);
+    // Instead of throwing, return a user-friendly fallback
+    return {
+      summary: "Sorry, there was a problem explaining this regex. Please try again.",
+      breakdown: [],
+      error: true,
+    };
   }
   try {
     return JSON.parse(match[0]);
@@ -77,6 +99,11 @@ export async function explainRegexWithGroq({
         notRegex: true,
       };
     }
-    throw new Error("Failed to parse JSON from model: " + content);
+    // Instead of throwing, return a user-friendly fallback
+    return {
+      summary: "Sorry, there was a problem explaining this regex. Please try again.",
+      breakdown: [],
+      error: true,
+    };
   }
 }

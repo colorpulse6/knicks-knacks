@@ -99,37 +99,43 @@ Regex: ${regex}`;
   const content = data.choices?.[0]?.message?.content;
   // LOG RAW AI RESPONSE FOR DEBUGGING
   console.log("[GROQ] Raw AI response:", content);
-  // Extract the first JSON object from the response
-  const match = content && content.match(/\{[\s\S]*\}/);
-  if (!match) {
-    // Instead of throwing, return a user-friendly fallback
-    return {
-      summary:
-        "Sorry, there was a problem explaining this regex. Please try again.",
-      breakdown: [],
-      error: true,
-      suggestion: "",
-    };
-  }
+
+  // Try direct JSON parse first (most robust if AI follows instructions)
   try {
-    return JSON.parse(match[0]);
-  } catch (e) {
-    // Try to recover: if model output contains the fallback JSON, extract it
-    if (match[0].includes("notRegex")) {
+    return JSON.parse(content);
+  } catch (e1) {
+    // Fallback: extract first JSON object from the response
+    let match = content && content.match(/\{[\s\S]*\}/);
+    if (!match) {
       return {
-        summary: "This does not appear to be a regular expression.",
+        summary:
+          "Sorry, there was a problem explaining this regex. Please try again.",
         breakdown: [],
-        notRegex: true,
+        error: true,
         suggestion: "",
       };
     }
-    // Instead of throwing, return a user-friendly fallback
-    return {
-      summary:
-        "Sorry, there was a problem explaining this regex. Please try again.",
-      breakdown: [],
-      error: true,
-      suggestion: "",
-    };
+    let jsonString = match[0];
+    // Only double-escape single backslashes not already escaped
+    jsonString = jsonString.replace(/([^\\])\\([^\\])/g, "$1\\\\$2");
+    try {
+      return JSON.parse(jsonString);
+    } catch (e2) {
+      if (jsonString.includes("notRegex")) {
+        return {
+          summary: "This does not appear to be a regular expression.",
+          breakdown: [],
+          notRegex: true,
+          suggestion: "",
+        };
+      }
+      return {
+        summary:
+          "Sorry, there was a problem explaining this regex. Please try again.",
+        breakdown: [],
+        error: true,
+        suggestion: "",
+      };
+    }
   }
 }

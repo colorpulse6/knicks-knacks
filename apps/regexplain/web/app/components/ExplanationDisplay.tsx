@@ -1,7 +1,13 @@
 import React from "react";
 
 interface ExplanationDisplayProps {
-  explanation: { summary: string; breakdown: { part: string; explanation: string }[] } | null;
+  explanation: {
+    summary: string;
+    breakdown: { part: string; explanation: string }[];
+    error: boolean;
+    suggestion?: string;
+    notRegex?: boolean;
+  } | null;
   loading: boolean;
 }
 
@@ -41,27 +47,40 @@ const ExplanationDisplay: React.FC<ExplanationDisplayProps> = ({
           Generating explanation…
         </span>
       ) : explanation ? (
-        <div>
-          {explanation.summary && (
-            <h3 className="font-semibold text-lg mb-3">
-              {explanation.summary}
-            </h3>
-          )}
-          {explanation.breakdown && explanation.breakdown.length > 0 && (
-            <ul className="space-y-3">
-              {explanation.breakdown.map((item, i) => (
-                <li key={i} className="flex items-start">
-                  <span
-                    className="font-mono font-bold bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 px-1 rounded mr-2"
-                  >
-                    {item.part}
-                  </span>
-                  <span className="flex-1">{item.explanation}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        explanation.error ? (
+          <div className="text-red-600 bg-red-100 border border-red-300 rounded px-2 py-1 text-sm mb-2">
+            <b>Sorry, there was a problem explaining this regex.</b> Please try
+            again or check your pattern.
+          </div>
+        ) : (
+          <div>
+            {explanation.summary && (
+              <h3 className="font-semibold text-lg mb-3">
+                {explanation.summary}
+              </h3>
+            )}
+            {explanation.suggestion && explanation.suggestion.trim() !== "" && (
+              <div className="mb-3 text-blue-900 bg-blue-50 border border-blue-200 rounded px-3 py-2 text-sm flex items-start gap-2">
+                <span className="text-xl">💡</span>
+                <span>
+                  <b>Suggestion:</b> {explanation.suggestion}
+                </span>
+              </div>
+            )}
+            {explanation.breakdown && explanation.breakdown.length > 0 && (
+              <ul className="space-y-3">
+                {explanation.breakdown.map((item, i) => (
+                  <li key={i} className="flex items-start">
+                    <span className="font-mono font-bold bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 px-1 rounded mr-2">
+                      {item.part}
+                    </span>
+                    <span className="flex-1">{item.explanation}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )
       ) : (
         <span className="text-gray-400">AI explanation will appear here.</span>
       )}

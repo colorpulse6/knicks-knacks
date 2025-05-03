@@ -1,0 +1,315 @@
+2025-05-03T08:30:02.880074Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie"), AnchoredSystemPathBuf(".turbo/cookies/1.cookie")}
+2025-05-03T08:30:02.880086Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T08:30:03.219271Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/2.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/3.cookie")}
+2025-05-03T08:30:03.219282Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }}))
+2025-05-03T08:30:04.878896Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/4.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log")}
+2025-05-03T08:30:04.878910Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T08:30:05.079549Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/5.cookie")}
+2025-05-03T08:30:05.079558Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }}))
+2025-05-03T08:30:07.579416Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/PromptInput.tsx")}
+2025-05-03T08:30:07.579445Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:30:17.178615Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T08:30:17.178632Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:30:28.078032Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T08:30:28.078044Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:30:40.479642Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T08:30:40.479653Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:35:14.777916Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/ModelSelector.tsx")}
+2025-05-03T08:35:14.777934Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:45:44.300023Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/ModelSelector.tsx")}
+2025-05-03T08:45:44.300032Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:47:47.304670Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next.config.js")}
+2025-05-03T08:47:47.304690Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:47:55.205913Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next.config.ts")}
+2025-05-03T08:47:55.205935Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:48:18.005566Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next-env.d.ts"), AnchoredSystemPathBuf("apps/bot-battle/web/tsconfig.json")}
+2025-05-03T08:48:18.005584Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:49:29.405984Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T08:49:29.406009Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:51:37.905748Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/postcss.config.mjs")}
+2025-05-03T08:51:37.905767Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:51:47.905701Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/postcss.config.mjs")}
+2025-05-03T08:51:47.905721Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:51:47.941893Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T08:52:35.106533Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/tailwind.config.ts")}
+2025-05-03T08:52:35.106552Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:52:35.906359Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next.config.js")}
+2025-05-03T08:52:35.906371Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:52:36.204987Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/tailwind.config.js")}
+2025-05-03T08:52:36.204998Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:53:20.406472Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next.config.js")}
+2025-05-03T08:53:20.406484Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:53:20.406499Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T08:53:50.606495Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/tailwind.config.js")}
+2025-05-03T08:53:50.606514Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T08:53:50.637682Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:12:53.247026Z  WARN turborepo_filewatch::package_watcher: lagged behind 36 processing file watching events
+2025-05-03T09:12:53.409119Z  WARN turborepo_filewatch::package_watcher: lagged behind 162 processing file watching events
+2025-05-03T09:12:53.489695Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T09:12:53.547140Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T09:12:54.814467Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("yarn.lock"), AnchoredSystemPathBuf("package.json")}
+2025-05-03T09:12:54.814478Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-05-03T09:12:56.077394Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/6.cookie")}
+2025-05-03T09:12:56.077412Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T09:12:56.177506Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/7.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/8.cookie"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log")}
+2025-05-03T09:12:56.177526Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }}))
+2025-05-03T09:12:58.477627Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/9.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log")}
+2025-05-03T09:12:58.477646Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }}))
+2025-05-03T09:12:58.777552Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/10.cookie"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log")}
+2025-05-03T09:12:58.777562Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T09:14:43.579051Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json")}
+2025-05-03T09:14:43.579072Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-05-03T09:14:44.679093Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/12.cookie"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/11.cookie"), AnchoredSystemPathBuf(".turbo/cookies/13.cookie")}
+2025-05-03T09:14:44.679119Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T09:14:46.377874Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/14.cookie")}
+2025-05-03T09:14:46.377897Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T09:14:46.480298Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log")}
+2025-05-03T09:14:46.480864Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }}))
+2025-05-03T09:14:47.278390Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/15.cookie")}
+2025-05-03T09:14:47.278400Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }}))
+2025-05-03T09:15:55.778736Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next.config.js")}
+2025-05-03T09:15:55.778747Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:16:09.781757Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/next.config.js")}
+2025-05-03T09:16:09.781780Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:16:09.800821Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:17:43.679497Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/globals.css")}
+2025-05-03T09:17:43.679514Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:18:01.679989Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/globals.css")}
+2025-05-03T09:18:01.680000Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:18:01.680017Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:22:50.382064Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/.env.example")}
+2025-05-03T09:22:50.382088Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:24:32.982694Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:24:32.982704Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:24:35.982035Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:24:35.982046Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:25:16.783245Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:25:16.783263Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:26:07.083421Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/ModelSelector.tsx")}
+2025-05-03T09:26:07.083438Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:29:18.285238Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/ModelSelector.tsx")}
+2025-05-03T09:29:18.285248Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:29:18.285266Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:32:40.486426Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api"), AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm")}
+2025-05-03T09:32:40.486438Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:32:40.486456Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:35:21.286834Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/route.ts")}
+2025-05-03T09:35:21.286845Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:35:45.887794Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T09:35:45.887805Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:36:45.487408Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/route.ts")}
+2025-05-03T09:36:45.487419Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:39:39.888287Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:39:39.888298Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:40:20.789270Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:40:20.789281Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:40:45.090225Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:40:45.090236Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:41:01.588898Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:41:01.588910Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:41:37.677047Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:41:37.677070Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:41:43.975302Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:41:43.975323Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:45:03.575671Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:45:03.575683Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:45:17.375087Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:45:17.375099Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:46:41.475748Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:46:41.475760Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:47:42.376383Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:47:42.376402Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:48:36.576362Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:48:36.576380Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:49:47.676700Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:49:47.676712Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:51:01.877152Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T09:51:01.877165Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:51:01.877182Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:51:46.975227Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("yarn.lock")}
+2025-05-03T09:51:46.975238Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T09:52:25.978015Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:52:25.978037Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:53:40.977231Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T09:53:40.977248Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:53:41.013707Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T09:54:11.277521Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/public/favicon.ico")}
+2025-05-03T09:54:11.277535Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:54:46.778770Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/head.tsx")}
+2025-05-03T09:54:46.778790Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:57:23.088484Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/head.tsx")}
+2025-05-03T09:57:23.088503Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:58:31.698515Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/public/botbattle-icon.png")}
+2025-05-03T09:58:31.698558Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T09:59:08.695494Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/head.tsx")}
+2025-05-03T09:59:08.695506Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:18:26.062446Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/public/botbattle-icon.png")}
+2025-05-03T13:18:26.062466Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:18:31.661049Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/public/botbattle-icon.png")}
+2025-05-03T13:18:31.661127Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:22:32.961010Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/layout.tsx")}
+2025-05-03T13:22:32.961022Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:25:03.461932Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/layout.tsx")}
+2025-05-03T13:25:03.461945Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:37:59.577906Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T13:37:59.577936Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:39:50.478567Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T13:39:50.478577Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:39:50.478593Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T13:42:56.938686Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T13:42:56.938697Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:43:37.038054Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T13:43:37.038065Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:43:37.038098Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T13:45:53.737969Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/utils/llm.ts")}
+2025-05-03T13:45:53.737981Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T13:45:54.237094Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMResponsePanel.tsx")}
+2025-05-03T13:45:54.237107Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:06:57.562460Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T14:06:57.562479Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:07:21.962407Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T14:07:21.962422Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:07:42.062349Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative.ts")}
+2025-05-03T14:07:42.062367Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:08:46.162643Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative.ts")}
+2025-05-03T14:08:46.162657Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:11:17.561936Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T14:11:17.561949Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:16:00.863113Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative")}
+2025-05-03T14:16:00.863124Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:16:00.863142Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T14:16:22.863015Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative/route.ts")}
+2025-05-03T14:16:22.863027Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:18:05.262621Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative/route.ts")}
+2025-05-03T14:18:05.262631Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:18:05.267680Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T14:18:59.063685Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative/route.ts")}
+2025-05-03T14:18:59.063699Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:20:14.162985Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative/route.ts")}
+2025-05-03T14:20:14.163021Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:20:14.191872Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-03T14:22:06.363996Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T14:22:06.364009Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:22:06.463594Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/api/llm/comparative/route.ts")}
+2025-05-03T14:22:06.463616Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:25:52.447497Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/package.json")}
+2025-05-03T14:25:52.447509Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T14:25:52.829234Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package-lock.json"), AnchoredSystemPathBuf("yarn.lock")}
+2025-05-03T14:25:52.829246Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T14:25:53.420782Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("yarn.lock")}
+2025-05-03T14:25:53.420793Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T14:49:32.270246Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T14:49:32.270257Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:03:11.399646Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:11.399656Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:11.617620Z  WARN turborepo_filewatch::package_watcher: lagged behind 94 processing file watching events
+2025-05-03T16:03:11.623030Z  WARN turborepo_filewatch::globwatcher: encountered filewatching error, flushing all globs: channel lagged by 202
+2025-05-03T16:03:11.623063Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T16:03:11.623459Z  WARN turborepo_filewatch::globwatcher: encountered filewatching error, flushing all globs: channel lagged by 83
+2025-05-03T16:03:12.629284Z  WARN turborepo_filewatch::package_watcher: lagged behind 43 processing file watching events
+2025-05-03T16:03:12.629541Z  WARN turborepo_filewatch::globwatcher: encountered filewatching error, flushing all globs: channel lagged by 86
+2025-05-03T16:03:12.639294Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T16:03:12.734363Z  WARN turborepo_filewatch::globwatcher: encountered filewatching error, flushing all globs: channel lagged by 235
+2025-05-03T16:03:12.791089Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T16:03:12.891912Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T16:03:13.207787Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:13.207799Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:13.229717Z  WARN turborepo_filewatch::package_watcher: lagged behind 752 processing file watching events
+2025-05-03T16:03:13.397520Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:13.397531Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:13.792359Z  WARN turborepo_filewatch::globwatcher: encountered filewatching error, flushing all globs: channel lagged by 179
+2025-05-03T16:03:13.798165Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:13.798175Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:14.397984Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:14.397996Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:14.428394Z  WARN turborepo_filewatch::globwatcher: encountered filewatching error, flushing all globs: channel lagged by 220
+2025-05-03T16:03:14.432809Z  WARN turborepo_filewatch::package_watcher: lagged behind 332 processing file watching events
+2025-05-03T16:03:14.433347Z  WARN turborepo_lib::package_changes_watcher: file event lagged
+2025-05-03T16:03:14.799550Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:14.799560Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:15.304942Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-05-03T16:03:15.304954Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-05-03T16:03:23.660983Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("yarn.lock")}
+2025-05-03T16:03:23.661000Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T16:04:30.196416Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/tailwind.config.js")}
+2025-05-03T16:04:30.196437Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:04:31.095484Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:04:31.095497Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:05:03.391596Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("yarn.lock"), AnchoredSystemPathBuf("apps/regexplain/web/package.json")}
+2025-05-03T16:05:03.391606Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("regexplain"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-03T16:05:34.095191Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package-lock.json")}
+2025-05-03T16:05:34.095203Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T16:06:30.695414Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:06:30.695425Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:06:39.695576Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:06:39.695594Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:06:45.694158Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:06:45.694169Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:10:34.393180Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/16.cookie")}
+2025-05-03T16:10:34.393190Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T16:10:34.492150Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/17.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/18.cookie")}
+2025-05-03T16:10:34.492164Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }, WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T16:10:36.792552Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/19.cookie")}
+2025-05-03T16:10:36.792565Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T16:10:36.893184Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log")}
+2025-05-03T16:10:36.893196Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }}))
+2025-05-03T16:10:37.192956Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/20.cookie")}
+2025-05-03T16:10:37.192966Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-03T16:15:44.192443Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T16:15:44.192455Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:16:46.388537Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T16:16:46.388550Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:18:26.888732Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/page.tsx")}
+2025-05-03T16:18:26.888751Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:19:36.696531Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:19:36.696549Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:20:22.197755Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:20:22.197768Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:20:29.998546Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:20:29.998556Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:20:36.699223Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:20:36.699234Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:20:44.298456Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:20:44.298466Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:20:56.498959Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:20:56.498969Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:21:12.298146Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:21:12.298156Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:21:18.398041Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:21:18.398052Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:21:27.198050Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:21:27.198060Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:22:08.997021Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:22:08.997032Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:22:49.271305Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("yarn.lock"), AnchoredSystemPathBuf("apps/bot-battle/web/package.json")}
+2025-05-03T16:22:49.271315Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:24:58.697052Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:24:58.697066Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:25:02.696157Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:25:02.696169Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:26:06.595473Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:26:06.595485Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:26:12.596184Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:26:12.596204Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:27:21.795008Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:27:21.795027Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:29:05.295793Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:29:05.295804Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:29:10.394485Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:29:10.394503Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:29:22.594683Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:29:22.594695Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:29:48.495098Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:29:48.495117Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:31:08.194287Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:31:08.194299Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:31:11.693459Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:31:11.693470Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:31:46.792732Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:31:46.792743Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:31:50.192730Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:31:50.192742Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:32:37.193009Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:32:37.193019Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))
+2025-05-03T16:32:54.493214Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/bot-battle/web/app/components/LLMComparativeAnalysis.tsx")}
+2025-05-03T16:32:54.493226Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@calorie-cam/bot-battle-web"), path: AnchoredSystemPathBuf("apps/bot-battle/web") }}))

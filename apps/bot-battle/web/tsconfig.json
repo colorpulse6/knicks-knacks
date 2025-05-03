@@ -1,0 +1,38 @@
+{
+  "extends": "../../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "build",
+    "rootDir": "src",
+    "baseUrl": "src",
+    "jsx": "preserve",
+    "types": [
+      "node",
+      "jest",
+      "@testing-library/jest-dom"
+    ],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "src",
+    "tests",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
+}

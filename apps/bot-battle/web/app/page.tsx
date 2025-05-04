@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PromptSelector } from "./components/PromptSelector";
 import { PromptInput } from "./components/PromptInput";
 import { ModelSelector } from "./components/ModelSelector";
@@ -76,11 +76,12 @@ export default function Page() {
           ];
         } catch (err: any) {
           // Handle token-related errors specifically
-          const errorMessage = err.message.includes('Token limit exceeded') || 
-                            err.message.includes('API quota exceeded') ||
-                            err.message.includes('RESOURCE_EXHAUSTED')
-          ? `⚠️ ${err.message}`
-          : `Error: ${err.message}`;
+          const errorMessage =
+            err.message.includes("Token limit exceeded") ||
+            err.message.includes("API quota exceeded") ||
+            err.message.includes("RESOURCE_EXHAUSTED")
+              ? `⚠️ ${err.message}`
+              : `Error: ${err.message}`;
           return [model, { loading: false, response: errorMessage }];
         }
       })
@@ -228,19 +229,21 @@ export default function Page() {
                                         str.toUpperCase()
                                       )}
                               </td>
-                              {Object.keys(responses).map((model) => (
-                                <td
-                                  key={`${model}-${metric}`}
-                                  className="px-4 py-2 text-sm"
-                                >
-                                  {metric === "tokensPerSecond"
-                                    ? formatNumber(
-                                        responses[model]?.metrics?.[metric]
-                                      )
-                                    : responses[model]?.metrics?.[metric]}
-                                  {metric === "latencyMs" && " ms"}
-                                </td>
-                              ))}
+                              {Object.keys(responses).map((model) => {
+                                const metricValue =
+                                  responses[model]?.metrics?.[metric];
+                                return (
+                                  <td
+                                    key={`${model}-${metric}`}
+                                    className="px-4 py-2 text-sm"
+                                  >
+                                    {metric === "tokensPerSecond"
+                                      ? formatNumber(metricValue as number)
+                                      : metricValue}
+                                    {metric === "latencyMs" && " ms"}
+                                  </td>
+                                );
+                              })}
                             </tr>
                           )
                       )}
@@ -254,11 +257,15 @@ export default function Page() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {models.map((model) => {
             const response = responses[model];
-            const isTokenError = response.response?.startsWith('⚠️');
+            const isTokenError = response.response?.startsWith("⚠️");
             return (
-              <div 
-                key={model} 
-                className={`border rounded-lg p-4 ${isTokenError ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : ''}`}
+              <div
+                key={model}
+                className={`border rounded-lg p-4 ${
+                  isTokenError
+                    ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                    : ""
+                }`}
               >
                 <LLMResponsePanel
                   model={model}

@@ -9,6 +9,7 @@ interface LLMComparativeAnalysisProps {
   results: { model: string; response: string }[];
   analysis: string | null;
   isLoading: boolean;
+  error?: string;
   onRunAnalysis: () => void;
   open: boolean;
   onClose: () => void;
@@ -19,6 +20,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
   results,
   analysis,
   isLoading,
+  error,
   onRunAnalysis,
   open,
   onClose,
@@ -53,7 +55,11 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
             highlighting strengths and weaknesses.
           </div>
 
-          {isLoading ? (
+          {error ? (
+            <div className="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-md">
+              {error}
+            </div>
+          ) : isLoading ? (
             <div className="space-y-4 animate-pulse">
               <div className="h-6 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
               <div className="space-y-2">
@@ -83,29 +89,31 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
                   ),
                   li: ({ node, children, ...props }) => {
                     const content = children?.toString() || "";
-
-                    // More precise detection for your specific ranking format
-                    const isRankedItem =
-                      /\*\*\d+\.\*\* \*\*Model \d+ \([^)]+\)\*\*/.test(content);
-                    const rankMatch = content.match(
-                      /\*\*(\d+)\.\*\* \*\*Model \d+ \([^)]+\)\*\*/
+                    // Enhanced detection for the specific ranking format
+                    const isFirstPlace =
+                      /\*\*1\.\*\*|\*\*first\*\*|\*\*winner\*\*/i.test(content);
+                    const isSecondPlace = /\*\*2\.\*\*|\*\*second\*\*/i.test(
+                      content
                     );
-                    const rank = rankMatch ? parseInt(rankMatch[1]) : null;
+                    const isThirdPlace = /\*\*3\.\*\*|\*\*third\*\*/i.test(
+                      content
+                    );
 
-                    // Debug logging
-                    console.log("Rank detection:", {
-                      content: content.substring(0, 50),
-                      isRankedItem,
-                      rank,
-                    });
+                    // Check for model ranking patterns like "**1.** **Model 2 (Gemini)**"
+                    const modelRankMatch = content.match(
+                      /\*\*(\d+)\.\*\* \*\*Model (\d+)/i
+                    );
+                    const rank = modelRankMatch
+                      ? parseInt(modelRankMatch[1])
+                      : null;
 
                     return (
                       <li className="flex items-start gap-2">
-                        {rank === 1 ? (
+                        {rank === 1 || isFirstPlace ? (
                           <Trophy className="h-5 w-5 text-yellow-500 flex-shrink-0" />
-                        ) : rank === 2 ? (
+                        ) : rank === 2 || isSecondPlace ? (
                           <Medal className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                        ) : rank === 3 ? (
+                        ) : rank === 3 || isThirdPlace ? (
                           <Award className="h-5 w-5 text-amber-600 flex-shrink-0" />
                         ) : (
                           <Star className="h-5 w-5 text-gray-300 flex-shrink-0" />

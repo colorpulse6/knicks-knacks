@@ -1,6 +1,13 @@
 // Utility functions to call LLM APIs for BotBattle
 // Each function should call its respective API and return a normalized response
 
+import {
+  APIError,
+  parseGeminiError,
+  parseGroqError,
+  parseOpenAIError,
+} from "./apiErrors";
+
 export type LLMModel =
   | "claude"
   | "gemini"
@@ -68,7 +75,16 @@ async function judgeWithGroq(
     signal,
   });
 
-  if (!res.ok) throw new Error("Groq judge API error");
+  if (!res.ok) {
+    let errorMsg = `Groq judge API error: ${res.statusText}`;
+    try {
+      const errorJson = await res.json();
+      throw parseGroqError(errorJson);
+    } catch (e) {
+      throw new APIError(errorMsg, "api_error");
+    }
+  }
+
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content || "";
 
@@ -109,7 +125,13 @@ async function callGroqAPI(
   const latencyMs = performance.now() - start;
 
   if (!response.ok) {
-    throw new Error(`Groq API error: ${response.statusText}`);
+    let errorMsg = `Groq API error: ${response.statusText}`;
+    try {
+      const errorJson = await response.json();
+      throw parseGroqError(errorJson);
+    } catch (e) {
+      throw new APIError(errorMsg, "api_error");
+    }
   }
 
   const data = await response.json();
@@ -176,9 +198,10 @@ async function callGeminiAPI(
     let errorMsg = `Gemini API error: ${response.statusText}`;
     try {
       const errorJson = await response.json();
-      errorMsg += ` | ${JSON.stringify(errorJson)}`;
-    } catch {}
-    throw new Error(errorMsg);
+      throw parseGeminiError(errorJson);
+    } catch (e) {
+      throw new APIError(errorMsg, "api_error");
+    }
   }
 
   const data = await response.json();
@@ -220,7 +243,13 @@ async function callOpenAIAPI(
   const latencyMs = performance.now() - start;
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    let errorMsg = `OpenAI API error: ${response.statusText}`;
+    try {
+      const errorJson = await response.json();
+      throw parseOpenAIError(errorJson);
+    } catch (e) {
+      throw new APIError(errorMsg, "api_error");
+    }
   }
 
   const data = await response.json();

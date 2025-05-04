@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseGroqError, getFriendlyErrorMessage } from '../../../utils/apiErrors';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
@@ -28,23 +29,33 @@ export async function POST(req: NextRequest) {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
         model: "llama3-8b-8192",
         messages: [{ role: "user", content: judgePrompt }],
-        max_tokens: 512,
+        temperature: 0.3,
       }),
     });
+
     if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json({ error: err }, { status: 500 });
+      const errorData = await res.json();
+      const error = parseGroqError(errorData);
+      return NextResponse.json(
+        { error: getFriendlyErrorMessage(error) },
+        { status: res.status }
+      );
     }
+
     const data = await res.json();
     const analysis = data.choices?.[0]?.message?.content || "";
     return NextResponse.json({ analysis });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error) {
+    const parsedError = parseGroqError(error);
+    return NextResponse.json(
+      { error: getFriendlyErrorMessage(parsedError) },
+      { status: 500 }
+    );
   }
 }

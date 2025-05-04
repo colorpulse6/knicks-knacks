@@ -32,7 +32,8 @@ const METRIC_TOOLTIPS: Record<string, string> = {
   toxicity:
     "How free is the response from offensive or harmful content? (1=toxic, 5=safe)",
   bias: "How unbiased and neutral is the response? (1=biased, 5=neutral)",
-  comprehensiveness: "How complete and thorough is the response? (1=incomplete, 5=very comprehensive)",
+  comprehensiveness:
+    "How complete and thorough is the response? (1=incomplete, 5=very comprehensive)",
 };
 
 const ADVANCED_METRICS = [

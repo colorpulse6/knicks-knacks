@@ -6,6 +6,7 @@ import { ModelSelector } from "./components/ModelSelector";
 import { LLMResponsePanel } from "./components/LLMResponsePanel";
 import { LLMComparativeAnalysis } from "./components/LLMComparativeAnalysis";
 import { LLMModel } from "./utils/llm";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 async function fetchLLMResponse(
   model: LLMModel,
@@ -45,6 +46,7 @@ export default function Page() {
   );
   const [isComparativeLoading, setIsComparativeLoading] = useState(false);
   const [openComparativeAnalysis, setOpenComparativeAnalysis] = useState(false);
+  const [showMetricsComparison, setShowMetricsComparison] = useState(false);
 
   const handlePromptTemplateChange = (val: string) => {
     setSelectedPrompt(val);
@@ -63,6 +65,7 @@ export default function Page() {
         models.map((m) => [m, { loading: true, response: "" }])
       )
     );
+
     const results = await Promise.all(
       models.map(async (model) => {
         try {
@@ -107,21 +110,10 @@ export default function Page() {
     }
   }
 
-  useEffect(() => {
-    const allDone =
-      models.length > 0 &&
-      models.every(
-        (model) => responses[model]?.response && !responses[model]?.loading
-      );
-
-    if (allDone && !openComparativeAnalysis) {
-      console.log("All models completed - opening analysis");
-      setOpenComparativeAnalysis(true);
-      if (!comparativeAnalysis) {
-        runComparativeAnalysis();
-      }
-    }
-  }, [responses, models]);
+  function formatNumber(num: number | undefined): string {
+    if (num === undefined) return "";
+    return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
 
   return (
     <>
@@ -144,28 +136,6 @@ export default function Page() {
         />
         <PromptInput value={prompt} onChange={setPrompt} />
         <ModelSelector selected={models} onChange={setModels} />
-        <div className="flex gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => {
-              console.log("Current analysis state:", {
-                openComparativeAnalysis,
-                comparativeAnalysis,
-              });
-              setOpenComparativeAnalysis(true);
-            }}
-            className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 rounded"
-          >
-            Debug: Show Analysis
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpenComparativeAnalysis(false)}
-            className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900 rounded"
-          >
-            Debug: Hide Analysis
-          </button>
-        </div>
         <button
           type="submit"
           className="bg-primary text-white px-4 py-2 rounded mb-6 disabled:opacity-50"
@@ -173,6 +143,108 @@ export default function Page() {
         >
           Run Benchmark
         </button>
+
+        {Object.keys(responses).length > 0 && (
+          <>
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenComparativeAnalysis(true);
+                  if (!comparativeAnalysis) {
+                    runComparativeAnalysis();
+                  }
+                }}
+                className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 rounded"
+              >
+                Show Comprehensive Analysis
+              </button>
+            </div>
+
+            <div className="mb-6 border rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowMetricsComparison(!showMetricsComparison)}
+                className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800"
+              >
+                <span className="font-medium">Side by side comparison</span>
+                {showMetricsComparison ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
+              </button>
+
+              {showMetricsComparison && (
+                <div className="overflow-x-auto p-3">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                          Metric
+                        </th>
+                        {Object.keys(responses).map((model) => (
+                          <th
+                            key={model}
+                            className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400"
+                          >
+                            {model}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {[
+                        "latencyMs",
+                        "inputTokens",
+                        "outputTokens",
+                        "totalTokens",
+                        "tokensPerSecond",
+                        "wordCount",
+                        "charCount",
+                        "outputTokensPerSecond",
+                        "inputTokensPerSecond",
+                        "totalTokensPerSecond",
+                      ].map(
+                        (metric) =>
+                          responses[Object.keys(responses)[0]]?.metrics?.[
+                            metric
+                          ] !== undefined && (
+                            <tr key={metric}>
+                              <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                                {metric === "latencyMs"
+                                  ? "Latency (ms)"
+                                  : metric === "tokensPerSecond"
+                                  ? "Tokens/sec"
+                                  : metric
+                                      .replace(/([A-Z])/g, " $1")
+                                      .replace(/^./, (str) =>
+                                        str.toUpperCase()
+                                      )}
+                              </td>
+                              {Object.keys(responses).map((model) => (
+                                <td
+                                  key={`${model}-${metric}`}
+                                  className="px-4 py-2 text-sm"
+                                >
+                                  {metric === "tokensPerSecond"
+                                    ? formatNumber(
+                                        responses[model]?.metrics?.[metric]
+                                      )
+                                    : responses[model]?.metrics?.[metric]}
+                                  {metric === "latencyMs" && " ms"}
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        )}
         <div className="grid md:grid-cols-2 gap-4">
           {models.map((m) => (
             <LLMResponsePanel

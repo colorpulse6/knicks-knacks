@@ -75,7 +75,13 @@ export default function Page() {
             { loading: false, response: res.response, metrics: res.metrics },
           ];
         } catch (err: any) {
-          return [model, { loading: false, response: `Error: ${err.message}` }];
+          // Handle token-related errors specifically
+          const errorMessage = err.message.includes('Token limit exceeded') || 
+                            err.message.includes('API quota exceeded') ||
+                            err.message.includes('RESOURCE_EXHAUSTED')
+          ? `⚠️ ${err.message}`
+          : `Error: ${err.message}`;
+          return [model, { loading: false, response: errorMessage }];
         }
       })
     );
@@ -245,16 +251,24 @@ export default function Page() {
             </div>
           </>
         )}
-        <div className="grid md:grid-cols-2 gap-4">
-          {models.map((m) => (
-            <LLMResponsePanel
-              key={m}
-              model={m}
-              isLoading={responses[m]?.loading}
-              response={responses[m]?.response}
-              metrics={responses[m]?.metrics}
-            />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {models.map((model) => {
+            const response = responses[model];
+            const isTokenError = response.response?.startsWith('⚠️');
+            return (
+              <div 
+                key={model} 
+                className={`border rounded-lg p-4 ${isTokenError ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : ''}`}
+              >
+                <LLMResponsePanel
+                  model={model}
+                  isLoading={response.loading}
+                  response={response.response}
+                  metrics={response.metrics}
+                />
+              </div>
+            );
+          })}
         </div>
       </form>
     </>

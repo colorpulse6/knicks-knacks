@@ -25,7 +25,6 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
   open,
   onClose,
 }) => {
-  console.log(analysis);
   return (
     <Dialog.Root open={open} onOpenChange={onClose}>
       <Dialog.Portal>
@@ -51,7 +50,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
           </div>
 
           <div className="text-xs text-gray-600 dark:text-gray-300 mb-4">
-            Groq will compare and critique all LLM responses for this prompt,
+            We will compare and critique all LLM responses for this prompt,
             highlighting strengths and weaknesses.
           </div>
 

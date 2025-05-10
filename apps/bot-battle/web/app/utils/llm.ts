@@ -279,6 +279,130 @@ async function callOpenAIAPI(
   };
 }
 
+async function callOpenRouterClaude(
+  prompt: string,
+  signal?: AbortSignal
+): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+
+  const start = performance.now();
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://bot-battle.com",
+        "X-Title": "Bot Battle",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "anthropic/claude-3-sonnet",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+      signal,
+    }
+  );
+
+  const latencyMs = performance.now() - start;
+
+  if (!response.ok) {
+    let errorMsg = `OpenRouter Claude error (${response.status}): ${response.statusText}`;
+    try {
+      const errorJson = await response.json();
+      errorMsg += ` - ${errorJson.error?.message || JSON.stringify(errorJson)}`;
+      throw new APIError(errorMsg, "api_error");
+    } catch (e) {
+      throw new APIError(errorMsg, "api_error");
+    }
+  }
+
+  const data = await response.json();
+  const message = data.choices?.[0]?.message?.content || "";
+  const usage = data.usage || {};
+
+  return {
+    response: message,
+    metrics: {
+      latencyMs: Math.round(latencyMs),
+      inputTokens: usage.prompt_tokens,
+      outputTokens: usage.completion_tokens,
+      totalTokens: usage.total_tokens,
+      tokensPerSecond:
+        usage.completion_tokens && latencyMs > 0
+          ? usage.completion_tokens / (latencyMs / 1000)
+          : undefined,
+      wordCount: message.split(/\s+/).filter(Boolean).length,
+      charCount: message.length,
+    },
+  };
+}
+
+// --- Helper for OpenRouter (DeepSeek) ---
+async function callOpenRouterDeepSeek(
+  prompt: string,
+  signal?: AbortSignal
+): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+
+  const start = performance.now();
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://bot-battle.com",
+        "X-Title": "Bot Battle",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "deepseek/deepseek-chat",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      }),
+      signal,
+    }
+  );
+  console.log("OPEN ROUTER RESPONSE: ", response);
+  const latencyMs = performance.now() - start;
+
+  if (!response.ok) {
+    let errorMsg = `OpenRouter API error (${response.status}): ${response.statusText}`;
+    try {
+      const errorJson = await response.json();
+      errorMsg += ` - ${errorJson.error?.message || JSON.stringify(errorJson)}`;
+      throw new APIError(errorMsg, "api_error");
+    } catch (e) {
+      throw new APIError(errorMsg, "api_error");
+    }
+  }
+
+  const data = await response.json();
+  const message = data.choices?.[0]?.message?.content || "";
+  const usage = data.usage || {};
+
+  return {
+    response: message,
+    metrics: {
+      latencyMs: Math.round(latencyMs),
+      inputTokens: usage.prompt_tokens,
+      outputTokens: usage.completion_tokens,
+      totalTokens: usage.total_tokens,
+      tokensPerSecond:
+        usage.completion_tokens && latencyMs > 0
+          ? usage.completion_tokens / (latencyMs / 1000)
+          : undefined,
+      wordCount: message.split(/\s+/).filter(Boolean).length,
+      charCount: message.length,
+    },
+  };
+}
+
 export async function callLLM(
   model: LLMModel,
   prompt: string,
@@ -296,15 +420,15 @@ export async function callLLM(
       case "gemini":
         result = await callGeminiAPI(prompt, signal);
         break;
+      case "deepseek":
+        result = await callOpenRouterDeepSeek(prompt, signal);
+        break;
       case "openrouter":
       case "openai":
         result = await callOpenAIAPI(prompt, signal);
         break;
       case "claude":
-        result.response = "[Claude response placeholder]";
-        break;
-      case "deepseek":
-        result.response = "[DeepSeek response placeholder]";
+        result = await callOpenRouterClaude(prompt, signal);
         break;
       case "mistral":
         result.response = "[Mistral response placeholder]";

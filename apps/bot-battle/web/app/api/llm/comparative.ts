@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     }
     const data = await res.json();
     const analysis = data.choices?.[0]?.message?.content || "";
+
     return NextResponse.json({ analysis });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

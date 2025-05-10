@@ -57,6 +57,7 @@ export default function Page() {
     e.preventDefault();
     setOpenComparativeAnalysis(false);
     setComparativeAnalysis(null);
+
     const usedPrompt = prompt.trim();
     if (!usedPrompt || models.length === 0) return;
     // Set loading state
@@ -257,7 +258,7 @@ export default function Page() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {models.map((model) => {
             const response = responses[model];
-            const isTokenError = response.response?.startsWith("⚠️");
+            const isTokenError = response?.response?.startsWith("⚠️");
             return (
               <div
                 key={model}
@@ -269,9 +270,9 @@ export default function Page() {
               >
                 <LLMResponsePanel
                   model={model}
-                  isLoading={response.loading}
-                  response={response.response}
-                  metrics={response.metrics}
+                  isLoading={response?.loading}
+                  response={response?.response}
+                  metrics={response?.metrics}
                 />
               </div>
             );

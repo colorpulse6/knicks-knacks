@@ -8,6 +8,7 @@
     "apps/calorie-cam/mobile",
     "apps/calorie-cam/backend",
     "apps/calorie-cam/supabase",
+    "apps/bot-battle/web",
     "packages/ui",
     "packages/shared",
     "packages/config"

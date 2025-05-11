@@ -1,5 +1,5 @@
 {
-  "name": "@calorie-cam/mobile",
+  "name": "@knicks-knacks/calorie-cam-mobile",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -8,7 +8,8 @@
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
     "clean": "npx expo start --clear",
-    "dev": "npx expo start"
+    "dev": "npx expo start",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
@@ -22,7 +23,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
-    "expo": "~52.0.0",
+    "expo": "^53.0.9",
     "expo-camera": "~16.0.18",
     "expo-constants": "^17.0.8",
     "expo-doctor": "^1.12.8",
@@ -30,8 +31,8 @@
     "expo-image-picker": "^16.0.6",
     "expo-secure-store": "^14.0.1",
     "expo-status-bar": "~2.0.1",
-    "react": "18.3.1",
-    "react-native": "0.76.9",
+    "react": "18.2.0",
+    "react-native": "0.73.6",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "^4.10.0",
@@ -44,7 +45,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@tsconfig/react-native": "^3.0.5",
-    "@types/react": "~18.3.12",
+    "@types/react": "~18.2.0",
     "babel-plugin-syntax-hermes-parser": "^0.28.1",
     "typescript": "^5.3.3"
   },

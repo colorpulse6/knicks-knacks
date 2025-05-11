@@ -1,23 +1,25 @@
 {
-  "name": "leaf",
+  "name": "@knicks-knacks/leaf-mobile",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "dev": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "expo": "~52.0.46",
+    "expo": "^53.0.9",
     "expo-status-bar": "~2.0.1",
-    "react": "18.3.1",
-    "react-native": "0.76.9",
+    "react": "18.2.0",
+    "react-native": "0.73.6",
     "react-native-get-random-values": "^1.11.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~18.3.12",
+    "@types/react": "~18.2.0",
     "@types/uuid": "^10.0.0",
     "typescript": "^5.3.3"
   },

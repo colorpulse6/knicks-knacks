@@ -4,7 +4,6 @@
   "private": true,
   "workspaces": [
     "apps/*/*",
-    "apps/bot-battle/*",
     "packages/*"
   ],
   "scripts": {
@@ -16,7 +15,12 @@
     "postinstall": "turbo run build --filter=@knicks-knacks/*",
     "calorie-cam:backend": "cd apps/calorie-cam/backend && yarn dev",
     "calorie-cam:mobile": "cd apps/calorie-cam/mobile && npx expo start",
-    "calorie-cam:dev": "echo 'Starting CalorieCam backend and mobile app separately. Use yarn calorie-cam:backend and yarn calorie-cam:mobile in different terminals.'"
+    "calorie-cam:dev": "echo 'Starting CalorieCam backend and mobile app separately. Use yarn calorie-cam:backend and yarn calorie-cam:mobile in different terminals.'",
+    "leaf:backend": "cd apps/leaf/backend && yarn dev",
+    "leaf:mobile": "cd apps/leaf/mobile && npx expo start",
+    "leaf:dev": "echo 'Starting Leaf backend and mobile app separately. Use yarn leaf:backend and leaf:mobile in different terminals.'",
+    "regexplain:dev": "cd apps/regexplain/web && yarn dev",
+    "bot-battle:dev": "cd apps/bot-battle/web && yarn dev"
   },
   "devDependencies": {
     "turbo": "^1.10.16"
@@ -29,6 +33,6 @@
   "dependencies": {
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.5"
+    "tailwindcss": "^4.0.5"
   }
 }

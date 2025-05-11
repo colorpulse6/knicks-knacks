@@ -1,6 +1,6 @@
 # Knicks Knacks Monorepo
 
-A modern monorepo structure using TurboRepo, Next.js, Vite, React Native, and more.
+A modern monorepo structure using TurboRepo, Next.js, React Native, and TypeScript. This repository uses Yarn workspaces to manage dependencies and Turborepo to orchestrate builds, linting, and testing across all projects.
 
 ## Structure
 
@@ -48,6 +48,12 @@ This monorepo contains multiple full-stack apps, each with their own mobile, bac
   - Smart warnings for common regex mistakes (e.g., double backslashes)
   - Robust error handling for non-regex input
 - **Location:** `apps/regexplain/web`
+  - `web/`: Next.js (React) web frontend
+
+### BotBattle
+
+- **Description:** A web application for benchmarking different LLM APIs and comparing their performance.
+- **Location:** `apps/bot-battle/web`
   - `web/`: Next.js (React) web frontend
 
 See each app's own README for setup and usage details.
@@ -190,8 +196,85 @@ yarn test
 - **Testing**: Vitest, Testing Library, Playwright
 - **Icons**: Lucide React
 
+## Development
+
+### Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/colorpulse6/knicks-knacks.git
+   cd knicks-knacks
+   ```
+
+2. **Install dependencies**
+   ```bash
+   yarn install
+   ```
+
+3. **Run a specific app**
+   ```bash
+   # CalorieCam
+   yarn calorie-cam:mobile
+   yarn calorie-cam:backend
+   
+   # Leaf
+   yarn leaf:mobile
+   yarn leaf:backend
+   
+   # RegExplain
+   yarn regexplain:dev
+   
+   # BotBattle
+   yarn bot-battle:dev
+   ```
+
+4. **Run commands across all apps and packages**
+   ```bash
+   # Build all packages and apps
+   yarn build
+   
+   # Run dev servers in all packages and apps
+   yarn dev
+   
+   # Run linting across all packages and apps
+   yarn lint
+   
+   # Run tests across all packages and apps
+   yarn test
+   ```
+
+### Package Dependencies
+
+- **`@knicks-knacks/ui`**: Shared UI components for web and mobile apps
+- **`@knicks-knacks/shared`**: Shared utilities, hooks, and types
+- **`@knicks-knacks/eslint-config`**: Standardized ESLint configuration
+- **`@knicks-knacks/config`**: Shared configuration for TypeScript, Tailwind, etc.
+
+### Monorepo Structure
+
+This monorepo uses:
+- **Turborepo**: For efficient build caching and task running
+- **Yarn Workspaces**: For package management and dependency sharing
+- **TypeScript**: For type safety across all projects
+- **ESLint**: For consistent code quality
+- **Tailwind CSS**: For web styling (not used in mobile apps)
+
+### Adding a New Component to the UI Package
+
+1. Create your component in `packages/ui/src/components/`
+2. For cross-platform components, use the `Platform.OS` check:
+   ```tsx
+   import { Platform } from 'react-native';
+   
+   if (Platform.OS === 'web') {
+     // Web-specific rendering
+   } else {
+     // Native-specific rendering
+   }
+   ```
+3. Export your component from `packages/ui/src/index.tsx`
+
 ## Additional Notes
 
-- Use Yarn workspaces for dependency management and script execution.
 - If you encounter dependency issues, try `yarn clean` and then `yarn install`.
 - For more details on each package, see their respective directories.

@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-neutral-light dark:bg-neutral-dark min-h-screen">
+      <body className="min-h-screen">
         <header className="w-full py-6 bg-gray-900 text-white flex items-center justify-center shadow mb-8">
           <img
             src="/botbattle-icon.png"

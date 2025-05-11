@@ -1,5 +1,5 @@
 {
-  "name": "regexplain",
+  "name": "@knicks-knacks/regexplain-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,17 +13,22 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "regexp-tree": "^0.1.27",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.5",
+    "@tailwindcss/postcss": "^4.0.5",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

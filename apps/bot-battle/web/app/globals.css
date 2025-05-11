@@ -1,10 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss"; /* Changed from @tailwind base/components/utilities */
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+@theme inline { /* Added to match regexplain structure */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* bot-battle uses Arial/Helvetica directly in body, not CSS vars for font-family like regexplain's Geist */
 }
 
 @media (prefers-color-scheme: dark) {

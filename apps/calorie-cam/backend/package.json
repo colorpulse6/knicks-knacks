@@ -1,5 +1,5 @@
 {
-  "name": "@calorie-cam/backend",
+  "name": "@knicks-knacks/calorie-cam-backend",
   "version": "1.0.0",
   "description": "Backend server for CalorieCam - a food calorie tracking app",
   "main": "dist/server.js",
@@ -11,6 +11,7 @@
     "build": "tsc",
     "prestart": "yarn build",
     "start": "node dist/server.js",
+    "lint": "eslint . --ext .js,.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

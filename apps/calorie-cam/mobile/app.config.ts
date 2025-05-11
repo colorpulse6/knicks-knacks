@@ -14,6 +14,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
+    experiments: {
+      newArch: false, // Explicitly disable the New Architecture
+    },
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,

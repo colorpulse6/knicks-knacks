@@ -12,6 +12,7 @@ dist
 out
 build
 .vercel
+.turbo
 
 # environment variables - be specific to catch all instances
 .env

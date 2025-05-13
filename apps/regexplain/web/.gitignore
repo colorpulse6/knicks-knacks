@@ -4,11 +4,14 @@
 /node_modules
 /.pnp
 .pnp.*
+# Yarn 2+ configuration
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+# Explicitly ignore the cache directory
+.yarn/cache/
 
 # testing
 /coverage

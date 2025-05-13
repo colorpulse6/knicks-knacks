@@ -2,16 +2,11 @@
 node_modules
 .pnp
 .pnp.js
-# Yarn 2+ configuration - completely ignore the cache directory
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-# Make sure cache is ignored even with the above exceptions
-.yarn/cache/
-.yarn/install-state.gz
+# Yarn 2+ configuration - completely ignore all yarn directories and files
+.yarn/
+.yarn
+.pnp.*
+.yarn-integrity
 
 # testing
 coverage

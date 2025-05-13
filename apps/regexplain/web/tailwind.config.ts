@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss';
 
-export default {
+const config: Config = {
   darkMode: "class",
   theme: {
     extend: {
@@ -29,12 +29,10 @@ export default {
   },
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
-    '../../../packages/ui/**/*.{js,ts,jsx,tsx}',
+    './public/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../../packages/ui/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  plugins: [],
-  // Tailwind v4 metadata to enable optimizations
-  metadata: {
-    version: "4.0.0",
-    layers: ["base", "components", "utilities"],
-  }
+  plugins: []
 } satisfies Config;
+
+export default config;

@@ -62,26 +62,30 @@ See each app's own README for setup and usage details.
 
 ### Prerequisites
 
-- Node.js 16+
-- Yarn (v1.x)
+- Node.js 18+ 
+- Yarn Berry (v4+) - automatically handled by Corepack
 
 ### Installation
 
 ```bash
+# Enable Corepack (if not already enabled)
+corepack enable
+
 # Install dependencies
 yarn install
 ```
 
 ## Package Manager
 
-This monorepo uses **Yarn** instead of PNPM because:
+This monorepo uses **Yarn Berry (v4)** instead of PNPM because:
 
 1. **Expo Compatibility**: PNPM has compatibility issues with Expo's dependency management system
 2. **Turborepo Integration**: Yarn provides more stable integration with Turborepo for our specific configuration
+3. **Performance**: Yarn Berry offers improved performance with its modern architecture
 
-### Yarn Usage
+### Yarn Berry Usage
 
-Make sure to use Yarn for all package operations:
+This project uses Yarn Berry (v4) with the Node Modules linker for maximum compatibility. Use Yarn for all package operations:
 
 ```bash
 # Install dependencies
@@ -95,10 +99,16 @@ yarn calorie-cam:mobile    # For the mobile app
 yarn calorie-cam:backend   # For the backend
 
 # Add a dependency to a specific app
-yarn workspace @calorie-cam/mobile add [package-name]
+yarn workspace @knicks-knacks/calorie-cam-mobile add [package-name]
 
 # Add a dependency to a specific shared package
 yarn workspace @knicks-knacks/ui add [package-name]
+
+# Update Yarn Berry to a newer version
+yarn set version latest
+
+# Check for dependency issues
+yarn dlx @yarnpkg/doctor
 ```
 
 ### Troubleshooting

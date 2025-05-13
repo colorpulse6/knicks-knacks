@@ -12,27 +12,24 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name '.turbo' -type d -prune -exec rm -rf '{}' + && find . -name 'dist' -type d -prune -exec rm -rf '{}' + && find . -name '.next' -type d -prune -exec rm -rf '{}' +",
-    "postinstall": "turbo run build --filter=\"packages/*\"",
+    "prepare": "turbo run build --filter=@knicks-knacks/ui --filter=@knicks-knacks/shared",
+    "build:packages": "turbo run build --filter=\"@knicks-knacks/{ui,shared}\"",
     "calorie-cam:backend": "cd apps/calorie-cam/backend && yarn dev",
-    "calorie-cam:mobile": "cd apps/calorie-cam/mobile && npx expo start",
+    "calorie-cam:mobile": "cd apps/calorie-cam/mobile && yarn expo start",
     "calorie-cam:dev": "echo 'Starting CalorieCam backend and mobile app separately. Use yarn calorie-cam:backend and yarn calorie-cam:mobile in different terminals.'",
     "leaf:backend": "cd apps/leaf/backend && yarn dev",
-    "leaf:mobile": "cd apps/leaf/mobile && npx expo start",
+    "leaf:mobile": "cd apps/leaf/mobile && yarn expo start",
     "leaf:dev": "echo 'Starting Leaf backend and mobile app separately. Use yarn leaf:backend and leaf:mobile in different terminals.'",
     "regexplain:dev": "cd apps/regexplain/web && yarn dev",
     "bot-battle:dev": "cd apps/bot-battle/web && yarn dev"
   },
   "devDependencies": {
+    "babel-plugin-module-resolver": "^5.0.2",
     "turbo": "^1.10.16"
   },
   "packageManager": "yarn@4.9.1",
   "main": "index.js",
   "repository": "https://github.com/colorpulse6/knicks-knacks.git",
   "author": "<colorpulse@gmail.com>",
-  "license": "MIT",
-  "dependencies": {
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.5"
-  }
+  "license": "MIT"
 }

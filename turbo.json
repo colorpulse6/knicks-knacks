@@ -12,7 +12,18 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "mobile#dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": []
     },
     "lint": {
       "dependsOn": [
@@ -26,5 +37,9 @@
       ],
       "outputs": []
     }
-  }
+  },
+  "globalDependencies": [
+    "$EXPO_METRO_CACHE_KEY",
+    ".env"
+  ]
 }

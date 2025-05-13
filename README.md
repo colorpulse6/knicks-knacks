@@ -248,7 +248,6 @@ yarn test
 - **`@knicks-knacks/ui`**: Shared UI components for web and mobile apps
 - **`@knicks-knacks/shared`**: Shared utilities, hooks, and types
 - **`@knicks-knacks/eslint-config`**: Standardized ESLint configuration
-- **`@knicks-knacks/config`**: Shared configuration for TypeScript, Tailwind, etc.
 
 ### Monorepo Structure
 

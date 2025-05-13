@@ -3,13 +3,24 @@
   "version": "0.0.1",
   "private": true,
   "main": "index.js",
+  "type": "commonjs",
+  "exports": {
+    ".": "./index.js",
+    "./base": "./base.js",
+    "./next": "./next.js",
+    "./next-js": "./next-js.mjs",
+    "./react-internal": "./react-internal.js"
+  },
   "dependencies": {
-    "eslint": "^8.38.0",
-    "eslint-config-next": "^13.3.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-config-turbo": "^1.9.3",
-    "eslint-plugin-react": "^7.32.2",
-    "@typescript-eslint/eslint-plugin": "^5.59.0",
-    "@typescript-eslint/parser": "^5.59.0"
+    "@eslint/js": "^9.0.0",
+    "@next/eslint-plugin-next": "^15.3.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.3.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-turbo": "^1.12.4",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0"
   }
 }

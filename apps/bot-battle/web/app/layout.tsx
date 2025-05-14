@@ -1,5 +1,6 @@
 import "./globals.css";
 import React from "react";
+import Image from "next/image";
 
 export const metadata = {
   title: "BotBattle",
@@ -15,10 +16,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen">
         <header className="w-full py-6 bg-gray-900 text-white flex items-center justify-center shadow mb-8">
-          <img
+          <Image
             src="/botbattle-icon.png"
             alt="BotBattle logo"
-            className="h-10 w-10 mr-4"
+            width={40}
+            height={40}
+            className="mr-4"
           />
           <h1 className="text-2xl font-bold tracking-tight">
             BotBattle – LLM Benchmarking

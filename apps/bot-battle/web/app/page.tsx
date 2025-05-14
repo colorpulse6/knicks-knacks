@@ -79,8 +79,8 @@ export default function Page() {
           // Handle token-related errors specifically
           const errorMessage =
             err.message.includes("Token limit exceeded") ||
-            err.message.includes("API quota exceeded") ||
-            err.message.includes("RESOURCE_EXHAUSTED")
+              err.message.includes("API quota exceeded") ||
+              err.message.includes("RESOURCE_EXHAUSTED")
               ? `⚠️ ${err.message}`
               : `Error: ${err.message}`;
           return [model, { loading: false, response: errorMessage }];
@@ -126,7 +126,6 @@ export default function Page() {
   return (
     <>
       <LLMComparativeAnalysis
-        prompt={prompt.trim()}
         results={Object.keys(responses).map((model) => ({
           model,
           response: responses[model].response,
@@ -216,15 +215,15 @@ export default function Page() {
                       ].map(
                         (metric) =>
                           responses[Object.keys(responses)[0]]?.metrics?.[
-                            metric
+                          metric
                           ] !== undefined && (
                             <tr key={metric}>
                               <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                                 {metric === "latencyMs"
                                   ? "Latency (ms)"
                                   : metric === "tokensPerSecond"
-                                  ? "Tokens/sec"
-                                  : metric
+                                    ? "Tokens/sec"
+                                    : metric
                                       .replace(/([A-Z])/g, " $1")
                                       .replace(/^./, (str) =>
                                         str.toUpperCase()
@@ -262,11 +261,10 @@ export default function Page() {
             return (
               <div
                 key={model}
-                className={`border rounded-lg p-4 ${
-                  isTokenError
+                className={`border rounded-lg p-4 ${isTokenError
                     ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
                     : ""
-                }`}
+                  }`}
               >
                 <LLMResponsePanel
                   model={model}

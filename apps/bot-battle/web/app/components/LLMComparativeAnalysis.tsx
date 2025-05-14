@@ -5,7 +5,6 @@ import remarkGfm from "remark-gfm";
 import { Medal, Trophy, Award, Star } from "lucide-react";
 
 interface LLMComparativeAnalysisProps {
-  prompt: string;
   results: { model: string; response: string }[];
   analysis: string | null;
   isLoading: boolean;
@@ -16,7 +15,6 @@ interface LLMComparativeAnalysisProps {
 }
 
 export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
-  prompt,
   results,
   analysis,
   isLoading,
@@ -86,7 +84,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
                   ul: ({ node, ...props }) => (
                     <ul className="space-y-3 pl-5" {...props} />
                   ),
-                  li: ({ node, children, ...props }) => {
+                  li: ({ children }) => {
                     const content = children?.toString() || "";
                     // Enhanced detection for the specific ranking format
                     const isFirstPlace =

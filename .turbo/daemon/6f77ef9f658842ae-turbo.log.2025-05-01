@@ -1,0 +1,44 @@
+2025-05-01T19:22:36.319266Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/1.cookie"), AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie")}
+2025-05-01T19:22:36.319276Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-01T19:22:36.589136Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log"), AnchoredSystemPathBuf(".turbo/cookies/2.cookie"), AnchoredSystemPathBuf(".turbo/cookies/3.cookie")}
+2025-05-01T19:22:36.589146Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }}))
+2025-05-01T19:22:38.219822Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/4.cookie"), AnchoredSystemPathBuf("packages/shared/.turbo/turbo-build.log")}
+2025-05-01T19:22:38.219831Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@knicks-knacks/shared"), path: AnchoredSystemPathBuf("packages/shared") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-05-01T19:22:38.520233Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/5.cookie"), AnchoredSystemPathBuf("packages/ui/.turbo/turbo-build.log")}
+2025-05-01T19:22:38.520242Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@knicks-knacks/ui"), path: AnchoredSystemPathBuf("packages/ui") }}))
+2025-05-01T19:23:22.499144Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/page.tsx")}
+2025-05-01T19:23:22.499152Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:24:14.896028Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components")}
+2025-05-01T19:24:14.896038Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:24:14.896056Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-01T19:24:37.898517Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components/ExplanationDisplay.tsx"), AnchoredSystemPathBuf("apps/regexplain/web/app/components/RegexInput.tsx")}
+2025-05-01T19:24:37.898528Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:24:38.096122Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components/RegexBreakdown.tsx")}
+2025-05-01T19:24:38.096134Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:40:13.386144Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/page.tsx")}
+2025-05-01T19:40:13.386154Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:43:06.385745Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/utils")}
+2025-05-01T19:43:06.385756Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:43:06.385773Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-05-01T19:43:30.585634Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/utils/groq.ts")}
+2025-05-01T19:43:30.585644Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:43:54.685287Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/page.tsx")}
+2025-05-01T19:43:54.685298Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:44:23.284615Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components/RegexTester.tsx")}
+2025-05-01T19:44:23.284634Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:44:34.383670Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/page.tsx")}
+2025-05-01T19:44:34.383760Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:46:15.482837Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components/RegexTester.tsx")}
+2025-05-01T19:46:15.482849Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:50:28.680221Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/utils/groq.ts")}
+2025-05-01T19:50:28.680232Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:52:08.178483Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/utils/groq.ts")}
+2025-05-01T19:52:08.178492Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:52:27.079433Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/utils/groq.ts")}
+2025-05-01T19:52:27.079446Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:54:37.577430Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/utils/groq.ts")}
+2025-05-01T19:54:37.577442Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T19:54:58.577681Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components/ExplanationDisplay.tsx")}
+2025-05-01T19:54:58.577716Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))
+2025-05-01T20:48:04.473059Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/regexplain/web/app/components/ExplanationDisplay.tsx")}
+2025-05-01T20:48:04.473100Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/regexplain/web") }}))

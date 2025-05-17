@@ -1,15 +1,10 @@
-module.exports = {
-  root: true,
-  extends: [
-    "next",
-    "turbo",
-    "prettier",
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-  ],
-  plugins: ["@typescript-eslint"],
-  parser: "@typescript-eslint/parser",
-  rules: {
-    "@typescript-eslint/no-unused-vars": ["warn"],
-  },
-};
+/**
+ * Legacy exports for backwards compatibility
+ * Prefer using the specific exports (base, next, etc.) as shown in the Turborepo docs
+ */
+module.exports = require('./base');
+
+// Also export the specialized configs
+module.exports.next = require('./next');
+module.exports.base = require('./base');
+module.exports.reactInternal = require('./react-internal');

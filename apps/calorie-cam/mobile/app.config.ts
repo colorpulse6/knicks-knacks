@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { ExpoConfig, ConfigContext } from "expo/config";
+import { ExpoConfig } from "expo/config";
 
-export default ({ config }: ConfigContext): ExpoConfig => {
+export default (): ExpoConfig => {
   return {
     name: "CalorieCam",
     slug: "calorie-cam",
@@ -14,6 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
+    experiments: {},
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,

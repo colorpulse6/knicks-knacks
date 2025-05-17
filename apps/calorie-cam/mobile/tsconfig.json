@@ -1,18 +1,31 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
     "paths": {
       "*": [
         "src/*"
+      ],
+      "@knicks-knacks/ui": [
+        "../../../packages/ui/src"
+      ],
+      "@knicks-knacks/ui/*": [
+        "../../../packages/ui/src/*"
+      ],
+      "@knicks-knacks/shared": [
+        "../../../packages/shared/src"
+      ],
+      "@knicks-knacks/shared/*": [
+        "../../../packages/shared/src/*"
       ]
     },
     "jsx": "react-native",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "resolveJsonModule": true
   },
   "include": [
     "**/*.ts",

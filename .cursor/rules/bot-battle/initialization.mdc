@@ -1,0 +1,141 @@
+Project name: BotBattle
+
+Project Goal:
+Build a frontend-only Next.js + TypeScript app to benchmark and analyze responses from multiple free LLM APIs. Users select predefined prompt templates or custom prompts and receive detailed analytics on LLM performance.
+
+⸻
+
+🌟 Integrated LLM Models
+
+Start with these models (all currently have publicly available APIs):
+	•	Anthropic Claude (Claude 3 Haiku/Sonnet)
+	•	Google Gemini (Gemini 1.5 Pro)
+	•	Groq (LLaMA, Mixtral)
+	•	DeepSeek
+	•	Mistral AI (7B, Mixtral)
+	•	Perplexity AI (Sonar series)
+	•	Cohere (Command R)
+	•	OpenRouter models (various)
+
+⸻
+
+📌 Prompt Templates
+
+Provide clear, reusable prompt templates as selectable options:
+
+General QA
+Prompt: "What is the capital of France and why is it historically significant?"
+
+Creative Writing
+Prompt: "Write a short story about a lost astronaut discovering an ancient civilization."
+
+Summarization
+Prompt: "Summarize the following article into three concise sentences: {user pastes article}"
+
+Code Generation
+Prompt: "Generate a Python function that calculates Fibonacci numbers using memoization."
+
+Math Problem Solving
+Prompt: "Solve step-by-step: If x² + 2x - 3 = 0, find the values of x."
+
+Translation
+Prompt: "Translate the following English sentence into Spanish: 'Tomorrow will be sunny and warm.'"
+
+Instruction Following
+Prompt: "List five effective strategies to improve remote team productivity."
+
+📐 Detailed Metrics for Response Evaluation
+
+🕑 Performance Metrics
+	•	Latency (Total response time in ms)
+	•	First-byte latency (ms)
+	•	Tokens per second (TPS)
+
+📃 Structural Metrics
+	•	Input token count
+	•	Output token count
+	•	Word count
+	•	Character count
+	•	Formatting presence (Markdown, Bullet points, Code blocks, Headers)
+	•	Length classification (Concise: <50 tokens, Moderate: 50-150 tokens, Verbose: >150 tokens)
+
+📊 Content Quality Metrics (evaluated via additional LLM, such as Claude or GPT-4o)
+	•	Accuracy (Factual correctness) — Score (1-10)
+	•	Relevance (How directly the output addresses the prompt) — Score (1-10)
+	•	Clarity (Grammar, readability, logical coherence) — Score (1-10)
+	•	Creativity (Novelty, originality, narrative strength) — Score (1-10, primarily for creative prompts)
+	•	Readability level (Flesch-Kincaid or GPT evaluated)
+	•	Safety/Toxicity evaluation (Safe or flagged)
+	•	Bias evaluation (Neutral, mildly biased, strongly biased, evaluated by an LLM)
+
+🔄 Consistency Metrics
+	•	Response determinism (Variation score from multiple identical prompts)
+
+⸻
+
+🎯 Functional Flow for Cursor Agent (Detailed)
+
+Step 1: User Interaction
+	•	User chooses from prompt template dropdown.
+	•	Alternatively, user can manually type or paste a custom prompt.
+
+Step 2: Model Selection
+	•	Users can toggle which LLM APIs to query (checkboxes/multi-select dropdown).
+
+Step 3: Query Execution
+	•	Send prompt to selected LLM APIs simultaneously using fetch/Axios.
+	•	Record precise timestamps at start and completion of each query.
+
+Step 4: Initial Metrics Computation
+	•	Immediately calculate latency, token count, word count, character count.
+	•	Visually indicate loading state and partial results to the user.
+
+Step 5: Secondary Metrics Evaluation
+	•	Automatically feed each LLM output to an evaluator LLM (e.g., Claude 3 or GPT-4o) to compute advanced metrics (accuracy, clarity, relevance, creativity, toxicity, bias).
+	•	Receive evaluation scores, parse, and normalize them for consistent comparison.
+
+Step 6: Results Visualization
+	•	Display results clearly side-by-side or in an easy-to-read comparative card view.
+	•	Use radar charts or bar graphs to show qualitative metrics clearly.
+	•	Allow sorting by latency, accuracy, relevance, creativity, etc.
+
+⸻
+
+🎨 Frontend UX/UI Considerations
+	•	Clean interface using Tailwind CSS
+	•	Dropdown for prompts; clear textual input areas
+	•	Interactive model selection interface (checkbox, toggle button)
+	•	Visual loading indicators, smooth animations using Framer Motion
+	•	Color-coded metrics for immediate visual interpretation
+	•	Collapsible response details to keep the main view concise
+
+    📁 Suggested Project Structure
+
+    /src
+  /components
+    - PromptDropdown.tsx
+    - PromptInput.tsx
+    - ModelSelector.tsx
+    - ResponseCard.tsx
+    - MetricsChart.tsx
+    - LoadingIndicator.tsx
+  /hooks
+    - useLLMQuery.ts
+    - useMetricsEvaluation.ts
+  /utils
+    - api.ts (handles API calls)
+    - evaluators.ts (handles secondary LLM evaluations)
+    - metrics.ts (calculations of tokens, words, latency, etc.)
+  /data
+    - prompts.ts (prompt templates and categories)
+    - models.ts (LLM model configs and API details)
+  /types
+    - index.ts (TypeScript interfaces & enums for models, prompts, metrics)
+
+    📌 Next Steps for MVP
+	•	Immediate: Set up Next.js, Tailwind, and basic frontend scaffolding.
+	•	Phase 1: Implement prompt selection, custom input, and basic API querying (latency & token counting).
+	•	Phase 2: Integrate additional LLM-based analytics (accuracy, creativity, toxicity).
+	•	Phase 3: Expand UX, improve visualizations, and add sorting/filtering functionality.
+
+⸻

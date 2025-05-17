@@ -1,19 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { getWorksByAuthor, getCoverUrl, getCoverUrlByOlid } from '../services/openLibrary';
-import useTheme from '../hooks/useTheme';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../types/navigation';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import {
+  getWorksByAuthor,
+  getCoverUrl,
+  getCoverUrlByOlid,
+} from "../services/openLibrary";
+import useTheme from "../hooks/useTheme";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../src/types/navigation";
 
-type BookDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'BookDetails'>;
+type BookDetailsScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  "BookDetails"
+>;
 
-export default function BookDetailsScreen({ route, navigation }: BookDetailsScreenProps) {
+export default function BookDetailsScreen({
+  route,
+  navigation,
+}: BookDetailsScreenProps) {
   const { themeObj } = useTheme();
   const { book } = route.params;
   const [suggestedBooks, setSuggestedBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     navigation.setOptions({ title: book.title });
@@ -33,19 +50,44 @@ export default function BookDetailsScreen({ route, navigation }: BookDetailsScre
       data={suggestedBooks.filter((b) => b.title !== book.title)}
       keyExtractor={(item) => item.key || item.title}
       renderItem={({ item }) => (
-        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
           {item.cover_edition_key ? (
             <Image
-              source={{ uri: getCoverUrlByOlid(item.cover_edition_key, 'M') }}
-              style={{ width: 40, height: 60, borderRadius: 4, marginRight: 12 }}
+              source={{ uri: getCoverUrlByOlid(item.cover_edition_key, "M") }}
+              style={{
+                width: 40,
+                height: 60,
+                borderRadius: 4,
+                marginRight: 12,
+              }}
               resizeMode="cover"
             />
           ) : (
-            <View style={{ width: 40, height: 60, borderRadius: 4, backgroundColor: themeObj.card, marginRight: 12 }} />
+            <View
+              style={{
+                width: 40,
+                height: 60,
+                borderRadius: 4,
+                backgroundColor: themeObj.card,
+                marginRight: 12,
+              }}
+            />
           )}
           <View style={{ flex: 1 }}>
-            <Text style={[styles.searchTitle, { color: themeObj.text }]}>{item.title}</Text>
-            <Text style={[styles.searchAuthor, { color: themeObj.textSecondary }]}>{item.author_name?.[0]}</Text>
+            <Text style={[styles.searchTitle, { color: themeObj.text }]}>
+              {item.title}
+            </Text>
+            <Text
+              style={[styles.searchAuthor, { color: themeObj.textSecondary }]}
+            >
+              {item.author_name?.[0]}
+            </Text>
           </View>
         </TouchableOpacity>
       )}
@@ -55,16 +97,29 @@ export default function BookDetailsScreen({ route, navigation }: BookDetailsScre
             {book.cover_url ? (
               <Image source={{ uri: book.cover_url }} style={styles.cover} />
             ) : (
-              <View style={[styles.cover, { backgroundColor: themeObj.card }]} />
+              <View
+                style={[styles.cover, { backgroundColor: themeObj.card }]}
+              />
             )}
             <View style={styles.info}>
-              <Text style={[styles.title, { color: themeObj.text }]}>{book.title}</Text>
-              <Text style={[styles.author, { color: themeObj.textSecondary }]}>{book.author}</Text>
+              <Text style={[styles.title, { color: themeObj.text }]}>
+                {book.title}
+              </Text>
+              <Text style={[styles.author, { color: themeObj.textSecondary }]}>
+                {book.author}
+              </Text>
             </View>
           </View>
-          <Text style={[styles.sectionTitle, { color: themeObj.text }]}>Suggested Books by {book.author}</Text>
-          {loading && <ActivityIndicator color={themeObj.primary} style={{ marginVertical: 16 }} />}
-          {error && <Text style={{ color: 'red' }}>{error}</Text>}
+          <Text style={[styles.sectionTitle, { color: themeObj.text }]}>
+            Suggested Books by {book.author}
+          </Text>
+          {loading && (
+            <ActivityIndicator
+              color={themeObj.primary}
+              style={{ marginVertical: 16 }}
+            />
+          )}
+          {error && <Text style={{ color: "red" }}>{error}</Text>}
         </>
       }
       style={{ flex: 1, backgroundColor: themeObj.background, padding: 16 }}
@@ -76,8 +131,8 @@ export default function BookDetailsScreen({ route, navigation }: BookDetailsScre
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 18,
   },
   cover: {
@@ -88,20 +143,20 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   author: {
     fontSize: 16,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 12,
     marginBottom: 8,
   },
@@ -110,7 +165,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderRadius: 8,
     padding: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   suggestedCover: {
     width: 80,
@@ -120,14 +175,14 @@ const styles = StyleSheet.create({
   },
   suggestedTitle: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   searchTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   searchAuthor: {
     fontSize: 14,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
 });

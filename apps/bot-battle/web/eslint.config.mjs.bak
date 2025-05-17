@@ -1,0 +1,21 @@
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { nextJsConfig } from "@knicks-knacks/eslint-config/next-js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Use flat config format for ESLint v9
+const eslintConfig = [
+  ...nextJsConfig,
+  // Add project-specific settings
+  {
+    settings: {
+      next: {
+        rootDir: __dirname
+      }
+    }
+  }
+];
+
+export default eslintConfig;

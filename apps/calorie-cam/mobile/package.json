@@ -1,7 +1,7 @@
 {
   "name": "@knicks-knacks/calorie-cam-mobile",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {
     "start": "yarn expo start",
     "android": "yarn expo start --android",

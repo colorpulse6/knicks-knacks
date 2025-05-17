@@ -2734,6 +2734,8 @@ __metadata:
     react-native-get-random-values: "npm:^1.11.0"
     react-native-safe-area-context: "npm:^5.4.0"
     react-native-screens: "npm:^4.10.0"
+    tailwind-rn: "npm:^4.2.0"
+    tailwindcss: "npm:^3.3.0"
     typescript: "npm:^5.3.3"
   languageName: unknown
   linkType: soft

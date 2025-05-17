@@ -5,14 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { enableScreens } from "react-native-screens";
-import MainScreen from "./src/screens/MainScreen";
-import HistoryScreen from "./src/screens/HistoryScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
-import SplashScreen from "./src/components/SplashScreen";
+import MainScreen from "./screens/MainScreen";
+import HistoryScreen from "./screens/HistoryScreen";
+import SettingsScreen from "./screens/SettingsScreen";
+import SplashScreen from "./components/SplashScreen";
 import { Ionicons } from "@expo/vector-icons";
 import * as Font from "expo-font";
-import { ThemeProvider } from "./src/context/ThemeContext";
-import { useTheme } from "./src/hooks/useTheme";
+import { ThemeProvider } from "./context/ThemeContext";
+import { useTheme } from "./hooks/useTheme";
 
 // Enable screens for react-navigation
 enableScreens();

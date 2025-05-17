@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { PromptSelector } from "./components/PromptSelector";
 import { PromptInput } from "./components/PromptInput";
 import { ModelSelector } from "./components/ModelSelector";
@@ -7,6 +7,8 @@ import { LLMResponsePanel } from "./components/LLMResponsePanel";
 import { LLMComparativeAnalysis } from "./components/LLMComparativeAnalysis";
 import { LLMModel } from "./utils/llm";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
+import { useApiKeyStore } from "./utils/apiKeyStore";
 
 async function fetchLLMResponse(
   model: LLMModel,
@@ -48,6 +50,16 @@ export default function Page() {
   const [openComparativeAnalysis, setOpenComparativeAnalysis] = useState(false);
   const [showMetricsComparison, setShowMetricsComparison] = useState(false);
 
+  // Check if the user has any API keys set
+  const apiKeys = useApiKeyStore((state) => state.apiKeys);
+  const hasApiKeys = Object.keys(apiKeys).length > 0;
+
+  // Handler for model selection changes
+  const handleModelChange = (newModels: LLMModel[]) => {
+    console.log("Models changed to:", newModels);
+    setModels([...newModels]); // Create a new array to ensure state update
+  };
+
   const handlePromptTemplateChange = (val: string) => {
     setSelectedPrompt(val);
     setPrompt(val);
@@ -79,8 +91,8 @@ export default function Page() {
           // Handle token-related errors specifically
           const errorMessage =
             err.message.includes("Token limit exceeded") ||
-              err.message.includes("API quota exceeded") ||
-              err.message.includes("RESOURCE_EXHAUSTED")
+            err.message.includes("API quota exceeded") ||
+            err.message.includes("RESOURCE_EXHAUSTED")
               ? `⚠️ ${err.message}`
               : `Error: ${err.message}`;
           return [model, { loading: false, response: errorMessage }];
@@ -125,6 +137,28 @@ export default function Page() {
 
   return (
     <>
+      {!hasApiKeys && (
+        <div className="mb-6 p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400 rounded-md">
+          <div className="flex items-start">
+            <div className="flex-grow">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                Using fallback API keys
+              </h3>
+              <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                You're currently using shared API keys with rate limits. For
+                better performance, you can
+                <Link
+                  href={{ pathname: "/settings" }}
+                  className="ml-1 underline font-medium"
+                >
+                  add your own API keys
+                </Link>
+                .
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <LLMComparativeAnalysis
         results={Object.keys(responses).map((model) => ({
           model,
@@ -142,7 +176,7 @@ export default function Page() {
           onChange={handlePromptTemplateChange}
         />
         <PromptInput value={prompt} onChange={setPrompt} />
-        <ModelSelector selected={models} onChange={setModels} />
+        <ModelSelector selected={models} onChange={handleModelChange} />
         <button
           type="submit"
           className="bg-primary text-white px-4 py-2 rounded mb-6 disabled:opacity-50"
@@ -215,7 +249,7 @@ export default function Page() {
                       ].map(
                         (metric) =>
                           responses[Object.keys(responses)[0]]?.metrics?.[
-                          metric
+                            metric
                           ] !== undefined && (
                             <tr key={metric}>
                               <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
@@ -224,10 +258,10 @@ export default function Page() {
                                   : metric === "tokensPerSecond"
                                     ? "Tokens/sec"
                                     : metric
-                                      .replace(/([A-Z])/g, " $1")
-                                      .replace(/^./, (str) =>
-                                        str.toUpperCase()
-                                      )}
+                                        .replace(/([A-Z])/g, " $1")
+                                        .replace(/^./, (str) =>
+                                          str.toUpperCase()
+                                        )}
                               </td>
                               {Object.keys(responses).map((model) => {
                                 const metricValue =
@@ -261,10 +295,11 @@ export default function Page() {
             return (
               <div
                 key={model}
-                className={`border rounded-lg p-4 ${isTokenError
-                    ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                    : ""
-                  }`}
+                className={`border rounded-lg p-4 ${
+                  isTokenError
+                    ? "bg-red-50 dark:bg-red-900/20"
+                    : "bg-gray-50 dark:bg-gray-800/50 shadow-sm"
+                }`}
               >
                 <LLMResponsePanel
                   model={model}

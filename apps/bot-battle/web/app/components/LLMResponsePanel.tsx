@@ -82,7 +82,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-white dark:bg-gray-900 shadow">
+    <div>
       <div className="font-bold mb-2">{model}</div>
       {isLoading ? (
         <div className="text-gray-500">Loading...</div>

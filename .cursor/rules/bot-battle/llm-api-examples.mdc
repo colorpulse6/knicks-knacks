@@ -1,0 +1,204 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const chatCompletion = await openai.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'gpt-4o', // Or any other model ID like 'gpt-4.1-mini'
+    });
+
+    return NextResponse.json({ response: chatCompletion.choices.message.content });
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    // It's good practice to check the error type for more specific messages
+    if (error instanceof OpenAI.APIError) {
+      return NextResponse.json({ error: error.message, status: error.status }, { status: error.status |
+| 500 });
+    }
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY |
+| "");
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    // For text-only input, use the gemini-pro model
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' }); // Or 'gemini-1.5-pro-latest'
+
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+
+    return NextResponse.json({ response: text });
+  } catch (error) {
+    console.error('Google Gemini API error:', error);
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+import { NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const message = await anthropic.messages.create({
+      model: 'claude-3-7-sonnet-20250219', // Or other models like 'claude-3-5-haiku-20241022'
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    // The response structure might vary; check Anthropic's documentation
+    // For Claude 3, content is an array of blocks.
+    let responseText = '';
+    if (message.content && message.content.length > 0 && message.content.type === 'text') {
+      responseText = message.content.text;
+    }
+
+    return NextResponse.json({ response: responseText });
+  } catch (error) {
+    console.error('Anthropic API error:', error);
+    if (error instanceof Anthropic.APIError) {
+        return NextResponse.json({ error: error.message, status: error.status }, { status: error.status |
+| 500 });
+    }
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+import { NextResponse } from 'next/server';
+import MistralClient from '@mistralai/mistralai';
+
+const apiKey = process.env.MISTRAL_API_KEY;
+
+if (!apiKey) {
+  throw new Error("MISTRAL_API_KEY is not defined in environment variables.");
+}
+
+const client = new MistralClient(apiKey);
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const chatResponse = await client.chat({
+      model: 'mistral-large-latest', // Or other models like 'mistral-small-latest'
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    return NextResponse.json({ response: chatResponse.choices.message.content });
+  } catch (error) {
+    console.error('Mistral API error:', error);
+    // Add specific error handling for Mistral if their SDK provides typed errors
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+import { NextResponse } from 'next/server';
+import { CohereClient } from 'cohere-ai';
+
+const cohere = new CohereClient({
+  token: process.env.COHERE_API_KEY |
+| "",
+});
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const chat = await cohere.chat({
+      model: 'command-r-plus', // Or 'command-r'
+      message: prompt,
+      // For multi-turn, you would use the 'chatHistory' parameter
+    });
+    
+    // The response structure for cohere.chat is slightly different
+    // 'text' contains the direct response string
+    return NextResponse.json({ response: chat.text });
+  } catch (error) {
+    console.error('Cohere API error:', error);
+    // Add specific error handling for Cohere if their SDK provides typed errors
+    // For example, checking `error.statusCode` or `error.message`
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+import { NextResponse } from 'next/server';
+import { AI21Client } from 'ai21';
+
+const client = new AI21Client({
+  apiKey: process.env.AI21_API_KEY,
+});
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const response = await client.chat.completions.create({
+      model: 'jamba-large', // Or 'jamba-mini'
+      messages: [{ role: 'user', content: prompt }],
+      // maxTokens, temperature, etc. can be added here
+    });
+    
+    // The response structure might vary; check AI21's documentation
+    // Assuming it's similar to OpenAI's structure for completions
+    let responseText = '';
+    if (response.choices && response.choices.length > 0 && response.choices.message?.content) {
+        responseText = response.choices.message.content;
+    }
+
+    return NextResponse.json({ response: responseText });
+  } catch (error) {
+    console.error('AI21 API error:', error);
+    // Add specific error handling for AI21 if their SDK provides typed errors
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}

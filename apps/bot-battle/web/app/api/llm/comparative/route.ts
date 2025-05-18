@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseGroqError, getFriendlyErrorMessage } from '../../../utils/apiErrors';
+import {
+  parseGroqError,
+  getFriendlyErrorMessage,
+} from "../../../utils/apiErrors";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
@@ -19,11 +22,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Compose a comparative judging prompt
+  // Format model names from new provider/model format if available
   const responsesText = results
-    .map((r, i) => `Model ${i + 1} (${r.model}):\n${r.response}`)
+    .map((r, i) => {
+      let modelName;
+      if (r.providerId && r.modelId) {
+        // New format with separate provider and model IDs
+        modelName = `${r.providerId}/${r.modelId}`;
+      } else if (r.model) {
+        // Legacy format with single model string
+        modelName = r.model;
+      } else {
+        modelName = `Model ${i + 1}`;
+      }
+      return `Model ${i + 1} (${modelName}):\n${r.response}`;
+    })
     .join("\n\n");
-  const judgePrompt = `You are an expert LLM evaluator. Given the following prompt and the responses from multiple models, provide a comparative analysis.\n\n**Formatting Instructions:**\n- Use clear, bold section titles for each model (e.g., **Model 1 (OpenAI)**), and for the overall analysis and ranking.\n- For each model, include a short summary, then list strengths and weaknesses as bullet points.\n- At the end, provide a clearly titled, ranked list of models (best to worst) with a one-sentence justification for each rank.\n- Use Markdown for all formatting.\n- Do NOT use Markdown tables.\n- Use only headings, bold, italics, and bullet points.\n- Do NOT include any raw HTML.\n- Do NOT repeat the prompt or responses in your output.\n\n**Prompt:** ${prompt}\n\n**Responses:**\n${responsesText}`;
+
+  const judgePrompt = `You are an expert LLM evaluator. Given the following prompt and the responses from multiple models, provide a comparative analysis.\n\n**Formatting Instructions:**\n- Use clear, bold section titles for each model (e.g., **Model 1 (OpenAI/gpt-4o)**), and for the overall analysis and ranking.\n- For each model, include a short summary, then list strengths and weaknesses as bullet points.\n- At the end, provide a clearly titled, ranked list of models (best to worst) with a one-sentence justification for each rank.\n- Use Markdown for all formatting.\n- Do NOT use Markdown tables.\n- Use only headings, bold, italics, and bullet points.\n- Do NOT include any raw HTML.\n- Do NOT repeat the prompt or responses in your output.\n\n**Prompt:** ${prompt}\n\n**Responses:**\n${responsesText}`;
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

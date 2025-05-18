@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface LLMResponsePanelProps {
   model: string;
   isLoading?: boolean;
-  response?: string;
+  response?: string | React.ReactNode;
   metrics?: Record<string, string | number | undefined>;
 }
 
@@ -56,6 +57,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
   const [accuracy, setAccuracy] = useState<
     "accurate" | "inaccurate" | "unsure" | null
   >(null);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   function renderMetric(
     label: string,
@@ -82,14 +84,37 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
   }
 
   return (
-    <div>
-      <div className="font-bold mb-2">{model}</div>
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+      <div className="flex justify-between items-center mb-3">
+        <div className="font-bold">{model}</div>
+        {!isLoading && response && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            type="button"
+            className="flex items-center text-sm text-blue-600 hover:underline"
+            aria-expanded={isExpanded}
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp size={16} className="mr-1" />
+                Hide Response
+              </>
+            ) : (
+              <>
+                <ChevronDown size={16} className="mr-1" />
+                Show Response
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
       {isLoading ? (
         <div className="text-gray-500">Loading...</div>
       ) : (
         <>
-          <pre className="whitespace-pre-wrap text-sm mb-2">{response}</pre>
-          <div className="text-xs text-gray-700 dark:text-gray-300 mb-2">
+          {/* Metrics panel - now above the response */}
+          <div className="text-xs text-gray-700 dark:text-gray-300 mb-3 bg-gray-50 dark:bg-gray-800 p-3 rounded">
             {metrics && (
               <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
                 {metrics.latencyMs !== undefined &&
@@ -135,7 +160,18 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
               </ul>
             )}
           </div>
-          <div className="flex items-center gap-4 mt-2">
+
+          {/* Collapsible response */}
+          {isExpanded && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
+              <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-96">
+                {response}
+              </pre>
+            </div>
+          )}
+
+          {/* Human rating controls */}
+          <div className="flex items-center gap-4 mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
             <div>
               <span className="mr-1">Human rating:</span>
               {[1, 2, 3, 4, 5].map((star) => (

@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import { Medal, Trophy, Award, Star } from "lucide-react";
 
 interface LLMComparativeAnalysisProps {
-  results: { model: string; response: string }[];
+  results: { model: string; response: string | React.ReactNode }[];
   analysis: string | null;
   isLoading: boolean;
   error?: string;

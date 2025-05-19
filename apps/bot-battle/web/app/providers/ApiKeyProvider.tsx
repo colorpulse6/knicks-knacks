@@ -10,7 +10,6 @@ import {
 import { useStore } from "zustand";
 import {
   type ApiKeyStore,
-  type ApiKeyState,
   createApiKeyStore,
   initApiKeyStore,
 } from "../utils/apiKeyStore";

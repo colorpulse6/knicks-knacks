@@ -10,8 +10,6 @@ import {
   ChevronUp,
   Info,
   Briefcase,
-  FileJson,
-  Terminal,
   Zap,
   DollarSign,
   Lock,
@@ -88,7 +86,7 @@ function ModelAvailabilityInfo() {
               </span>
               <div>
                 <span className="font-medium">App Key Models:</span> Available
-                using BotBattle's API key (no cost to you)
+                using BotBattle&apos;s API key (no cost to you)
               </div>
             </li>
             <li className="flex items-start">
@@ -290,7 +288,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
                           {model.costType === "appKeyPermissive" && (
                             <div className="flex items-center text-green-600 dark:text-green-400">
                               <Gift size={12} className="mr-1.5 opacity-70" />{" "}
-                              Free with app's key
+                              Free with app&apos;s key
                             </div>
                           )}
                           {model.costType === "free" && (

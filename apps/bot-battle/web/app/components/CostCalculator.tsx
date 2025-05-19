@@ -1,9 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  LLM_REGISTRY,
-  LLMModelSpec,
-  LLMProviderSpec,
-} from "../core/llm-registry";
+import { LLM_REGISTRY } from "../core/llm-registry";
 import { estimateTokensForPrompt } from "../utils/tokenCounter";
 import { SelectedLLM } from "./ModelSelector";
 import { Info, RefreshCw } from "lucide-react";

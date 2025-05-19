@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useTransition, useEffect } from "react";
+import React, { useState } from "react";
 import { PromptSelector } from "./components/PromptSelector";
 import { PromptInput } from "./components/PromptInput";
 import { ModelSelector, SelectedLLM } from "./components/ModelSelector";
@@ -8,7 +8,7 @@ import { LLMComparativeAnalysis } from "./components/LLMComparativeAnalysis";
 import { ChevronDown, ChevronUp, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { useApiKeyStore } from "./providers/ApiKeyProvider";
-import { LLM_REGISTRY, getModelSpec } from "./core/llm-registry";
+import { LLM_REGISTRY } from "./core/llm-registry";
 import { CostCalculator } from "./components/CostCalculator";
 
 // Create a unique ID for each selected model to use as map keys
@@ -199,7 +199,7 @@ export default function Page() {
     try {
       // Extract model responses for analysis
       const modelResponses = Object.entries(responses).map(
-        ([key, responseData]) => ({
+        ([_, responseData]) => ({
           model: responseData.displayName,
           // Convert ReactNode responses to strings for API calls
           response:
@@ -279,8 +279,8 @@ export default function Page() {
                 Using fallback API keys
               </h3>
               <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                You're currently using shared API keys with rate limits. For
-                better performance, you can
+                You&apos;re currently using shared API keys with rate limits.
+                For better performance, you can
                 <Link
                   href={{ pathname: "/settings" }}
                   className="ml-1 underline font-medium"
@@ -294,7 +294,7 @@ export default function Page() {
         </div>
       )}
       <LLMComparativeAnalysis
-        results={Object.entries(responses).map(([key, data]) => ({
+        results={Object.entries(responses).map(([_, data]) => ({
           model: data.displayName,
           response: data.response,
         }))}

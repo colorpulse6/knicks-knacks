@@ -2,7 +2,6 @@
 
 import { APIError } from "../../apiErrors";
 import { getApiKey } from "../api-keys";
-import { handleApiError } from "../utils";
 
 // --- Generic Helper for any model via OpenRouter ---
 // This will be used for all our new providers (meta, nousresearch, microsoft, qwen, etc.)

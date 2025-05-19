@@ -174,13 +174,13 @@ export function ApiKeyInput({
         </p>
         {isPersistenceEnabled ? (
           <p>
-            • Your API key is stored in your browser's localStorage and will
-            persist between sessions until you clear it.
+            • Your API key is stored in your browser&apos;s localStorage and
+            will persist between sessions until you clear it.
           </p>
         ) : (
           <p>
-            • Your API key is stored in your browser's memory for this session
-            only.
+            • Your API key is stored in your browser&apos;s memory for this
+            session only.
           </p>
         )}
         <p>

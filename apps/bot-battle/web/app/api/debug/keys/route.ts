@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   // Only available in development mode for security
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(

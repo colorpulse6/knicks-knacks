@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callLLMWithProviderAndModel } from "../../utils/llm";
+import { callLLMWithProviderAndModel } from "../../utils/llm/index";
 import { isModelAvailable, getModelSpec } from "../../core/llm-registry";
 
 // Providers that use OpenRouter under the hood
@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
     if (process.env.AI21_API_KEY) availableApiKeys.ai21 = true;
     if (process.env.META_API_KEY) availableApiKeys.meta = true;
     if (process.env.MICROSOFT_API_KEY) availableApiKeys.microsoft = true;
+    if (process.env.DEEPSEEK_API_KEY) availableApiKeys.deepseek = true;
+    if (process.env.QWEN_API_KEY) availableApiKeys.qwen = true;
 
     // Special case for OpenRouter-based providers with appKeyPermissive models
     if (OPENROUTER_BASED_PROVIDERS.includes(providerId.toLowerCase())) {

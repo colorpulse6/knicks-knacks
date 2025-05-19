@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { ApiKeyInput } from "../components/ApiKeyInput";
 import { useApiKeyStore } from "../providers/ApiKeyProvider";
-import { getClientApiKeys } from "../utils/llm";
+import { getClientApiKeys } from "../utils/llm/api-keys";
 import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 
@@ -157,6 +157,18 @@ export default function SettingsPage() {
           provider="microsoft"
           label="Microsoft"
           description="Used for premium Phi-4 models with enhanced reasoning capabilities. Get your API key from the Microsoft Azure portal."
+        />
+
+        <ApiKeyInput
+          provider="deepseek"
+          label="DeepSeek AI"
+          description="Used for premium DeepSeek models like DeepSeek Coder and DeepSeek V2. Get your API key from the DeepSeek platform."
+        />
+
+        <ApiKeyInput
+          provider="qwen"
+          label="Qwen"
+          description="Used for premium Qwen models including Qwen3 235B and other Qwen models. Get your API key from the Alibaba Cloud DashScope console."
         />
       </div>
 

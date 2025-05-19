@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useApiKeyStore } from "../providers/ApiKeyProvider";
-import { getClientApiKeys, setClientApiKey } from "../utils/llm";
+import { getClientApiKeys, setClientApiKey } from "../utils/llm/api-keys";
 
 interface ApiKeyInputProps {
   provider: string;

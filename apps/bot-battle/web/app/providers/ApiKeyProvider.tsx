@@ -15,7 +15,7 @@ import {
   initApiKeyStore,
 } from "../utils/apiKeyStore";
 import { useEffect } from "react";
-import { setClientApiKey, getClientApiKeys } from "../utils/llm";
+import { setClientApiKey, getClientApiKeys } from "../utils/llm/api-keys";
 
 // Create a context for the store
 export type ApiKeyStoreApi = ReturnType<typeof createApiKeyStore>;

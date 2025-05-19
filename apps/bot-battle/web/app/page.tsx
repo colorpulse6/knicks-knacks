@@ -130,65 +130,64 @@ export default function Page() {
       )
     );
 
-    const results = await Promise.all(
-      models.map(async (model) => {
-        try {
-          const res = await fetchLLMResponse(model, usedPrompt);
-          return [
-            getModelKey(model),
-            {
-              loading: false,
-              response: res.response,
-              metrics: res.metrics,
-              displayName: getModelDisplayName(model),
-            },
-          ];
-        } catch (err: any) {
-          // Create a user-friendly error message based on error type
-          let errorMessage: string | React.ReactElement =
-            `Error: ${err.message}`;
+    // Process each model individually instead of waiting for all to complete
+    models.forEach(async (model) => {
+      try {
+        const res = await fetchLLMResponse(model, usedPrompt);
 
-          // Handle API key errors with a settings link
-          if (
-            err.message.includes("API key") ||
-            err.message.includes("Model unavailable")
-          ) {
-            // Use string for type checking but render React node in UI
-            const errorText = `⚠️ ${err.message}`;
-            errorMessage = (
-              <div>
-                <p className="text-red-500 mb-2">{errorText}</p>
-                <a
-                  href="/settings"
-                  className="text-blue-500 hover:underline text-sm"
-                >
-                  Go to API Settings →
-                </a>
-              </div>
-            );
-          }
-          // Handle token limit errors
-          else if (
-            err.message.includes("Token limit exceeded") ||
-            err.message.includes("API quota exceeded") ||
-            err.message.includes("RESOURCE_EXHAUSTED")
-          ) {
-            errorMessage = `⚠️ ${err.message}`;
-          }
+        // Update just this model's result, preserving other models' states
+        setResponses((prevResponses) => ({
+          ...prevResponses,
+          [getModelKey(model)]: {
+            loading: false,
+            response: res.response,
+            metrics: res.metrics,
+            displayName: getModelDisplayName(model),
+          },
+        }));
+      } catch (err: any) {
+        // Create a user-friendly error message based on error type
+        let errorMessage: string | React.ReactElement = `Error: ${err.message}`;
 
-          return [
-            getModelKey(model),
-            {
-              loading: false,
-              response: errorMessage,
-              displayName: getModelDisplayName(model),
-            },
-          ];
+        // Handle API key errors with a settings link
+        if (
+          err.message.includes("API key") ||
+          err.message.includes("Model unavailable")
+        ) {
+          // Use string for type checking but render React node in UI
+          const errorText = `⚠️ ${err.message}`;
+          errorMessage = (
+            <div>
+              <p className="text-red-500 mb-2">{errorText}</p>
+              <a
+                href="/settings"
+                className="text-blue-500 hover:underline text-sm"
+              >
+                Go to API Settings →
+              </a>
+            </div>
+          );
         }
-      })
-    );
+        // Handle token limit errors
+        else if (
+          err.message.includes("Token limit exceeded") ||
+          err.message.includes("API quota exceeded") ||
+          err.message.includes("RESOURCE_EXHAUSTED")
+        ) {
+          errorMessage = `⚠️ ${err.message}`;
+        }
 
-    setResponses(Object.fromEntries(results));
+        // Update just this model's error state
+        setResponses((prevResponses) => ({
+          ...prevResponses,
+          [getModelKey(model)]: {
+            loading: false,
+            response: errorMessage,
+            displayName: getModelDisplayName(model),
+          },
+        }));
+      }
+    });
   };
 
   async function runComparativeAnalysis() {

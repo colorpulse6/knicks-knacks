@@ -1,5 +1,25 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+
+const Tooltip = ({
+  content,
+  children,
+}: {
+  content: string;
+  children: React.ReactNode;
+}) => {
+  return (
+    <div className="relative flex items-center group">
+      {children}
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+        <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 max-w-xl shadow-lg">
+          {content}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface LLMResponsePanelProps {
   model: string;
@@ -53,10 +73,6 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
   response,
   metrics = {},
 }) => {
-  const [rating, setRating] = useState<number | null>(null);
-  const [accuracy, setAccuracy] = useState<
-    "accurate" | "inaccurate" | "unsure" | null
-  >(null);
   const [isExpanded, setIsExpanded] = useState(true);
 
   function renderMetric(
@@ -70,14 +86,9 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
           {label}: <b>{value}</b>
         </span>
         {METRIC_TOOLTIPS[key] && (
-          <span
-            className="ml-1 text-xs text-gray-400 cursor-help inline-block p-1"
-            title={METRIC_TOOLTIPS[key]}
-            aria-label={METRIC_TOOLTIPS[key]}
-            tabIndex={0}
-          >
-            ⓘ
-          </span>
+          <Tooltip content={METRIC_TOOLTIPS[key]}>
+            <HelpCircle size={14} className="text-gray-400 ml-1 cursor-help" />
+          </Tooltip>
         )}
       </li>
     );
@@ -171,7 +182,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
           )}
 
           {/* Human rating controls */}
-          <div className="flex items-center gap-4 mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+          {/* <div className="flex items-center gap-4 mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
             <div>
               <span className="mr-1">Human rating:</span>
               {[1, 2, 3, 4, 5].map((star) => (
@@ -203,7 +214,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
                 <option value="unsure">Unsure</option>
               </select>
             </div>
-          </div>
+          </div> */}
         </>
       )}
     </div>

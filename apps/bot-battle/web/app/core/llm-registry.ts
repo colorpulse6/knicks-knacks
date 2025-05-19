@@ -158,30 +158,30 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         description:
           "A smaller, faster, and more cost-effective version of GPT-4o, supporting multimodal inputs and outputs.",
       },
-      {
-        id: "o3",
-        displayName: "OpenAI o3",
-        contextWindow: 200000,
-        cost: {
-          inputPerMillionTokens: 10.0,
-          outputPerMillionTokens: 40.0,
-          currency: "USD",
-          notes:
-            "Cached input: $2.50 / 1M tokens. Max output tokens: 100,000. Supports reasoning effort settings.",
-        },
-        costType: "userKeyRequired",
-        capabilities: [
-          "text",
-          "image",
-          "code",
-          "json",
-          "tool_use",
-          "reasoning",
-          "long_context",
-        ],
-        description:
-          "OpenAI's most powerful reasoning model with leading performance on coding, math, science, and vision. Ideal for complex, multi-step problems.",
-      },
+      // {
+      //   id: "o3",
+      //   displayName: "OpenAI o3",
+      //   contextWindow: 200000,
+      //   cost: {
+      //     inputPerMillionTokens: 10.0,
+      //     outputPerMillionTokens: 40.0,
+      //     currency: "USD",
+      //     notes:
+      //       "Cached input: $2.50 / 1M tokens. Max output tokens: 100,000. Supports reasoning effort settings.",
+      //   },
+      //   costType: "userKeyRequired",
+      //   capabilities: [
+      //     "text",
+      //     "image",
+      //     "code",
+      //     "json",
+      //     "tool_use",
+      //     "reasoning",
+      //     "long_context",
+      //   ],
+      //   description:
+      //     "OpenAI's most powerful reasoning model with leading performance on coding, math, science, and vision. Ideal for complex, multi-step problems.",
+      // },
       {
         id: "o4-mini",
         displayName: "OpenAI o4-mini",
@@ -426,7 +426,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           outputPerMillionTokens: 0.4,
           currency: "USD",
           notes:
-            "Pricing for text/image/video input. Audio input: $0.70/1M. Image generation: $0.039/image. Context caching, Grounding with Google Search, and Live API available.",
+            "Pricing for text/image/video input. Audio input: $0.70/1M. Context caching, Grounding with Google Search, and Live API available.",
         },
         costType: "userKeyRequired",
         capabilities: [
@@ -439,15 +439,40 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "tool_use",
           "multilingual",
           "grounding",
-          "image_generation",
           "live_api",
           "long_context",
         ],
         description:
-          "A versatile and cost-effective multimodal model from Google, supporting image generation and live API interactions.",
+          "A versatile and cost-effective multimodal model from Google, supporting live API interactions with next generation features and speed.",
       },
       {
-        id: "gemini-1.5-pro-latest",
+        id: "gemini-2.0-flash-lite",
+        displayName: "Gemini 2.0 Flash-Lite",
+        contextWindow: 1048576,
+        cost: {
+          inputPerMillionTokens: 0.05,
+          outputPerMillionTokens: 0.2,
+          currency: "USD",
+          notes:
+            "Optimized for cost efficiency and low latency. Pricing for text/image/video input.",
+        },
+        costType: "userKeyRequired",
+        capabilities: [
+          "text",
+          "image",
+          "audio",
+          "video",
+          "code",
+          "json",
+          "tool_use",
+          "multilingual",
+          "long_context",
+        ],
+        description:
+          "Google's lightweight Gemini 2.0 model optimized for cost efficiency and low latency for high volume tasks.",
+      },
+      {
+        id: "gemini-1.5-pro",
         displayName: "Gemini 1.5 Pro",
         contextWindow: 2000000,
         cost: {
@@ -475,7 +500,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "Google's highest intelligence Gemini 1.5 series model, with a breakthrough 2 million token context window. Excels at complex coding and reasoning.",
       },
       {
-        id: "gemini-1.5-flash-latest",
+        id: "gemini-1.5-flash",
         displayName: "Gemini 1.5 Flash",
         contextWindow: 1048576,
         cost: {
@@ -529,21 +554,6 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "A smaller, highly cost-effective version of Gemini 1.5 Flash, suitable for high-volume, lower complexity tasks with a large context window.",
       },
       {
-        id: "gemini-1.0-pro",
-        displayName: "Gemini 1.0 Pro",
-        contextWindow: 30720,
-        cost: {
-          inputPerMillionTokens: 0.5,
-          outputPerMillionTokens: 1.5,
-          currency: "USD",
-          notes:
-            "Based on per 1k tokens: $0.000125/1k characters input, $0.000375/1k characters output (text). Image input $0.0025/image.",
-        },
-        costType: "userKeyRequired",
-        capabilities: ["text", "image", "code", "json"],
-        description: "Google's previous generation capable model.",
-      },
-      {
         id: "gemini-2.0-flash-exp:free",
         displayName: "Gemini 2.0 Flash Exp (Free)",
         contextWindow: 30720,
@@ -553,7 +563,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "Free tier access to Google's Gemini 2.0 Flash Exp model via OpenRouter.",
       },
       {
-        id: "gemini-2.5-pro-exp-03-25",
+        id: "gemini-2.5-pro-exp-03-25:free",
         displayName: "Gemini 2.5 Pro Exp (Free)",
         contextWindow: 128000,
         costType: "appKeyPermissive",
@@ -601,22 +611,6 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         capabilities: ["text", "code", "json"],
         description:
           "Meta's Llama 3 70B model, served with high speed on Groq LPU™.",
-      },
-      {
-        id: "mixtral-8x7b-32768",
-        displayName: "Mixtral 8x7B (via Groq)",
-        contextWindow: 32768,
-        cost: {
-          inputPerMillionTokens: 0.0,
-          outputPerMillionTokens: 0.0,
-          currency: "USD",
-          notes:
-            "Currently free within Groq's developer limits with an API key.",
-        },
-        costType: "appKeyPermissive",
-        capabilities: ["text", "code", "json"],
-        description:
-          "Mistral AI's Mixtral 8x7B model, served with high speed on Groq LPU™.",
       },
     ],
   },
@@ -1071,10 +1065,62 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
   {
     id: "deepseek",
     displayName: "DeepSeek AI",
-    apiKeyProviderName: "OpenRouter",
-    apiKeyLink: "https://openrouter.ai/keys",
+    apiKeyProviderName: "DeepSeek AI",
+    apiKeyLink: "https://platform.deepseek.com/api-keys",
     providerWebsite: "https://deepseek.ai/",
     models: [
+      {
+        id: "deepseek-coder-33b-instruct",
+        displayName: "DeepSeek Coder 33B Instruct",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 1.0,
+          outputPerMillionTokens: 5.0,
+          currency: "USD",
+          notes: "Premium model requiring DeepSeek API key.",
+        },
+        costType: "userKeyRequired",
+        capabilities: ["text", "code", "json", "tool_use", "reasoning"],
+        description:
+          "DeepSeek's powerful coding model, optimized for code generation, understanding, and explanation with top-tier benchmark performance.",
+      },
+      {
+        id: "deepseek-v2",
+        displayName: "DeepSeek V2",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 2.0,
+          outputPerMillionTokens: 8.0,
+          currency: "USD",
+          notes: "Premium model requiring DeepSeek API key.",
+        },
+        costType: "userKeyRequired",
+        capabilities: [
+          "text",
+          "code",
+          "json",
+          "tool_use",
+          "reasoning",
+          "multilingual",
+        ],
+        description:
+          "DeepSeek's flagship large language model with advanced reasoning capabilities and strong performance across a wide range of tasks.",
+      },
+      {
+        id: "deepseek-llm-67b-chat",
+        displayName: "DeepSeek LLM 67B Chat",
+        contextWindow: 16384,
+        cost: {
+          inputPerMillionTokens: 0.8,
+          outputPerMillionTokens: 3.2,
+          currency: "USD",
+          notes: "Premium model requiring DeepSeek API key.",
+        },
+        costType: "userKeyRequired",
+        capabilities: ["text", "code", "json", "reasoning", "multilingual"],
+        description:
+          "A well-balanced DeepSeek model offering strong performance for general purpose tasks and technical content generation.",
+      },
       {
         id: "deepseek-prover-v2:free",
         displayName: "DeepSeek Prover V2",
@@ -1198,13 +1244,81 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
   {
     id: "qwen",
     displayName: "Qwen (Alibaba)",
-    apiKeyProviderName: "OpenRouter",
-    apiKeyLink: "https://openrouter.ai/keys",
+    apiKeyProviderName: "Qwen",
+    apiKeyLink: "https://dashscope.console.aliyun.com/apiKey",
     providerWebsite: "https://qwenlm.github.io/",
     models: [
       {
+        id: "qwen3-235b-a22b",
+        displayName: "Qwen3 235B A22B",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 5.0,
+          outputPerMillionTokens: 15.0,
+          currency: "USD",
+          notes:
+            "Premium model requiring Qwen API key. Most powerful Qwen model available.",
+        },
+        costType: "userKeyRequired",
+        capabilities: [
+          "text",
+          "code",
+          "json",
+          "tool_use",
+          "reasoning",
+          "multilingual",
+        ],
+        description:
+          "The most powerful mixture-of-experts language model in the Qwen family, offering exceptional performance on complex tasks.",
+      },
+      {
+        id: "qwen3-30b-a3b",
+        displayName: "Qwen3 30B A3B",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 1.0,
+          outputPerMillionTokens: 3.0,
+          currency: "USD",
+          notes: "Premium model requiring Qwen API key.",
+        },
+        costType: "userKeyRequired",
+        capabilities: ["text", "code", "json", "tool_use", "multilingual"],
+        description:
+          "A compact and high-performance Mixture of Experts (MoE) model, balancing power and efficiency.",
+      },
+      {
+        id: "qwen3-32b",
+        displayName: "Qwen3 32B",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 1.2,
+          outputPerMillionTokens: 3.6,
+          currency: "USD",
+          notes: "Premium model requiring Qwen API key.",
+        },
+        costType: "userKeyRequired",
+        capabilities: ["text", "code", "json", "tool_use", "multilingual"],
+        description:
+          "The most powerful dense model in the Qwen3 family, offering strong performance for general purpose tasks.",
+      },
+      {
+        id: "qwen2.5-max",
+        displayName: "Qwen2.5 Max",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 3.0,
+          outputPerMillionTokens: 9.0,
+          currency: "USD",
+          notes: "Premium model requiring Qwen API key.",
+        },
+        costType: "userKeyRequired",
+        capabilities: ["text", "code", "json", "tool_use", "multilingual"],
+        description:
+          "The most powerful language model in the Qwen2.5 series, delivering exceptional performance across a wide range of tasks.",
+      },
+      {
         id: "qwen3-1.7b:free",
-        displayName: "Qwen3 1.7B",
+        displayName: "Qwen3 1.7B (Free)",
         contextWindow: 8192,
         cost: {
           inputPerMillionTokens: 0.0,

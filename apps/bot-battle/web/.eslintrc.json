@@ -3,8 +3,19 @@
     "@knicks-knacks/eslint-config/next",
     "@knicks-knacks/eslint-config/prerender-fix"
   ],
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   },
   "rules": {
     // Allow mixing RSC and client components during static build

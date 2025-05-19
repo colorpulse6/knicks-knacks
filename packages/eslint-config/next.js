@@ -3,6 +3,23 @@
  */
 module.exports = {
   extends: ["./base.js", "next/core-web-vitals"],
+  // Use the TypeScript parser directly instead of relying on next's parser
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 2020,
+    sourceType: "module",
+  },
+  settings: {
+    next: {
+      rootDir: ["apps/*/", "."],
+    },
+    react: {
+      version: "detect",
+    },
+  },
   rules: {
     "react/react-in-jsx-scope": "off",
     // Help with preventing build-time errors

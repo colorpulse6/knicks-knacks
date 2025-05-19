@@ -1,5 +1,8 @@
 "use client";
 
+// Add this line to prevent prerender errors
+export const dynamic = "force-dynamic";
+
 import React from "react";
 import Link from "next/link";
 

@@ -2,10 +2,11 @@
 node_modules
 .pnp
 .pnp.js
+# Yarn 2+ configuration - completely ignore all yarn directories and files
 .yarn/
-
-# turbo
-.turbo/
+.yarn
+.pnp.*
+.yarn-integrity
 
 # testing
 coverage
@@ -16,6 +17,7 @@ dist
 out
 build
 .vercel
+.turbo
 
 # environment variables - be specific to catch all instances
 .env

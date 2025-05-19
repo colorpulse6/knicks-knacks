@@ -1,9 +1,19 @@
 {
-  "extends": "@knicks-knacks/config/tsconfig.base.json",
-  "include": ["src"],
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "src"
+  ],
   "compilerOptions": {
     "outDir": "dist",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "jsx": "react-jsx"
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "isolatedModules": true
   }
 }

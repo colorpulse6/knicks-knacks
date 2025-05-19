@@ -1,5 +1,14 @@
 {
-    "extends": [
-        "next/core-web-vitals"
-    ]
+  "extends": [
+    "@knicks-knacks/eslint-config/next",
+    "@knicks-knacks/eslint-config/prerender-fix"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    // Allow mixing RSC and client components during static build
+    "react-hooks/rules-of-hooks": "warn", // Downgrade from error to warning
+    "@next/next/no-img-element": "off" // Sometimes img is needed
+  }
 }

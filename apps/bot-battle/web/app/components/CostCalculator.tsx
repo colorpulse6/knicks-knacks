@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import { LLM_REGISTRY } from "../core/llm-registry";
 import { estimateTokensForPrompt } from "../utils/tokenCounter";

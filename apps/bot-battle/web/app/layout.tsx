@@ -2,7 +2,7 @@ import "./globals.css";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ClientWrapper } from "./components/ClientWrapper";
+import { ApiKeyProvider } from "./providers/ApiKeyProvider";
 
 export const metadata = {
   title: "BotBattle",
@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <ClientWrapper>
+        <ApiKeyProvider>
           <header className="w-full py-6 bg-gray-900 text-white flex items-center justify-center shadow mb-8 relative">
             <div className="flex items-center">
               <Image
@@ -41,7 +41,7 @@ export default function RootLayout({
             </div>
           </header>
           <main className="container mx-auto py-8 px-4">{children}</main>
-        </ClientWrapper>
+        </ApiKeyProvider>
       </body>
     </html>
   );

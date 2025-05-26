@@ -4,7 +4,19 @@ import { PromptSelector } from "./components/PromptSelector";
 import { PromptInput } from "./components/PromptInput";
 import { ModelSelector, SelectedLLM } from "./components/ModelSelector";
 import { LLMResponsePanel } from "./components/LLMResponsePanel";
-import { LLMComparativeAnalysis } from "./components/LLMComparativeAnalysis";
+import dynamic from "next/dynamic";
+
+// Dynamically import LLMComparativeAnalysis to prevent SSR issues with ReactMarkdown
+const LLMComparativeAnalysis = dynamic(
+  () =>
+    import("./components/LLMComparativeAnalysis").then((mod) => ({
+      default: mod.LLMComparativeAnalysis,
+    })),
+  {
+    ssr: false,
+    loading: () => <div>Loading analysis...</div>,
+  }
+);
 import { ChevronDown, ChevronUp, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { useApiKeyStore } from "./providers/ApiKeyProvider";

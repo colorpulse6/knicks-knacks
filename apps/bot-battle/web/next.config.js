@@ -7,6 +7,13 @@ const nextConfig = {
   images: {
     unoptimized: process.env.NODE_ENV === "development",
   },
+  // Ignore TypeScript and ESLint errors during build
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig;

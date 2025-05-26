@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+// Prevent caching for this debug route (Next.js 15 requirement)
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   // Only available in development mode for security
   if (process.env.NODE_ENV !== "development") {

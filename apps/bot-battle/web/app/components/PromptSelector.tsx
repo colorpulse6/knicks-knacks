@@ -1,21 +1,27 @@
+"use client";
+
 import React from "react";
 
 const PROMPT_TEMPLATES = [
   {
     label: "General QA",
-    prompt: "What is the capital of France and why is it historically significant?",
+    prompt:
+      "What is the capital of France and why is it historically significant?",
   },
   {
     label: "Creative Writing",
-    prompt: "Write a short story about a lost astronaut discovering an ancient civilization.",
+    prompt:
+      "Write a short story about a lost astronaut discovering an ancient civilization.",
   },
   {
     label: "Summarization",
-    prompt: "Summarize the following article into three concise sentences: {user pastes article}",
+    prompt:
+      "Summarize the following article into three concise sentences: {user pastes article}",
   },
   {
     label: "Code Generation",
-    prompt: "Generate a Python function that calculates Fibonacci numbers using memoization.",
+    prompt:
+      "Generate a Python function that calculates Fibonacci numbers using memoization.",
   },
   {
     label: "Math Problem Solving",
@@ -23,11 +29,13 @@ const PROMPT_TEMPLATES = [
   },
   {
     label: "Translation",
-    prompt: "Translate the following English sentence into Spanish: 'Tomorrow will be sunny and warm.'",
+    prompt:
+      "Translate the following English sentence into Spanish: 'Tomorrow will be sunny and warm.'",
   },
   {
     label: "Instruction Following",
-    prompt: "List five effective strategies to improve remote team productivity.",
+    prompt:
+      "List five effective strategies to improve remote team productivity.",
   },
 ];
 
@@ -43,10 +51,10 @@ export function PromptSelector({ value, onChange }: PromptSelectorProps) {
       <select
         className="w-full border rounded px-3 py-2 bg-white dark:bg-neutral-dark"
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
       >
         <option value="">Custom</option>
-        {PROMPT_TEMPLATES.map(t => (
+        {PROMPT_TEMPLATES.map((t) => (
           <option key={t.label} value={t.prompt}>
             {t.label}
           </option>

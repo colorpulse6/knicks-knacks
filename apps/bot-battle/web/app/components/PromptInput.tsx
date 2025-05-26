@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 type PromptInputProps = {
@@ -12,7 +14,7 @@ export function PromptInput({ value, onChange }: PromptInputProps) {
       <textarea
         className="w-full border rounded px-3 py-2 min-h-[80px] bg-white dark:bg-neutral-dark"
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="Enter your prompt or select a template above..."
       />
     </div>

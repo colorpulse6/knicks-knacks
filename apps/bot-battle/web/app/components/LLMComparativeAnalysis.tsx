@@ -1,8 +1,10 @@
+"use client";
+
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import * as Dialog from "@radix-ui/react-dialog";
 import remarkGfm from "remark-gfm";
-import { Medal, Trophy, Award, Star } from "lucide-react";
+import { Medal, Trophy, Award, Star, X } from "lucide-react";
 
 interface LLMComparativeAnalysisProps {
   results: { model: string; response: string | React.ReactNode }[];
@@ -39,10 +41,10 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                className="absolute top-4 right-4 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                 aria-label="Close"
               >
-                ×
+                <X size={20} />
               </button>
             </Dialog.Close>
           </div>

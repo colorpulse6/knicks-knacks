@@ -7,6 +7,12 @@ import { ClientProviders } from "./providers/ClientProviders";
 export const metadata = {
   title: "BotBattle",
   description: "Benchmark and analyze responses from multiple LLM APIs.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/botbattle-icon.png", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

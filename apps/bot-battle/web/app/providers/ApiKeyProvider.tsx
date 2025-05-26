@@ -27,21 +27,35 @@ export interface ApiKeyProviderProps {
 }
 
 export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
+  // Track hydration state to prevent SSR issues
+  const [isHydrated, setIsHydrated] = useState(false);
   // Keep track of initial sync state
   const [hasCompletedInitialSync, setHasCompletedInitialSync] = useState(false);
 
   // Use a ref to store the store instance to ensure it's only created once
+  // Only create the store after hydration to prevent SSR issues
   const storeRef = useRef<ApiKeyStoreApi | null>(null);
-  if (storeRef.current === null) {
-    storeRef.current = createApiKeyStore(initApiKeyStore());
-    console.log("📦 API key store created");
-  }
+
+  // Initialize store only on client side after hydration
+  useEffect(() => {
+    if (storeRef.current === null) {
+      storeRef.current = createApiKeyStore(initApiKeyStore());
+      console.log("📦 API key store created");
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // Create a fallback store for SSR
+  const fallbackStore = createApiKeyStore(initApiKeyStore());
+  const store = isHydrated ? storeRef.current : fallbackStore;
 
   // Sync API keys with LLM utilities when they change
-  const apiKeys = useStore(storeRef.current, (state) => state.apiKeys);
+  const apiKeys = useStore(store!, (state) => state.apiKeys);
 
   // On mount, force a full sync of all API keys
   useEffect(() => {
+    if (!isHydrated) return;
+
     console.log("🔄 ApiKeyProvider mounted - performing initial sync");
 
     // Set each client API key when component mounts
@@ -56,7 +70,7 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
     setTimeout(() => {
       const clientKeys = getClientApiKeys();
 
-      // If any key in Zustand isn't in clientApiKeys, try to set it again
+      // If any key in Zustand isn't in clientKeys, try to set it again
       Object.entries(apiKeys).forEach(([provider, key]) => {
         if (key && !clientKeys[provider.toLowerCase()]) {
           console.log(`Key for ${provider} not properly set, retrying...`);
@@ -75,12 +89,12 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
         setClientApiKey(provider, null);
       });
     };
-  }, []); // Empty dependency array - only run on mount
+  }, [isHydrated]); // Depend on hydration state
 
   // Watch for changes to apiKeys and update client
   useEffect(() => {
-    // Skip the initial render - we handle that in the mount effect
-    if (!hasCompletedInitialSync) return;
+    // Skip if not hydrated or initial render
+    if (!isHydrated || !hasCompletedInitialSync) return;
 
     console.log("🔑 API keys changed, syncing with LLM utilities");
 
@@ -95,10 +109,10 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
       const clientKeys = getClientApiKeys();
       console.log("Client API keys state after sync:", clientKeys);
     }, 100);
-  }, [apiKeys, hasCompletedInitialSync]);
+  }, [apiKeys, hasCompletedInitialSync, isHydrated]);
 
   return (
-    <ApiKeyStoreContext.Provider value={storeRef.current}>
+    <ApiKeyStoreContext.Provider value={store || undefined}>
       {children}
     </ApiKeyStoreContext.Provider>
   );

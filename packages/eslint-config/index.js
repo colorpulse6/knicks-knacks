@@ -9,6 +9,5 @@ module.exports = {
     base: require.resolve("./base"),
     next: require.resolve("./next"),
     reactInternal: require.resolve("./react-internal"),
-    prerenderFix: require.resolve("./prerender-fix"),
   },
 };

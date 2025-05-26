@@ -3,14 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "main": "index.js",
-  "type": "commonjs",
   "exports": {
     ".": "./index.js",
-    "./base": "./base.js",
-    "./next": "./next.js",
+    "./base": "./base.mjs",
+    "./next": "./next.mjs",
+    "./expo": "./expo.mjs",
     "./next-js": "./next-js.mjs",
     "./react-internal": "./react-internal.js",
-    "./prerender-fix": "./prerender-fix.js"
+    "./base.mjs": "./base.mjs",
+    "./next.mjs": "./next.mjs",
+    "./expo.mjs": "./expo.mjs"
   },
   "dependencies": {
     "@babel/core": "^7.24.0",
@@ -26,5 +28,10 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^15.3.1",
+    "eslint-config-turbo": "^2.0.0",
+    "eslint-plugin-react-hooks": "^4.6.0"
   }
 }

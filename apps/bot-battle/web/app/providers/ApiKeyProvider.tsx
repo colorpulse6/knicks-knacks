@@ -1,6 +1,12 @@
 "use client";
 
-import { type ReactNode, createContext, useContext, useState } from "react";
+import {
+  type ReactNode,
+  createContext,
+  useRef,
+  useContext,
+  useState,
+} from "react";
 import { useStore } from "zustand";
 import {
   type ApiKeyStore,
@@ -24,21 +30,18 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
   // Keep track of initial sync state
   const [hasCompletedInitialSync, setHasCompletedInitialSync] = useState(false);
 
-  // Use lazy state initialization to ensure the store is only created once
-  // This prevents hydration mismatches during SSR
-  const [store] = useState(() => {
-    const newStore = createApiKeyStore(initApiKeyStore());
+  // Use a ref to store the store instance to ensure it's only created once
+  const storeRef = useRef<ApiKeyStoreApi | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createApiKeyStore(initApiKeyStore());
     console.log("📦 API key store created");
-    return newStore;
-  });
+  }
 
   // Sync API keys with LLM utilities when they change
-  const apiKeys = useStore(store, (state) => state.apiKeys);
+  const apiKeys = useStore(storeRef.current, (state) => state.apiKeys);
 
   // On mount, force a full sync of all API keys
   useEffect(() => {
-    // Ensure we're in the browser before attempting sync
-    if (typeof window === "undefined") return;
     console.log("🔄 ApiKeyProvider mounted - performing initial sync");
 
     // Set each client API key when component mounts
@@ -76,8 +79,6 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
 
   // Watch for changes to apiKeys and update client
   useEffect(() => {
-    // Ensure we're in the browser before attempting sync
-    if (typeof window === "undefined") return;
     // Skip the initial render - we handle that in the mount effect
     if (!hasCompletedInitialSync) return;
 
@@ -97,7 +98,7 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
   }, [apiKeys, hasCompletedInitialSync]);
 
   return (
-    <ApiKeyStoreContext.Provider value={store}>
+    <ApiKeyStoreContext.Provider value={storeRef.current}>
       {children}
     </ApiKeyStoreContext.Provider>
   );

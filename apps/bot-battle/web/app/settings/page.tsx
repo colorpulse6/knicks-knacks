@@ -176,6 +176,7 @@ export default function SettingsPage() {
         <button
           onClick={() => {
             if (
+              typeof window !== "undefined" &&
               window.confirm("Are you sure you want to clear all API keys?")
             ) {
               clearAllApiKeys();

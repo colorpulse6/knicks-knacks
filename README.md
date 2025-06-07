@@ -49,12 +49,14 @@ This monorepo contains multiple full-stack apps, each with their own mobile, bac
   - Robust error handling for non-regex input
 - **Location:** `apps/regexplain/web`
   - `web/`: Next.js (React) web frontend
+- **Live URL:** https://www.regexplain.cc/
 
 ### BotBattle
 
 - **Description:** A web application for benchmarking different LLM APIs and comparing their performance.
 - **Location:** `apps/bot-battle/web`
   - `web/`: Next.js (React) web frontend
+- **Live URL:** https://www.botbattle.cc/
 
 See each app's own README for setup and usage details.
 
@@ -62,7 +64,7 @@ See each app's own README for setup and usage details.
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - Yarn Berry (v4+) - automatically handled by Corepack
 
 ### Installation
@@ -211,44 +213,48 @@ yarn test
 ### Getting Started
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/colorpulse6/knicks-knacks.git
    cd knicks-knacks
    ```
 
 2. **Install dependencies**
+
    ```bash
    yarn install
    ```
 
 3. **Run a specific app**
+
    ```bash
    # CalorieCam
    yarn calorie-cam:mobile
    yarn calorie-cam:backend
-   
+
    # Leaf
    yarn leaf:mobile
    yarn leaf:backend
-   
+
    # RegExplain
    yarn regexplain:dev
-   
+
    # BotBattle
    yarn bot-battle:dev
    ```
 
 4. **Run commands across all apps and packages**
+
    ```bash
    # Build all packages and apps
    yarn build
-   
+
    # Run dev servers in all packages and apps
    yarn dev
-   
+
    # Run linting across all packages and apps
    yarn lint
-   
+
    # Run tests across all packages and apps
    yarn test
    ```
@@ -262,6 +268,7 @@ yarn test
 ### Monorepo Structure
 
 This monorepo uses:
+
 - **Turborepo**: For efficient build caching and task running
 - **Yarn Workspaces**: For package management and dependency sharing
 - **TypeScript**: For type safety across all projects
@@ -272,15 +279,17 @@ This monorepo uses:
 
 1. Create your component in `packages/ui/src/components/`
 2. For cross-platform components, use the `Platform.OS` check:
+
    ```tsx
-   import { Platform } from 'react-native';
-   
-   if (Platform.OS === 'web') {
+   import { Platform } from "react-native";
+
+   if (Platform.OS === "web") {
      // Web-specific rendering
    } else {
      // Native-specific rendering
    }
    ```
+
 3. Export your component from `packages/ui/src/index.tsx`
 
 ## Additional Notes

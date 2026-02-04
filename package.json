@@ -4,6 +4,7 @@
   "private": true,
   "workspaces": [
     "apps/*/*",
+    "games/*/web",
     "packages/*"
   ],
   "scripts": {
@@ -21,7 +22,11 @@
     "leaf:mobile": "cd apps/leaf/mobile && yarn expo start",
     "leaf:dev": "echo 'Starting Leaf backend and mobile app separately. Use yarn leaf:backend and leaf:mobile in different terminals.'",
     "regexplain:dev": "cd apps/regexplain/web && yarn dev",
-    "bot-battle:dev": "cd apps/bot-battle/web && yarn dev"
+    "bot-battle:dev": "cd apps/bot-battle/web && yarn dev",
+    "wordle:dev": "cd games/wordle/web && yarn dev",
+    "2048:dev": "cd games/2048/web && yarn dev",
+    "asteroids:dev": "cd games/asteroids/web && yarn dev",
+    "chimera:dev": "cd games/chimera/web && yarn dev"
   },
   "devDependencies": {
     "babel-plugin-module-resolver": "^5.0.2",

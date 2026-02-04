@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8ef;
+  --foreground: #776e65;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

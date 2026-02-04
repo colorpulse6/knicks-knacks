@@ -1,0 +1,369 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --tile-size: 32px;
+  --viewport-width: 800px;
+  --viewport-height: 600px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+}
+
+/* Pixel-perfect rendering for sprites */
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Custom scrollbar for menus */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--menu-bg);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--menu-border);
+  border-radius: 4px;
+}
+
+/* RPG Menu Box Style */
+.rpg-box {
+  @apply bg-menu-bg border-2 border-menu-border rounded-lg p-4;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.1),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.3),
+    4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* ATB Gauge styling */
+.atb-gauge {
+  @apply relative h-3 bg-gray-800 rounded-full overflow-hidden;
+}
+
+.atb-gauge-fill {
+  @apply absolute left-0 top-0 h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-100;
+}
+
+.atb-gauge-ready {
+  @apply bg-gradient-to-r from-yellow-500 to-yellow-300;
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+/* HP/MP Bar styling */
+.hp-bar {
+  @apply h-2 bg-gray-800 rounded-full overflow-hidden;
+}
+
+.hp-bar-fill {
+  @apply h-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-300;
+}
+
+.hp-bar-low {
+  @apply from-red-600 to-red-400;
+}
+
+.mp-bar-fill {
+  @apply h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-300;
+}
+
+/* Dialogue box styling */
+.dialogue-box {
+  @apply rpg-box absolute bottom-4 left-4 right-4;
+  min-height: 120px;
+}
+
+.dialogue-text {
+  @apply text-lg leading-relaxed;
+  font-family: monospace;
+}
+
+/* Battle command menu */
+.command-menu {
+  @apply rpg-box w-48;
+}
+
+.command-item {
+  @apply px-4 py-2 cursor-pointer transition-colors;
+}
+
+.command-item:hover,
+.command-item.selected {
+  @apply bg-menu-highlight text-white;
+}
+
+.command-item.disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Damage numbers floating animation */
+.damage-number {
+  @apply absolute font-bold text-2xl pointer-events-none;
+  animation: damage-float 1s ease-out forwards;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.damage-critical {
+  @apply text-yellow-400 text-3xl;
+}
+
+.damage-heal {
+  @apply text-green-400;
+}
+
+/* Glitch effect overlay */
+.glitch-overlay {
+  @apply fixed inset-0 pointer-events-none z-50;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 255, 255, 0.03) 50%,
+      transparent 100%
+    );
+  animation: glitch-scan 0.1s linear infinite;
+}
+
+@keyframes glitch-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* Screen transitions */
+.screen-fade {
+  @apply fixed inset-0 bg-black z-40 pointer-events-none;
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Battle transition effect */
+.battle-transition {
+  @apply fixed inset-0 z-50;
+  background: linear-gradient(
+    45deg,
+    #000 25%,
+    transparent 25%,
+    transparent 50%,
+    #000 50%,
+    #000 75%,
+    transparent 75%
+  );
+  background-size: 20px 20px;
+  animation: battle-swipe 0.5s ease-out forwards;
+}
+
+@keyframes battle-swipe {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Pulse animation for ready state */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Title screen styling */
+.title-screen {
+  @apply min-h-screen flex flex-col items-center justify-center;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+}
+
+.title-logo {
+  @apply text-6xl font-bold mb-8;
+  background: linear-gradient(90deg, #d4af37, #f4e4c1, #d4af37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 20px rgba(212, 175, 55, 0.5);
+}
+
+.menu-option {
+  @apply text-xl py-3 px-8 cursor-pointer transition-all duration-200;
+}
+
+.menu-option:hover,
+.menu-option.selected {
+  @apply text-gold scale-110;
+}
+
+/* System Boot Screen Effects */
+
+/* Scanline overlay for CRT effect */
+.scanline-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+  pointer-events: none;
+}
+
+/* Text flicker animation for alerts */
+.animate-text-flicker {
+  animation: text-flicker 0.15s infinite;
+}
+
+@keyframes text-flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.6;
+  }
+}
+
+/* Glitch text effect for "KAI" */
+.glitch-text {
+  position: relative;
+  animation: glitch-text-main 0.5s infinite;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-text::before {
+  color: #ff0000;
+  animation: glitch-text-1 0.3s infinite;
+  clip-path: inset(0 0 50% 0);
+}
+
+.glitch-text::after {
+  color: #00ffff;
+  animation: glitch-text-2 0.3s infinite;
+  clip-path: inset(50% 0 0 0);
+}
+
+@keyframes glitch-text-main {
+  0%, 90%, 100% {
+    transform: translateX(0);
+  }
+  92% {
+    transform: translateX(-2px);
+  }
+  94% {
+    transform: translateX(2px);
+  }
+  96% {
+    transform: translateX(-1px);
+  }
+  98% {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes glitch-text-1 {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes glitch-text-2 {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(3px);
+  }
+  40% {
+    transform: translateX(-3px);
+  }
+  60% {
+    transform: translateX(2px);
+  }
+  80% {
+    transform: translateX(-2px);
+  }
+}
+
+/* Fade in animation */
+.animate-fade-in {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes damage-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.8);
+  }
+}

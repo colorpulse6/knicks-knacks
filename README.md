@@ -58,6 +58,28 @@ This monorepo contains multiple full-stack apps, each with their own mobile, bac
   - `web/`: Next.js (React) web frontend
 - **Live URL:** https://www.botbattle.cc/
 
+## Games
+
+Web-based games built with Next.js and deployed to GitHub Pages at https://colorpulse6.github.io/
+
+### Wordle
+
+- **Description:** A daily word guessing game where players have six attempts to guess a five-letter word.
+- **Location:** `games/wordle/web`
+- **Live URL:** https://colorpulse6.github.io/wordle/
+
+### 2048
+
+- **Description:** A number sliding puzzle game where players combine tiles to reach the 2048 tile.
+- **Location:** `games/2048/web`
+- **Live URL:** https://colorpulse6.github.io/2048/
+
+### Asteroids
+
+- **Description:** A space shooter game with collision detection where players destroy asteroids while avoiding collisions.
+- **Location:** `games/asteroids/web`
+- **Live URL:** https://colorpulse6.github.io/asteroids/
+
 See each app's own README for setup and usage details.
 
 ## Getting Started

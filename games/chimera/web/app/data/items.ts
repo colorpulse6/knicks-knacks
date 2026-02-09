@@ -348,6 +348,19 @@ export const KEY_ITEMS: Record<string, Item> = {
     usableInBattle: false,
     usableInField: false,
   },
+  vorns_orders: {
+    id: "vorns_orders",
+    name: "Vorn's Orders",
+    description:
+      "A thin metal slate covered in strange glowing text that shifts and changes. The words speak of 'harvesting subjects' and 'payment upon delivery.' Someone was paying Vorn to kidnap villagers, but who? And what do they want with people?",
+    type: "key",
+    rarity: "epic",
+    value: 0,
+    stackable: false,
+    maxStack: 1,
+    usableInBattle: false,
+    usableInField: false,
+  },
   rusty_key: {
     id: "rusty_key",
     name: "Rusty Key",
@@ -675,6 +688,22 @@ export const EQUIPMENT: Record<string, Item> = {
     equipStats: { attack: 50, magicAttack: 10, speed: 3 },
     shardSlots: 4,
   },
+  lightning_blade: {
+    id: "lightning_blade",
+    name: "Lightning Blade",
+    description: "Vorn's fearsome weapon. It crackles with strange energy, but your mind cannot grasp how to wield it.",
+    type: "weapon",
+    rarity: "legendary",
+    value: 0, // Cannot be sold
+    stackable: false,
+    maxStack: 1,
+    usableInBattle: false,
+    usableInField: false,
+    equipStats: { attack: 65, magicAttack: 25, speed: 8 },
+    shardSlots: 4,
+    requiredFlag: "awareness_restored", // Cannot equip until Act III
+    lockedDescription: "The weapon hums with alien energy. When you try to grip it, your fingers pass through as if it were made of light. Something is blocking your connection to it...",
+  },
 
   // ============================================
   // ARMOR
@@ -1000,6 +1029,116 @@ export function isConsumable(item: Item): boolean {
 // Check if item is equipment
 export function isEquipment(item: Item): boolean {
   return ["weapon", "armor", "helmet", "accessory"].includes(item.type);
+}
+
+// ============================================
+// ITEM ICONS - Get icon path for item display
+// ============================================
+
+/**
+ * Get the icon path for an item
+ * Uses explicit icon field if set, otherwise derives from item properties
+ */
+export function getItemIcon(item: Item): string {
+  // If item has explicit icon, use it
+  if (item.icon) {
+    return `/icons/items/${item.icon}.png`;
+  }
+
+  // Derive icon from item type and properties
+  switch (item.type) {
+    case "consumable":
+      // Derive from effect type
+      if (item.effect) {
+        switch (item.effect.type) {
+          case "heal_hp":
+            // High power = better potion
+            if (item.effect.power >= 150) return "/icons/items/potion_red_large.png";
+            if (item.effect.power >= 50) return "/icons/items/potion_red.png";
+            return "/icons/items/food.png"; // Low heal = food item
+          case "heal_mp":
+            return "/icons/items/potion_blue.png";
+          case "revive":
+            return "/icons/items/potion_gold.png";
+          case "cure_status":
+            return "/icons/items/potion_green.png";
+          case "buff":
+            return "/icons/items/scroll.png";
+          case "damage":
+            return "/icons/items/bomb.png";
+          default:
+            return "/icons/items/potion_red.png";
+        }
+      }
+      return "/icons/items/potion_red.png";
+
+    case "weapon":
+      // Check name for weapon type hints
+      const weaponName = item.name.toLowerCase();
+      if (weaponName.includes("staff") || weaponName.includes("rod")) return "/icons/items/staff.png";
+      if (weaponName.includes("dagger") || weaponName.includes("knife")) return "/icons/items/dagger.png";
+      if (weaponName.includes("axe")) return "/icons/items/axe.png";
+      if (weaponName.includes("bow")) return "/icons/items/bow.png";
+      if (weaponName.includes("blade") && item.rarity === "legendary") return "/icons/items/sword_lightning.png";
+      return "/icons/items/sword.png";
+
+    case "armor":
+      // Check for robe/dress vs heavy armor
+      const armorName = item.name.toLowerCase();
+      if (armorName.includes("robe") || armorName.includes("dress") || armorName.includes("cloak")) {
+        return "/icons/items/robe.png";
+      }
+      if (armorName.includes("plate") || armorName.includes("mail")) {
+        return "/icons/items/armor_heavy.png";
+      }
+      return "/icons/items/armor_light.png";
+
+    case "helmet":
+      const helmName = item.name.toLowerCase();
+      if (helmName.includes("circlet") || helmName.includes("crown") || helmName.includes("hood")) {
+        return "/icons/items/circlet.png";
+      }
+      return "/icons/items/helmet.png";
+
+    case "accessory":
+      const accName = item.name.toLowerCase();
+      if (accName.includes("ring") || accName.includes("band")) return "/icons/items/ring.png";
+      if (accName.includes("amulet") || accName.includes("pendant") || accName.includes("necklace")) return "/icons/items/amulet.png";
+      if (accName.includes("boot") || accName.includes("shoe")) return "/icons/items/boots.png";
+      if (accName.includes("charm")) return "/icons/items/charm.png";
+      return "/icons/items/ring.png";
+
+    case "key":
+      // Key items - check for specific types
+      const keyName = item.name.toLowerCase();
+      if (keyName.includes("key")) return "/icons/items/key.png";
+      if (keyName.includes("pendant") || keyName.includes("amulet")) return "/icons/items/amulet_key.png";
+      if (keyName.includes("flower") || keyName.includes("petal")) return "/icons/items/flower.png";
+      if (keyName.includes("note") || keyName.includes("letter") || keyName.includes("order")) return "/icons/items/scroll_key.png";
+      if (keyName.includes("mechanism") || keyName.includes("device") || keyName.includes("core")) return "/icons/items/artifact.png";
+      if (keyName.includes("fragment") || keyName.includes("shard")) return "/icons/items/crystal.png";
+      if (keyName.includes("token") || keyName.includes("coin")) return "/icons/items/coin.png";
+      return "/icons/items/key_item.png";
+
+    case "treasure":
+      // Crafting materials
+      const treasureName = item.name.toLowerCase();
+      if (treasureName.includes("ore") || treasureName.includes("metal")) return "/icons/items/ore.png";
+      if (treasureName.includes("leather") || treasureName.includes("hide")) return "/icons/items/leather.png";
+      if (treasureName.includes("fang") || treasureName.includes("claw") || treasureName.includes("bone")) return "/icons/items/fang.png";
+      if (treasureName.includes("essence") || treasureName.includes("mist")) return "/icons/items/essence.png";
+      if (treasureName.includes("stone") || treasureName.includes("shard") || treasureName.includes("crystal")) return "/icons/items/gem.png";
+      if (treasureName.includes("cog") || treasureName.includes("gear")) return "/icons/items/cog.png";
+      if (treasureName.includes("chain")) return "/icons/items/chain.png";
+      if (treasureName.includes("coin")) return "/icons/items/coin.png";
+      return "/icons/items/treasure.png";
+
+    case "shard":
+      return "/icons/items/shard.png";
+
+    default:
+      return "/icons/items/unknown.png";
+  }
 }
 
 // ============================================

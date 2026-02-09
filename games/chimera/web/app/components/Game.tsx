@@ -18,6 +18,7 @@ import {
   getNpcPlayerIsFacing,
 } from "../engine/interactionEngine";
 import DialogueBox from "./ui/DialogueBox";
+import QuestCompleteScreen from "./ui/QuestCompleteScreen";
 import { ShopScreen } from "./shop";
 import SaveScreen from "./menu/SaveScreen";
 import { InnScreen } from "./inn";
@@ -53,6 +54,9 @@ export default function Game() {
     battlesPaused,
     toggleAdminMode,
     toggleBattlesPaused,
+    activeDialogue,
+    pendingQuestComplete,
+    clearQuestComplete,
   } = useGameStore();
 
   // Local state for visual transition (battle)
@@ -189,7 +193,7 @@ export default function Game() {
       }
 
       // Don't accept input during transition or when overlays are open
-      if (isTransitioning || showTransition || showMapTransition || showSaveScreen || showInn) return;
+      if (isTransitioning || showTransition || showMapTransition || showSaveScreen || showInn || activeDialogue || pendingQuestComplete) return;
 
       if (phase === "exploring") {
         switch (e.key) {
@@ -248,7 +252,7 @@ export default function Game() {
         }
       }
     },
-    [phase, newGame, movePlayer, toggleMenu, togglePause, setPhase, party, isTransitioning, showTransition, showMapTransition, showSaveScreen, showInn, handleTeleport, currentMap, interact, toggleAdminMode]
+    [phase, newGame, movePlayer, toggleMenu, togglePause, setPhase, party, isTransitioning, showTransition, showMapTransition, showSaveScreen, showInn, activeDialogue, pendingQuestComplete, handleTeleport, currentMap, interact, toggleAdminMode]
   );
 
   useEffect(() => {
@@ -384,6 +388,12 @@ export default function Game() {
         duration={800}
       />
       <LevelUpNotification />
+      {pendingQuestComplete && (
+        <QuestCompleteScreen
+          rewards={pendingQuestComplete}
+          onComplete={clearQuestComplete}
+        />
+      )}
     </>
   );
 }

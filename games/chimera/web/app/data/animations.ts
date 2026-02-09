@@ -168,6 +168,21 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
       death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
     },
   },
+  // Bandit Chief Vorn: 1536×1024 (4×2 grid, 384×512 frames) - Bandit Camp boss
+  // Layout: Col 0=idle, Col 1=attack, Col 2=hurt, Col 3=dead (both rows same poses)
+  bandit_chief_vorn: {
+    src: "/sprites/enemies/bandit_chief.png",
+    frameWidth: 384,
+    frameHeight: 512,
+    columns: 4,
+    rows: 2,
+    animations: {
+      idle: { row: 0, frameCount: 2, frameDuration: 1500, loop: true, startFrame: 0, alternateRows: true },
+      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
+      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
+      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+    },
+  },
 };
 
 // World object sprite configurations

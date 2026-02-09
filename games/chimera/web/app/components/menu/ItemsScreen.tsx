@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useGameStore } from "../../stores/gameStore";
-import { getRarityColor, isConsumable } from "../../data/items";
+import { getRarityColor, isConsumable, getItemIcon } from "../../data/items";
 import { getEffectDescription } from "../../types/item";
 import type { Item, Character, InventorySlot } from "../../types";
 
@@ -162,6 +162,15 @@ export default function ItemsScreen() {
                 >
                   <div className="flex items-center gap-2">
                     {isSelected && <span className="text-amber-400">▸</span>}
+                    <img
+                      src={getItemIcon(slot.item)}
+                      alt=""
+                      className="w-6 h-6 pixelated"
+                      onError={(e) => {
+                        // Hide broken images
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                     <span className={rarityColor}>{slot.item.name}</span>
                   </div>
                   <span className="text-gray-500 text-sm">x{slot.quantity}</span>
@@ -175,11 +184,21 @@ export default function ItemsScreen() {
         <div className="w-56 bg-gray-800/30 rounded p-3 flex flex-col">
           {itemSlots[selectedIndex] && (
             <>
-              <h3
-                className={`font-bold mb-1 ${getRarityColor(itemSlots[selectedIndex].item.rarity)}`}
-              >
-                {itemSlots[selectedIndex].item.name}
-              </h3>
+              <div className="flex items-center gap-2 mb-1">
+                <img
+                  src={getItemIcon(itemSlots[selectedIndex].item)}
+                  alt=""
+                  className="w-8 h-8 pixelated"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <h3
+                  className={`font-bold ${getRarityColor(itemSlots[selectedIndex].item.rarity)}`}
+                >
+                  {itemSlots[selectedIndex].item.name}
+                </h3>
+              </div>
               <p className="text-gray-500 text-xs mb-2">
                 {getItemTypeLabel(itemSlots[selectedIndex].item)}
               </p>

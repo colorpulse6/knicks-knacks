@@ -69,7 +69,7 @@ export function canInteract(
   if (!event) return false;
 
   // Check event types that support interaction
-  const interactableTypes = ["treasure", "npc", "save_point", "door", "inn"];
+  const interactableTypes = ["treasure", "npc", "save_point", "door", "teleport", "inn", "battle", "trigger", "shop", "collectible"];
   return interactableTypes.includes(event.type);
 }
 
@@ -152,10 +152,18 @@ export function getInteractionPrompt(event: MapEvent): string {
       return "Save";
     case "door":
       return "Enter";
+    case "teleport":
+      return "Enter";
     case "shop":
       return "Enter Shop";
     case "inn":
       return "Enter Inn";
+    case "battle":
+      return event.triggered ? "" : "Confront";
+    case "trigger":
+      return "Examine";
+    case "collectible":
+      return "Pick Up";
     default:
       return "Interact";
   }

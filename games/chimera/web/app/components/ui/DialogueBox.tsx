@@ -61,6 +61,31 @@ export default function DialogueBox() {
       // Has next dialogue node - advance to it
       advanceDialogue(activeDialogue.next);
     } else {
+      // Check for onComplete actions before ending dialogue
+      if (activeDialogue.onComplete) {
+        // Handle startBattle flag - trigger the pending encounter
+        if (activeDialogue.onComplete.startBattle) {
+          const state = useGameStore.getState();
+          if (state.pendingEncounter && state.pendingEncounter.length > 0) {
+            // Start the battle transition
+            useGameStore.setState({ isTransitioning: true });
+          }
+        }
+
+        // Handle setFlags
+        if (activeDialogue.onComplete.setFlags) {
+          const { setStoryFlag } = useGameStore.getState();
+          for (const flag of activeDialogue.onComplete.setFlags) {
+            setStoryFlag(flag, true);
+          }
+        }
+
+        // Handle callback
+        if (activeDialogue.onComplete.callback) {
+          activeDialogue.onComplete.callback();
+        }
+      }
+
       // End dialogue
       endDialogue();
     }

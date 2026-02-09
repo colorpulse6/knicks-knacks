@@ -138,17 +138,17 @@ const STATIC_OBJECTS: StaticObject[] = [
 
 // Events
 const EVENTS: MapEvent[] = [
-  // === EXIT back to camp ===
+  // === EXIT back to Vorn's tent ===
   {
     id: "cellar_exit",
     type: "teleport",
     x: 5,
     y: 9,
     data: {
-      targetMapId: "bandit_camp",
-      targetX: 15,
-      targetY: 8,
-      message: "Climb back up to the camp?",
+      targetMapId: "bandit_tent",
+      targetX: 3,
+      targetY: 3,
+      message: "Climb back up to the tent?",
     },
   },
 
@@ -231,14 +231,14 @@ export const BANDIT_CELLAR_MAP: GameMap = {
   encounters: [], // No random encounters
   connections: [
     {
-      id: "to_camp",
-      targetMapId: "bandit_camp",
+      id: "to_tent",
+      targetMapId: "bandit_tent",
       sourcePosition: { x: 5, y: 9 },
-      targetPosition: { x: 15, y: 8 },
+      targetPosition: { x: 3, y: 3 },
       type: "stairs",
     },
   ],
   ambientColor: "#1a1a2e", // Dark mysterious blue
   music: "mystery_discovery",
-  requiredFlags: ["found_cellar"],
+  // No requiredFlags - access is controlled by the tent's cellar entrance
 };

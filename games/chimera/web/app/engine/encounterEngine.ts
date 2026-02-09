@@ -3,18 +3,21 @@
 import type { GameMap, EnemyEncounter, PlayerPosition } from "../types/map";
 import type { Enemy } from "../types/battle";
 import {
+  createBandit,
+  createRogueKnight,
+  createWolf,
+  createCorruptedSprite,
+  createSystemAgent,
   createBanditEncounter,
-  createWolfEncounter,
-  createCorruptedEncounter,
-  createSystemAgentEncounter,
 } from "../data/enemies";
 
-// Encounter factory map
-const ENCOUNTER_FACTORIES: Record<string, () => Enemy[]> = {
-  bandit: createBanditEncounter,
-  wolf: createWolfEncounter,
-  corrupted: createCorruptedEncounter,
-  system_agent: createSystemAgentEncounter,
+// Individual enemy creator map - creates a single enemy of the specified type
+const ENEMY_CREATORS: Record<string, (level?: number) => Enemy> = {
+  bandit: (level = 1) => createBandit(level),
+  rogue_knight: (level = 2) => createRogueKnight(level),
+  wolf: (level = 1) => createWolf(level),
+  corrupted: (level = 2) => createCorruptedSprite(level),
+  system_agent: (level = 3) => createSystemAgent(level),
 };
 
 /**
@@ -47,18 +50,24 @@ export function rollForEncounter(encounter: EnemyEncounter): boolean {
 
 /**
  * Create enemy group from encounter definition
+ * Creates enemies based on the enemies array in the encounter definition
  */
 export function createEnemiesFromEncounter(encounter: EnemyEncounter): Enemy[] {
-  // Use factory if encounter enemies match known types
-  const firstEnemyType = encounter.enemies[0];
-  const factory = ENCOUNTER_FACTORIES[firstEnemyType];
+  const enemies: Enemy[] = [];
 
-  if (factory) {
-    return factory();
+  for (const enemyType of encounter.enemies) {
+    const creator = ENEMY_CREATORS[enemyType];
+    if (creator) {
+      enemies.push(creator());
+    }
   }
 
-  // Fallback: create bandits
-  return createBanditEncounter();
+  // If no valid enemies were created, fallback to bandits
+  if (enemies.length === 0) {
+    return createBanditEncounter();
+  }
+
+  return enemies;
 }
 
 /**

@@ -65,7 +65,7 @@ function createGroundLayer(): number[][] {
 }
 
 // Create collision layer
-function createCollisionLayer(): boolean[][] {
+function createCollisionLayer(staticObjects: StaticObject[]): boolean[][] {
   const collision: boolean[][] = [];
   const ground = createGroundLayer();
 
@@ -77,6 +77,19 @@ function createCollisionLayer(): boolean[][] {
       row.push(tile !== 4);
     }
     collision.push(row);
+  }
+
+  // Add static object collision
+  for (const obj of staticObjects) {
+    if (obj.collision) {
+      for (const block of obj.collision) {
+        const bx = obj.x + block.offsetX;
+        const by = obj.y + block.offsetY;
+        if (by >= 0 && by < HEIGHT && bx >= 0 && bx < WIDTH) {
+          collision[by][bx] = false;
+        }
+      }
+    }
   }
 
   return collision;
@@ -102,10 +115,12 @@ const STATIC_OBJECTS: StaticObject[] = [
     width: 6,
     height: 4,
     collision: [
-      // Back wall
+      // Back wall - blocks entire row at y+3 (y=8) until boss is defeated
+      // Boss event at (14, 8) creates the "interact to confront" mechanic
       { offsetX: 0, offsetY: 3 }, { offsetX: 1, offsetY: 3 },
+      { offsetX: 2, offsetY: 3 }, // Block (14, 8) - Vorn's position
+      { offsetX: 3, offsetY: 3 }, // Block (15, 8) - entrance blocked
       { offsetX: 4, offsetY: 3 }, { offsetX: 5, offsetY: 3 },
-      // Leave center open for entrance
     ],
   },
 
@@ -245,16 +260,7 @@ const STATIC_OBJECTS: StaticObject[] = [
     ],
   },
 
-  // === HIDDEN CELLAR ENTRANCE (in leader's tent area) ===
-  {
-    id: "cellar_door",
-    sprite: "/assets/trapdoor.png",
-    x: 15,
-    y: 7,
-    width: 1,
-    height: 1,
-    collision: [], // Walkable - it's a trapdoor
-  },
+  // Note: Hidden cellar entrance is now inside the tent interior map (bandit_tent)
 
   // === WATCHTOWER (by gate) ===
   {
@@ -353,15 +359,17 @@ const EVENTS: MapEvent[] = [
   },
 
   // === PRISONER RESCUE EVENTS ===
+  // Triggers are at x=23 (one tile east of cages) so player can face them from x=24
   {
     id: "rescue_prisoner_1",
     type: "trigger",
-    x: 22,
+    x: 23,
     y: 11,
     data: {
       triggerType: "rescue",
       flag: "prisoner_1_freed",
-      message: "You break open the cage lock!",
+      message: "*You break open the rusty cage lock!*\n\nThe farmer stumbles out gratefully.",
+      alreadyTriggeredMessage: "The cage is already open.",
       onTrigger: {
         setFlags: ["prisoner_1_freed"],
       },
@@ -371,12 +379,13 @@ const EVENTS: MapEvent[] = [
   {
     id: "rescue_prisoner_2",
     type: "trigger",
-    x: 22,
+    x: 23,
     y: 14,
     data: {
       triggerType: "rescue",
       flag: "prisoner_2_freed",
-      message: "The merchant is free!",
+      message: "*The lock gives way with a snap!*\n\nThe merchant is free!",
+      alreadyTriggeredMessage: "The cage is already open.",
       onTrigger: {
         setFlags: ["prisoner_2_freed"],
       },
@@ -386,12 +395,13 @@ const EVENTS: MapEvent[] = [
   {
     id: "rescue_prisoner_3",
     type: "trigger",
-    x: 22,
+    x: 23,
     y: 17,
     data: {
       triggerType: "rescue",
       flag: "prisoner_3_freed",
-      message: "The guard staggers out, grateful.",
+      message: "*You wrench the cage door open!*\n\nThe guard staggers out, weak but grateful.",
+      alreadyTriggeredMessage: "The cage is already open.",
       onTrigger: {
         setFlags: ["prisoner_3_freed"],
       },
@@ -399,40 +409,21 @@ const EVENTS: MapEvent[] = [
     triggered: false,
   },
 
-  // === BOSS BATTLE - Bandit Chief Vorn ===
+  // === ENTER VORN'S TENT ===
+  // Player must free all prisoners before entering the tent
+  // Boss fight and hidden cellar are now inside the tent interior map
   {
-    id: "boss_vorn",
-    type: "battle",
+    id: "enter_vorn_tent",
+    type: "teleport",
     x: 14,
-    y: 7,
+    y: 8,  // Tent entrance - player stands at y=9 facing north
     data: {
-      enemies: ["bandit_chief_vorn"],
-      isBoss: true,
-      oneTime: true,
-      preBattleDialogue: "vorn_confrontation",
-      postBattleFlag: "vorn_defeated",
-    },
-    triggered: false,
-  },
-
-  // === HIDDEN CELLAR (after defeating Vorn) ===
-  {
-    id: "cellar_entrance",
-    type: "trigger",
-    x: 15,
-    y: 7,
-    data: {
-      triggerType: "examine",
-      requiredFlag: "vorn_defeated",
-      message: "A hidden trapdoor! It leads to a dark cellar below...",
-      onTrigger: {
-        setFlags: ["found_cellar"],
-        teleport: {
-          mapId: "bandit_cellar",
-          x: 5,
-          y: 8,
-        },
-      },
+      targetMapId: "bandit_tent",
+      targetX: 5,
+      targetY: 7,
+      message: "Enter Vorn's tent?",
+      requiredFlags: ["prisoner_1_freed", "prisoner_2_freed", "prisoner_3_freed"],
+      notMetMessage: "*Loud snoring emanates from inside the tent... Zzzzz...*\n\nPerhaps you should free the prisoners first.",
     },
   },
 
@@ -480,22 +471,7 @@ const EVENTS: MapEvent[] = [
     },
     triggered: false,
   },
-  // Leader's tent (requires boss defeat)
-  {
-    id: "vorn_chest",
-    type: "treasure",
-    x: 16,
-    y: 6,
-    data: {
-      items: [
-        { itemId: "theriac_electuary", quantity: 2 },
-        { itemId: "speed_tonic", quantity: 1 },
-      ],
-      gold: 300,
-      requiredFlag: "vorn_defeated",
-    },
-    triggered: false,
-  },
+  // Note: Vorn's chest is now inside the tent interior map (bandit_tent)
 
   // === INVESTIGATION POINTS ===
   // Examine the strange weapon
@@ -555,7 +531,7 @@ export const BANDIT_CAMP_MAP: GameMap = {
   tileSize: 32,
   layers: {
     ground: createGroundLayer(),
-    collision: createCollisionLayer(),
+    collision: createCollisionLayer(STATIC_OBJECTS),
     overhead: createOverheadLayer(),
   },
   events: EVENTS,

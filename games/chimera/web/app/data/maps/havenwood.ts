@@ -83,6 +83,19 @@ const STATIC_OBJECTS: StaticObject[] = [
       { offsetX: 0, offsetY: 2 }, { offsetX: 2, offsetY: 2 },
     ],
   },
+  // Tavern - The Rusted Cog (east of the shop)
+  {
+    id: "tavern",
+    sprite: "/assets/tavern.png",
+    x: 20,
+    y: 4,
+    width: 4,
+    height: 5,
+    collision: [
+      // Block at offsetY: 3 (y=7), leave center door open at x=21-22
+      { offsetX: 0, offsetY: 3 }, { offsetX: 3, offsetY: 3 },
+    ],
+  },
 
   // === TREES ===
   // Northwest trees
@@ -199,6 +212,24 @@ const STATIC_OBJECTS: StaticObject[] = [
       { offsetX: 2, offsetY: 1 },
     ],
   },
+
+  // === LUMINA ESTATE ENTRANCE ===
+  // Grand entrance to the noble estate (east side)
+  {
+    id: "estate_gate",
+    sprite: "/assets/door_ornate.png",
+    x: 26,
+    y: 10,
+    width: 4,
+    height: 4,
+    collision: [
+      // Block sides, leave center open for passage
+      { offsetX: 0, offsetY: 2 },
+      { offsetX: 0, offsetY: 3 },
+      { offsetX: 3, offsetY: 2 },
+      { offsetX: 3, offsetY: 3 },
+    ],
+  },
 ];
 
 // Create collision layer based on terrain and static objects
@@ -255,6 +286,7 @@ const NPCS: NPC[] = [
     facing: "down",
     dialogueId: "merchant_aldric_dynamic",
     movement: "static",
+    hiddenWhenFlag: "helped_aldric", // Goes back inside shop after quest
   },
   {
     id: "villager_tom",
@@ -331,6 +363,34 @@ const EVENTS: MapEvent[] = [
     data: {
       innName: "The Weary Wanderer",
       message: "Enter the inn?",
+    },
+  },
+  // Tavern Entrance - The Rusted Cog
+  {
+    id: "tavern_entrance",
+    type: "teleport",
+    x: 21,
+    y: 7,
+    data: {
+      targetMapId: "rusted_cog_tavern",
+      targetX: 7,
+      targetY: 10,
+      message: "Enter The Rusted Cog tavern?",
+    },
+  },
+  // Lumina Estate Entrance (east side of village)
+  {
+    id: "estate_entrance",
+    type: "teleport",
+    x: 27,
+    y: 12,
+    data: {
+      targetMapId: "lumina_estate",
+      targetX: 9,
+      targetY: 14,
+      message: "Enter the Lumina Estate?",
+      requiredFlag: "found_mechanism",
+      notMetMessage: "The Lumina Estate is home to the region's nobility. You have no business here... yet.",
     },
   },
   // Treasure Chests

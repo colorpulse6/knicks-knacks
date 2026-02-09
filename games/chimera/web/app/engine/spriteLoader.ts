@@ -321,9 +321,24 @@ export function drawPlaceholder(
 
   if (label) {
     ctx.fillStyle = "#ffffff";
-    ctx.font = "12px monospace";
+    ctx.font = "11px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(label, x + width / 2, y + height / 2 + 4);
+
+    // Truncate label if it's too wide for the box
+    const maxWidth = width - 8; // 4px padding on each side
+    let displayLabel = label;
+    let textWidth = ctx.measureText(displayLabel).width;
+
+    if (textWidth > maxWidth) {
+      // Try to fit by truncating with ellipsis
+      while (textWidth > maxWidth && displayLabel.length > 3) {
+        displayLabel = displayLabel.slice(0, -1);
+        textWidth = ctx.measureText(displayLabel + "...").width;
+      }
+      displayLabel += "...";
+    }
+
+    ctx.fillText(displayLabel, x + width / 2, y + height / 2 + 4);
   }
 }
 

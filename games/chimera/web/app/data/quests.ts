@@ -262,21 +262,21 @@ family is known for their extensive archives...
         id: "ask_villagers",
         type: "talk",
         description: "Ask villagers about scholars",
-        targetId: "villager_inquiry",
+        targetId: "merchant_aldric",
         isComplete: false,
       },
       {
         id: "learn_about_lumina",
         type: "talk",
         description: "Learn about the Lumina family archives",
-        targetId: "lumina_info",
+        targetId: "merchant_aldric",
         isComplete: false,
       },
       {
         id: "gain_audience",
         type: "talk",
         description: "Gain an audience at the Lumina Estate",
-        targetId: "lyra_lumina",
+        targetId: "lady_lyra",
         isComplete: false,
       },
     ],
@@ -438,12 +438,15 @@ disruption as a stress test, or simply hasn't prioritized the fix.
   the_hooded_stranger: {
     id: "the_hooded_stranger",
     name: "The Hooded Stranger",
-    description: "Investigate rumors of a mysterious figure asking about 'anomalies.'",
+    description: "Something about the hooded figure's presence disturbs you deeply.",
     longDescription: `
-The barkeep at the Rusted Cog has noticed a strange patron—a hooded figure
-who asks odd questions about "glitches" and "anomalies" and pays in coins
-no one has seen before. They seem particularly interested in anyone who's
-experienced strange phenomena...
+A strange figure sits in the corner of the Rusted Cog, speaking in
+incomprehensible patterns of noise and numbers. The barkeep says they've
+been there for days, watching, waiting.
+
+When you approached, their words meant nothing—static and code. Yet images
+burned into your mind unbidden. Ancient ruins. A hidden cache. You feel
+compelled to investigate, though you cannot explain why.
     `.trim(),
     giver: "barkeep_greta",
     chapter: 1,
@@ -455,14 +458,14 @@ experienced strange phenomena...
       {
         id: "find_stranger",
         type: "talk",
-        description: "Find the Hooded Stranger at night",
+        description: "Approach the Hooded Stranger",
         targetId: "hooded_stranger",
         isComplete: false,
       },
       {
         id: "answer_riddle",
         type: "collect",
-        description: "Solve the stranger's riddle",
+        description: "Follow the inexplicable compulsion",
         targetId: "riddle_solution",
         targetQuantity: 1,
         currentProgress: 0,
@@ -471,8 +474,15 @@ experienced strange phenomena...
       {
         id: "find_cache",
         type: "explore",
-        description: "Find the hidden cache in the ruins",
+        description: "Find what awaits in the ruins",
         targetId: "stranger_cache",
+        isComplete: false,
+      },
+      {
+        id: "return_to_stranger",
+        type: "talk",
+        description: "Return to the Hooded Stranger",
+        targetId: "hooded_stranger",
         isComplete: false,
       },
     ],
@@ -486,16 +496,17 @@ experienced strange phenomena...
 
     medievalLore: `
 Strange folk pass through Havenwood from time to time, but this one is
-different. They speak in riddles, pay with foreign coins, and seem to
-know things they shouldn't. Some whisper they might be a spy—or worse.
+different. They speak only in noise—numbers and static that hurt to hear.
+Yet sometimes, those who listen feel... compelled. Drawn to places they've
+never been. Most folk avoid them entirely. Perhaps that's wise.
     `.trim(),
 
     hiddenTruth: `
 The "Hooded Stranger" is an avatar projection of The System's AI—one of
 many ways it manifests within its own simulation to interact with
-inhabitants. It is testing Kai, observing his responses, and perhaps
-leaving breadcrumbs that will lead him toward greater awareness. The
-"Observer's Token" contains a subtle tracking subroutine.
+inhabitants. It is testing Kai, observing his responses, and transmitting
+location data directly into his consciousness via corrupted sensory
+channels. The "Observer's Token" contains a subtle tracking subroutine.
     `.trim(),
   },
 };

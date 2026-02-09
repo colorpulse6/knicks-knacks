@@ -46,9 +46,10 @@ export function getBrenDialogue(state: BrenDialogueState): DialogueNode {
     return BREN_PATROL_REMINDER;
   }
 
-  // Whispers active, first talk
+  // Whispers active, first talk - show intro so player can choose to get briefing
+  // (the objective completes when they ADVANCE to bren_briefing via the choice)
   if (questStatuses.whispers_of_trouble === "active") {
-    return BREN_BRIEFING;
+    return BREN_INTRO;
   }
 
   // Default - before quest

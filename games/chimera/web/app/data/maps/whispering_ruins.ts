@@ -164,7 +164,22 @@ const EVENTS: MapEvent[] = [
     },
     triggered: false,
   },
-  // Entrance to lower level (unlocked after Lyra joins)
+  // Hidden cache for The Hooded Stranger quest
+  // "In the place where memories are stored, seek the door that has no key"
+  {
+    id: "stranger_cache",
+    type: "treasure",
+    x: 11,
+    y: 2,
+    data: {
+      items: [{ itemId: "observers_token", quantity: 1 }],
+      requiredQuest: "the_hooded_stranger",
+      questObjective: { questId: "the_hooded_stranger", objectiveId: "find_cache" },
+      message: "Hidden behind a panel of glowing tiles, you find a small alcove. Inside rests a strange coin with an unblinking eye symbol. It pulses faintly in your hand...",
+    },
+    triggered: false,
+  },
+  // Entrance to lower level (unlocked after Lyra agrees to join expedition)
   {
     id: "to_lower_ruins",
     type: "teleport",
@@ -174,8 +189,9 @@ const EVENTS: MapEvent[] = [
       targetMapId: "whispering_ruins_lower",
       targetX: 17,
       targetY: 27,
-      message: "Descend deeper into the ruins?",
-      requiredFlag: "lyra_recruited",
+      message: "Descend deeper into the ruins with Lyra?",
+      requiredFlag: "showed_mechanism",
+      notMetMessage: "The passage descends into impenetrable darkness. Strange symbols line the walls... You sense this place holds secrets beyond your understanding. Perhaps someone with knowledge of ancient lore could help decipher them.",
     },
   },
 ];
@@ -254,6 +270,21 @@ const STATIC_OBJECTS: StaticObject[] = [
       // Block sides, leave center open for passage
       { offsetX: 0, offsetY: 1 },
       { offsetX: 2, offsetY: 1 },
+    ],
+  },
+
+  // === STAIRS TO LOWER RUINS ===
+  {
+    id: "stairs_to_lower",
+    sprite: "/assets/stairs_down.png",
+    x: 11,
+    y: 3,
+    width: 3,
+    height: 3,
+    collision: [
+      // Block sides, leave center open for descent
+      { offsetX: 0, offsetY: 2 },
+      { offsetX: 2, offsetY: 2 },
     ],
   },
 ];

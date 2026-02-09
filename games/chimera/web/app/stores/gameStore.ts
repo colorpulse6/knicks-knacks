@@ -25,9 +25,12 @@ import { HAVENWOOD_MAP } from "../data/maps/havenwood";
 import { WHISPERING_RUINS_MAP } from "../data/maps/whispering_ruins";
 import { HAVENWOOD_OUTSKIRTS_MAP } from "../data/maps/havenwood_outskirts";
 import { BANDIT_CAMP_MAP } from "../data/maps/bandit_camp";
+import { BANDIT_TENT_MAP } from "../data/maps/bandit_tent";
 import { BANDIT_CELLAR_MAP } from "../data/maps/bandit_cellar";
 import { WHISPERING_RUINS_LOWER_MAP } from "../data/maps/whispering_ruins_lower";
 import { HIDDEN_LABORATORY_MAP } from "../data/maps/hidden_laboratory";
+import { RUSTED_COG_TAVERN_MAP } from "../data/maps/rusted_cog_tavern";
+import { LUMINA_ESTATE_MAP } from "../data/maps/lumina_estate";
 import {
   checkForEncounter,
   createStepCounter,
@@ -38,6 +41,7 @@ import {
   createEnemiesFromEncounter,
   type StepCounter,
 } from "../engine/encounterEngine";
+import { createBanditChiefVorn } from "../data/enemies";
 import { processAllLevelUps } from "../engine/levelingEngine";
 import {
   getEventPlayerIsFacing,
@@ -62,6 +66,15 @@ export interface BattleRewards {
   gold: number;
   items: { itemId: string; name: string; quantity: number }[];
   levelUps: { characterName: string; newLevel: number }[];
+}
+
+// Quest completion rewards for notification popup
+export interface QuestCompleteRewards {
+  questId: string;
+  questName: string;
+  gold: number;
+  experience: number;
+  items: { itemId: string; name: string; quantity: number }[];
 }
 
 export interface GameState {
@@ -121,6 +134,12 @@ export interface GameState {
 
   // Battle rewards for victory screen
   pendingBattleRewards: BattleRewards | null;
+
+  // Quest completion rewards for notification popup
+  pendingQuestComplete: QuestCompleteRewards | null;
+
+  // Flag to set on battle victory (for boss fights)
+  pendingVictoryFlag: string | null;
 }
 
 export interface GameActions {
@@ -149,7 +168,7 @@ export interface GameActions {
   // Battle
   startBattle: (battle: BattleState) => void;
   updateBattle: (updates: Partial<BattleState>) => void;
-  finalizeBattleRewards: () => void; // Calculate rewards once when victory detected
+  finalizeBattleRewards: (enemies?: Enemy[]) => void; // Calculate rewards once when victory detected
   endBattle: (victory: boolean) => void;
 
   // Encounter
@@ -190,6 +209,7 @@ export interface GameActions {
   interact: () => string | null; // Returns message if interaction occurred
   openChest: (eventId: string) => string | null; // Open a treasure chest
   collectItem: (eventId: string) => string | null; // Collect quest item from map
+  resetTriggeredEvent: (eventId: string) => void; // Debug: reset a triggered event
 
   // Quest management
   startQuest: (questId: string) => boolean;
@@ -229,6 +249,7 @@ export interface GameActions {
   // Level-up and rewards
   clearLevelUps: () => void;
   clearBattleRewards: () => void;
+  clearQuestComplete: () => void;
 
   // Save/Load
   saveGame: (slot: number) => void;
@@ -282,6 +303,8 @@ const initialState: GameState = {
   battlesPaused: false,
   pendingLevelUps: [],
   pendingBattleRewards: null,
+  pendingQuestComplete: null,
+  pendingVictoryFlag: null,
 };
 
 export const useGameStore = create<GameState & GameActions>()(
@@ -435,7 +458,47 @@ export const useGameStore = create<GameState & GameActions>()(
                 targetMapId: string;
                 targetX: number;
                 targetY: number;
+                requiredFlag?: string;
+                requiredFlags?: string[];
+                notMetMessage?: string;
               };
+
+              // Check required flag (singular) for gated teleports
+              if (data.requiredFlag && !state.story.flags[data.requiredFlag]) {
+                const blockedDialogue: DialogueNode = {
+                  id: `teleport_blocked_${teleportEvent.id}`,
+                  speaker: "",
+                  portrait: "",
+                  text: data.notMetMessage || "You cannot enter here yet.",
+                };
+                return {
+                  playerPosition: newPosition,
+                  activeDialogue: blockedDialogue,
+                  phase: "dialogue" as GamePhase,
+                };
+              }
+
+              // Check required flags (plural) for gated teleports (e.g., tent entrance requires prisoners freed)
+              if (data.requiredFlags && data.requiredFlags.length > 0) {
+                const missingFlags = data.requiredFlags.filter(
+                  (flag) => !state.story.flags[flag]
+                );
+                if (missingFlags.length > 0) {
+                  // Show blocked message as dialogue
+                  const blockedDialogue: DialogueNode = {
+                    id: `teleport_blocked_${teleportEvent.id}`,
+                    speaker: "",
+                    portrait: "",
+                    text: data.notMetMessage || "You cannot enter here yet.",
+                  };
+                  return {
+                    playerPosition: newPosition,
+                    activeDialogue: blockedDialogue,
+                    phase: "dialogue" as GamePhase,
+                  };
+                }
+              }
+
               // Trigger map transition - player moves to the tile, then transition starts
               return {
                 playerPosition: newPosition,
@@ -445,6 +508,51 @@ export const useGameStore = create<GameState & GameActions>()(
                   y: data.targetY,
                 },
               };
+            }
+
+            // Check for battle events on the tile (boss fights, scripted encounters)
+            const battleEvent = state.currentMap.events.find(
+              (e) => e.type === "battle" && e.x === newX && e.y === newY
+            );
+            if (battleEvent && battleEvent.data && !state.openedChests.has(battleEvent.id)) {
+              const data = battleEvent.data as {
+                enemies: string[];
+                isBoss?: boolean;
+                oneTime?: boolean;
+                postBattleFlag?: string;
+              };
+
+              // Skip if boss already defeated (handles multiple events for same boss)
+              if (data.postBattleFlag && state.story.flags[data.postBattleFlag]) {
+                // Boss already defeated, don't trigger battle - continue with normal movement
+              } else {
+                // Create enemies based on the event data
+                let enemies: Enemy[] = [];
+                for (const enemyType of data.enemies) {
+                  if (enemyType === "bandit_chief_vorn") {
+                    enemies.push(createBanditChiefVorn(3));
+                  } else {
+                    // Use the encounter engine for standard enemies
+                    const encounter = { enemies: [enemyType], chance: 1, zone: { x: 0, y: 0, width: 1, height: 1 }, id: "temp" };
+                    enemies = enemies.concat(createEnemiesFromEncounter(encounter));
+                  }
+                }
+
+                if (enemies.length > 0) {
+                  // Mark as triggered if one-time
+                  const newOpenedChests = data.oneTime
+                    ? new Set([...state.openedChests, battleEvent.id])
+                    : state.openedChests;
+
+                  return {
+                    playerPosition: newPosition,
+                    openedChests: newOpenedChests,
+                    pendingEncounter: enemies,
+                    isTransitioning: true,
+                    pendingVictoryFlag: data.postBattleFlag || null,
+                  };
+                }
+              }
             }
 
             // Shop events don't auto-trigger - require interaction (Enter/Space)
@@ -481,17 +589,60 @@ export const useGameStore = create<GameState & GameActions>()(
         }),
 
       // Map
-      loadMap: (mapId) =>
-        set((state) => {
+      loadMap: (mapId) => {
+        // Handle quest objective updates for map entry
+        const state = get();
+
+        // The Lady's Curiosity - Escort objectives
+        if (state.hasActiveQuest("the_ladys_curiosity")) {
+          if (mapId === "whispering_ruins") {
+            // Escorted Lyra to the ruins
+            setTimeout(() => {
+              get().completeObjective("the_ladys_curiosity", "escort_to_ruins");
+            }, 0);
+          } else if (mapId === "whispering_ruins_lower") {
+            // Reached the Terminal chamber
+            setTimeout(() => {
+              get().completeObjective("the_ladys_curiosity", "reach_terminal");
+            }, 0);
+          }
+        }
+
+        // The Bandit Problem - Enter camp objective
+        if (state.hasActiveQuest("the_bandit_problem")) {
+          if (mapId === "bandit_camp") {
+            setTimeout(() => {
+              get().completeObjective("the_bandit_problem", "enter_camp");
+            }, 0);
+          } else if (mapId === "bandit_cellar") {
+            setTimeout(() => {
+              get().completeObjective("the_bandit_problem", "explore_cellar");
+            }, 0);
+          }
+        }
+
+        // Whispers of Trouble - Patrol outskirts objective
+        if (state.hasActiveQuest("whispers_of_trouble")) {
+          if (mapId === "havenwood_outskirts") {
+            setTimeout(() => {
+              get().completeObjective("whispers_of_trouble", "patrol_outskirts");
+            }, 0);
+          }
+        }
+
+        return set((state) => {
           // Map registry
           const maps: Record<string, GameMap> = {
             havenwood: HAVENWOOD_MAP,
             whispering_ruins: WHISPERING_RUINS_MAP,
             havenwood_outskirts: HAVENWOOD_OUTSKIRTS_MAP,
             bandit_camp: BANDIT_CAMP_MAP,
+            bandit_tent: BANDIT_TENT_MAP,
             bandit_cellar: BANDIT_CELLAR_MAP,
             whispering_ruins_lower: WHISPERING_RUINS_LOWER_MAP,
             hidden_laboratory: HIDDEN_LABORATORY_MAP,
+            rusted_cog_tavern: RUSTED_COG_TAVERN_MAP,
+            lumina_estate: LUMINA_ESTATE_MAP,
           };
 
           const map = maps[mapId];
@@ -502,7 +653,8 @@ export const useGameStore = create<GameState & GameActions>()(
             visitedMaps: new Set([...state.visitedMaps, mapId]),
             stepCounter: resetStepCounter(state.stepCounter), // Reset encounters on map change
           };
-        }),
+        });
+      },
 
       // Battle
       startBattle: (battle) => set({ battle, phase: "combat" }),
@@ -514,16 +666,21 @@ export const useGameStore = create<GameState & GameActions>()(
 
       // Calculate and store battle rewards without ending battle yet
       // Called when victory is detected, before showing VictoryScreen
-      finalizeBattleRewards: () =>
+      // Can accept enemies directly from BattleScreen to avoid state sync issues
+      finalizeBattleRewards: (passedEnemies) =>
         set((state) => {
-          if (!state.battle || state.pendingBattleRewards) return {};
+          if (state.pendingBattleRewards) return {};
 
-          const expGain = state.battle.enemies.reduce((sum, e) => sum + e.experience, 0);
-          const goldGain = state.battle.enemies.reduce((sum, e) => sum + e.gold, 0);
+          // Use passed enemies or fall back to state.battle.enemies
+          const enemies = passedEnemies ?? state.battle?.enemies;
+          if (!enemies || enemies.length === 0) return {};
+
+          const expGain = enemies.reduce((sum, e) => sum + e.experience, 0);
+          const goldGain = enemies.reduce((sum, e) => sum + e.gold, 0);
 
           // Calculate item drops ONCE with Math.random()
           const droppedItems: { itemId: string; name: string; quantity: number }[] = [];
-          state.battle.enemies.forEach((enemy) => {
+          enemies.forEach((enemy) => {
             if (enemy.drops) {
               enemy.drops.forEach((drop) => {
                 if (Math.random() < drop.chance) {
@@ -675,6 +832,33 @@ export const useGameStore = create<GameState & GameActions>()(
               levelUps: levelUpSummary,
             };
 
+            // Handle pending victory flag (for boss battles)
+            let updatedStory = state.story;
+            const victoryFlag = state.pendingVictoryFlag;
+            if (victoryFlag) {
+              updatedStory = {
+                ...state.story,
+                flags: {
+                  ...state.story.flags,
+                  [victoryFlag]: true,
+                },
+              };
+
+              // Handle quest objective updates for boss defeats
+              // We'll schedule this to run after the state update
+              setTimeout(() => {
+                if (victoryFlag === "vorn_defeated") {
+                  get().completeObjective("the_bandit_problem", "defeat_vorn");
+                  get().addMessage("Quest Updated: Defeated Bandit Chief Vorn!");
+                } else if (victoryFlag === "guardian_defeated") {
+                  // The Lady's Curiosity - Witnessed Lyra's reaction to the Terminal
+                  get().completeObjective("the_ladys_curiosity", "witness_reaction");
+                  // Complete the quest (awards rewards and adds Lyra to party)
+                  get().completeQuest("the_ladys_curiosity");
+                }
+              }, 0);
+            }
+
             return {
               battle: null,
               phase: "exploring",
@@ -682,9 +866,11 @@ export const useGameStore = create<GameState & GameActions>()(
               inventory: updatedInventory,
               pendingLevelUps: levelUpResults,
               pendingBattleRewards: battleRewards,
+              pendingVictoryFlag: null,
+              story: updatedStory,
             };
           }
-          return { battle: null, phase: victory ? "exploring" : "game_over", pendingBattleRewards: null };
+          return { battle: null, phase: victory ? "exploring" : "game_over", pendingBattleRewards: null, pendingVictoryFlag: null };
         }),
 
       // Encounter
@@ -729,6 +915,33 @@ export const useGameStore = create<GameState & GameActions>()(
           },
           pendingMapTransition: null,
         });
+
+        // Handle explore objectives when entering maps
+        if (mapId === "havenwood_outskirts") {
+          // Check if whispers_of_trouble is active and patrol objective isn't complete
+          const questStatus = get().getQuestStatus("whispers_of_trouble");
+          if (questStatus === "active") {
+            get().completeObjective("whispers_of_trouble", "patrol_outskirts");
+          }
+        }
+
+        if (mapId === "bandit_camp") {
+          // Check if the_bandit_problem is active
+          const questStatus = get().getQuestStatus("the_bandit_problem");
+          if (questStatus === "active") {
+            get().completeObjective("the_bandit_problem", "enter_camp");
+            get().addMessage("Quest Updated: Entered the Bandit Camp");
+          }
+        }
+
+        if (mapId === "bandit_cellar") {
+          // Check if the_bandit_problem is active
+          const questStatus = get().getQuestStatus("the_bandit_problem");
+          if (questStatus === "active") {
+            get().completeObjective("the_bandit_problem", "explore_cellar");
+            get().addMessage("Quest Updated: Discovered the hidden cellar!");
+          }
+        }
       },
 
       clearMapTransition: () =>
@@ -765,20 +978,81 @@ export const useGameStore = create<GameState & GameActions>()(
           // Morris quest triggers
           else if (nextNodeId === "morris_quest_accept") {
             get().startQuest("whispers_of_trouble");
+          } else if (nextNodeId === "morris_evidence_reaction") {
+            // Player is reporting evidence - complete the report objective
+            get().completeObjective("whispers_of_trouble", "report_to_morris");
           } else if (nextNodeId === "morris_bandit_accept") {
             get().startQuest("the_bandit_problem");
           } else if (nextNodeId === "morris_seeking_accept") {
+            // Complete "The Bandit Problem" quest before starting "Seeking Answers"
+            const banditQuestStatus = get().getQuestStatus("the_bandit_problem");
+            if (banditQuestStatus === "active") {
+              // Complete the return_artifact objective
+              get().completeObjective("the_bandit_problem", "return_artifact");
+              // Complete the quest (awards rewards)
+              get().completeQuest("the_bandit_problem");
+            }
+            // Start the next quest
             get().startQuest("seeking_answers");
           }
           // Bren dialogue triggers
           else if (nextNodeId === "bren_briefing") {
             get().setStoryFlag("talked_to_bren", true);
+            // Complete the talk_to_bren objective
+            get().completeObjective("whispers_of_trouble", "talk_to_bren");
           }
           // Aldric quest triggers
           else if (nextNodeId === "aldric_shipment_accept") {
             get().startQuest("lost_shipment");
+          } else if (nextNodeId === "aldric_scholar_info") {
+            // Seeking Answers: "Ask villagers about scholars"
+            get().completeObjective("seeking_answers", "ask_villagers");
           } else if (nextNodeId === "aldric_lumina_info") {
             get().setStoryFlag("asked_about_scholars", true);
+            // Seeking Answers: "Learn about the Lumina family archives"
+            get().completeObjective("seeking_answers", "learn_about_lumina");
+          }
+          // Aldric shop - open shop after showing dialogue
+          else if (nextNodeId === "aldric_shop_open") {
+            set({ activeDialogue: nextNode });
+            // Open shop after a brief delay to show the dialogue first
+            setTimeout(() => {
+              get().endDialogue();
+              get().enterShop("aldric_provisions");
+            }, 1500);
+            return;
+          }
+          // Greta (Rusted Cog) triggers
+          else if (nextNodeId === "greta_looking_around" || nextNodeId === "greta_about_village") {
+            get().setStoryFlag("met_greta", true);
+          } else if (nextNodeId === "greta_about_stranger") {
+            get().setStoryFlag("met_greta", true);
+            get().setStoryFlag("asked_about_stranger", true);
+            // Start the quest when Greta tells you about the mysterious stranger
+            get().startQuest("the_hooded_stranger");
+          }
+          // Hooded Stranger triggers
+          else if (nextNodeId === "stranger_speaks") {
+            get().setStoryFlag("met_stranger", true);
+            // Complete "find_stranger" objective (found the stranger!)
+            get().completeObjective("the_hooded_stranger", "find_stranger");
+          } else if (nextNodeId === "stranger_riddle_accept") {
+            // Player accepts the compulsion
+            get().setStoryFlag("riddle_asked", true);
+            // Complete "answer_riddle" objective (they've followed the compulsion)
+            get().completeObjective("the_hooded_stranger", "answer_riddle");
+          }
+          // Lyra dialogue triggers
+          else if (nextNodeId === "lyra_greeting") {
+            get().setStoryFlag("met_lyra", true);
+            // Seeking Answers: "Gain an audience at the Lumina Estate"
+            get().completeObjective("seeking_answers", "gain_audience");
+          } else if (nextNodeId === "lyra_joins") {
+            get().setStoryFlag("showed_mechanism", true);
+            // Complete "Seeking Answers" quest
+            get().completeQuest("seeking_answers");
+            // Start "The Lady's Curiosity" quest
+            get().startQuest("the_ladys_curiosity");
           }
 
           set({ activeDialogue: nextNode });
@@ -799,6 +1073,25 @@ export const useGameStore = create<GameState & GameActions>()(
             // Complete the quest and remove flowers
             get().removeItem("moonpetal_flower", 3);
             get().completeQuest("herbalists_request");
+          }
+        }
+
+        // Handle Whispers of Trouble quest completion
+        if (currentDialogue?.id === "morris_evidence_complete") {
+          const questStatus = get().getQuestStatus("whispers_of_trouble");
+          if (questStatus === "active") {
+            get().completeQuest("whispers_of_trouble");
+          }
+        }
+
+        // Handle The Hooded Stranger quest completion
+        if (currentDialogue?.id === "stranger_vanish") {
+          const questStatus = get().getQuestStatus("the_hooded_stranger");
+          if (questStatus === "active") {
+            // Complete the final objective before completing the quest
+            get().completeObjective("the_hooded_stranger", "return_to_stranger");
+            get().completeQuest("the_hooded_stranger");
+            get().setStoryFlag("ai_first_contact", true);
           }
         }
 
@@ -1320,6 +1613,20 @@ export const useGameStore = create<GameState & GameActions>()(
         );
         if (shopEvent && shopEvent.data) {
           const data = shopEvent.data as { shopId: string; message?: string };
+
+          // Aldric's shop is closed while he's outside dealing with his lost shipment
+          if (data.shopId === "aldric_provisions" && !state.story.flags.helped_aldric) {
+            // Show a message that the shop is closed
+            const closedDialogue: DialogueNode = {
+              id: "aldric_shop_closed",
+              speaker: "",
+              portrait: "",
+              text: "The door is locked. A small sign reads: 'Gone to check on a shipment. Back soon! -Aldric'",
+            };
+            set({ activeDialogue: closedDialogue, phase: "dialogue" });
+            return "Shop is closed";
+          }
+
           const shop = getShopById(data.shopId);
           if (shop) {
             // Enter the shop
@@ -1344,7 +1651,13 @@ export const useGameStore = create<GameState & GameActions>()(
           state.playerPosition.facing
         );
 
-        if (npc) {
+        // Check if NPC should be visible based on story flags
+        const isNpcVisible = npc && (
+          (!npc.visibleWhenFlag || state.story.flags[npc.visibleWhenFlag]) &&
+          (!npc.hiddenWhenFlag || !state.story.flags[npc.hiddenWhenFlag])
+        );
+
+        if (npc && isNpcVisible) {
           // Build story state for dialogue system
           const storyState: DialogueStoryState = {
             flags: state.story.flags,
@@ -1401,6 +1714,258 @@ export const useGameStore = create<GameState & GameActions>()(
           case "inn":
             get().openInn();
             return null;
+          case "trigger": {
+            // Handle trigger events (examine, investigation, story, etc.)
+            const data = event.data as {
+              triggerType?: string;
+              message?: string;
+              flag?: string;
+              requiredFlag?: string;
+              alreadyTriggeredMessage?: string;
+              onTrigger?: {
+                setFlags?: string[];
+                dialogue?: string;
+                giveItem?: string;
+              };
+            };
+
+            // Check required flag if any
+            if (data.requiredFlag && !state.story.flags[data.requiredFlag]) {
+              return null; // Can't trigger yet
+            }
+
+            // Check if already triggered (one-time triggers)
+            if (data.flag && state.story.flags[data.flag]) {
+              const alreadyMsg = data.alreadyTriggeredMessage || "You've already done this.";
+              const alreadyDialogue: DialogueNode = {
+                id: `already_${event.id}`,
+                speaker: "",
+                portrait: "",
+                text: alreadyMsg,
+              };
+              set({ activeDialogue: alreadyDialogue, phase: "dialogue" });
+              return null;
+            }
+
+            // Set flags from onTrigger
+            if (data.onTrigger?.setFlags) {
+              for (const flag of data.onTrigger.setFlags) {
+                get().setStoryFlag(flag, true);
+
+                // Handle specific quest objective updates based on flags
+                if (flag === "found_bandit_evidence") {
+                  // Update whispers_of_trouble quest objective
+                  get().completeObjective("whispers_of_trouble", "find_evidence");
+                  get().addMessage("Quest Updated: Found evidence of bandit activity!");
+                }
+
+                // Track prisoner rescues for the_bandit_problem quest
+                if (flag === "prisoner_1_freed" || flag === "prisoner_2_freed" || flag === "prisoner_3_freed") {
+                  // Count total freed prisoners
+                  const flags = get().story.flags;
+                  const freedCount = [
+                    flags.prisoner_1_freed || flag === "prisoner_1_freed",
+                    flags.prisoner_2_freed || flag === "prisoner_2_freed",
+                    flags.prisoner_3_freed || flag === "prisoner_3_freed",
+                  ].filter(Boolean).length;
+
+                  // Update quest progress
+                  get().updateQuestProgress("the_bandit_problem", "free_prisoners", freedCount);
+                  get().addMessage(`Quest Updated: Freed prisoner (${freedCount}/3)`);
+
+                  if (freedCount >= 3) {
+                    get().completeObjective("the_bandit_problem", "free_prisoners");
+                    get().addMessage("All prisoners have been freed!");
+                  }
+                }
+              }
+            }
+
+            // Give item if specified
+            if (data.onTrigger?.giveItem) {
+              get().addItem(data.onTrigger.giveItem, 1);
+            }
+
+            // Mark as triggered (for one-time triggers)
+            if (data.flag) {
+              get().setStoryFlag(data.flag, true);
+            }
+
+            // Show message as dialogue
+            if (data.message) {
+              const triggerDialogue: DialogueNode = {
+                id: `trigger_${event.id}`,
+                speaker: "",
+                portrait: "",
+                text: data.message,
+              };
+              set({ activeDialogue: triggerDialogue, phase: "dialogue" });
+            }
+
+            return data.message || "You examine the area.";
+          }
+          case "teleport": {
+            // Handle teleport events (doors, entrances) via interaction
+            const data = event.data as {
+              targetMapId: string;
+              targetX: number;
+              targetY: number;
+              message?: string;
+              requiredFlag?: string;
+              requiredFlags?: string[];
+              notMetMessage?: string;
+            };
+
+            // Check required flag (singular) for gated teleports
+            if (data.requiredFlag && !state.story.flags[data.requiredFlag]) {
+              const blockedDialogue: DialogueNode = {
+                id: `teleport_blocked_${event.id}`,
+                speaker: "",
+                portrait: "",
+                text: data.notMetMessage || "You cannot enter here yet.",
+              };
+              set({ activeDialogue: blockedDialogue, phase: "dialogue" });
+              return null;
+            }
+
+            // Check required flags (plural) for gated teleports
+            if (data.requiredFlags && data.requiredFlags.length > 0) {
+              const missingFlags = data.requiredFlags.filter(
+                (flag) => !state.story.flags[flag]
+              );
+              if (missingFlags.length > 0) {
+                // Show blocked message as dialogue
+                const blockedDialogue: DialogueNode = {
+                  id: `teleport_blocked_${event.id}`,
+                  speaker: "",
+                  portrait: "",
+                  text: data.notMetMessage || "You cannot enter here yet.",
+                };
+                set({ activeDialogue: blockedDialogue, phase: "dialogue" });
+                return null;
+              }
+            }
+
+            // Trigger map transition
+            set({
+              pendingMapTransition: {
+                mapId: data.targetMapId,
+                x: data.targetX,
+                y: data.targetY,
+              },
+            });
+            return data.message || "Entering...";
+          }
+          case "battle": {
+            // Handle fixed battle events (boss fights, scripted encounters)
+            const data = event.data as {
+              enemies: string[];
+              isBoss?: boolean;
+              oneTime?: boolean;
+              preBattleDialogue?: string;
+              postBattleFlag?: string;
+              requiredFlag?: string;
+              requiredFlags?: string[];
+              notMetMessage?: string;
+            };
+
+            // Check if already triggered (one-time battles)
+            if (data.oneTime && state.openedChests.has(event.id)) {
+              return "The area is clear.";
+            }
+
+            // Check if the post-battle flag is already set (boss already defeated)
+            // This handles cases where multiple events trigger the same boss (e.g., boss_vorn and boss_vorn_2)
+            if (data.postBattleFlag && state.story.flags[data.postBattleFlag]) {
+              return "The area is clear.";
+            }
+
+            // Check required flag (singular)
+            if (data.requiredFlag && !state.story.flags[data.requiredFlag]) {
+              const message = data.notMetMessage || "You can't proceed yet.";
+              const blockedDialogue: DialogueNode = {
+                id: `blocked_${event.id}`,
+                speaker: "",
+                portrait: "",
+                text: message,
+              };
+              set({ activeDialogue: blockedDialogue, phase: "dialogue" });
+              return null;
+            }
+
+            // Check required flags (plural - e.g., must free prisoners before fighting boss)
+            if (data.requiredFlags && data.requiredFlags.length > 0) {
+              const missingFlags = data.requiredFlags.filter(
+                (flag) => !state.story.flags[flag]
+              );
+              if (missingFlags.length > 0) {
+                // Show custom message or default
+                const message = data.notMetMessage || "You can't proceed yet.";
+                const blockedDialogue: DialogueNode = {
+                  id: `blocked_${event.id}`,
+                  speaker: "",
+                  portrait: "",
+                  text: message,
+                };
+                set({ activeDialogue: blockedDialogue, phase: "dialogue" });
+                return null;
+              }
+            }
+
+            // Create enemies based on the event data
+            let enemies: Enemy[] = [];
+            for (const enemyType of data.enemies) {
+              if (enemyType === "bandit_chief_vorn") {
+                enemies.push(createBanditChiefVorn(3));
+              } else {
+                // Use the encounter engine for standard enemies
+                const encounter = { enemies: [enemyType], chance: 1, zone: { x: 0, y: 0, width: 1, height: 1 }, id: "temp" };
+                enemies = enemies.concat(createEnemiesFromEncounter(encounter));
+              }
+            }
+
+            if (enemies.length === 0) {
+              return null;
+            }
+
+            // Mark as triggered if one-time (do before battle so it won't retrigger)
+            if (data.oneTime) {
+              set((s) => ({
+                openedChests: new Set([...s.openedChests, event.id]),
+              }));
+            }
+
+            // Set post-battle flag to be applied on victory
+            if (data.postBattleFlag) {
+              set({ pendingVictoryFlag: data.postBattleFlag });
+            }
+
+            // Check for pre-battle dialogue (boss confrontations, scripted encounters)
+            if (data.preBattleDialogue) {
+              const { getDialogueById } = require("../data/dialogues");
+              // Try the dialogue ID directly, or with _notice suffix for confrontations
+              const dialogueId = data.preBattleDialogue.includes("_confrontation")
+                ? data.preBattleDialogue.replace("_confrontation", "_notice")
+                : data.preBattleDialogue;
+              const startingDialogue = getDialogueById(dialogueId) || getDialogueById(data.preBattleDialogue);
+
+              if (startingDialogue) {
+                // Store enemies for after dialogue completes (dialogue's onComplete.startBattle will trigger it)
+                set({
+                  pendingEncounter: enemies,
+                  activeDialogue: startingDialogue,
+                  phase: "dialogue",
+                });
+
+                return null; // No message needed, dialogue handles it
+              }
+            }
+
+            // No pre-battle dialogue - start battle immediately
+            set({ pendingEncounter: enemies, isTransitioning: true });
+
+            return data.isBoss ? "Boss battle!" : "Battle started!";
+          }
           default:
             return null;
         }
@@ -1419,6 +1984,29 @@ export const useGameStore = create<GameState & GameActions>()(
         const event = state.currentMap.events.find((e) => e.id === eventId);
         if (!event || event.type !== "treasure") return null;
 
+        // Extended treasure data with quest/flag support
+        const data = event.data as TreasureContents & {
+          requiredQuest?: string;
+          requiredFlag?: string;
+          questObjective?: { questId: string; objectiveId: string };
+          message?: string;
+        };
+
+        // Check if quest is required
+        if (data.requiredQuest) {
+          const questStatus = get().getQuestStatus(data.requiredQuest);
+          if (questStatus !== "active") {
+            return "There's nothing here of interest.";
+          }
+        }
+
+        // Check if flag is required
+        if (data.requiredFlag) {
+          if (!state.story.flags[data.requiredFlag]) {
+            return "There's nothing here of interest.";
+          }
+        }
+
         // Process the treasure
         const result = processTreasure(event);
 
@@ -1427,8 +2015,6 @@ export const useGameStore = create<GameState & GameActions>()(
         }
 
         // Add items to inventory
-        const data = event.data as TreasureContents;
-
         if (data.items) {
           for (const { itemId, quantity } of data.items) {
             get().addItem(itemId, quantity);
@@ -1447,15 +2033,31 @@ export const useGameStore = create<GameState & GameActions>()(
           }
         }
 
+        // Complete quest objective if specified
+        if (data.questObjective) {
+          get().completeObjective(data.questObjective.questId, data.questObjective.objectiveId);
+          get().setStoryFlag("found_cache", true);
+        }
+
         // Mark chest as opened
         set((s) => ({
           openedChests: new Set([...s.openedChests, eventId]),
         }));
 
-        // Add to message log
-        get().addMessage(result.message);
+        // Use custom message or default
+        const message = data.message || result.message;
+        get().addMessage(message);
 
-        return result.message;
+        // Show the discovery as a dialogue box so player clearly sees it
+        const treasureDialogue: DialogueNode = {
+          id: `treasure_${eventId}`,
+          speaker: "",
+          portrait: "",
+          text: message,
+        };
+        set({ activeDialogue: treasureDialogue, phase: "dialogue" as GamePhase });
+
+        return message;
       },
 
       collectItem: (eventId) => {
@@ -1493,7 +2095,24 @@ export const useGameStore = create<GameState & GameActions>()(
         const message = data.message ?? `Found ${itemName}!`;
         get().addMessage(message);
 
+        // Show the discovery as a dialogue box so player clearly sees it
+        const collectDialogue: DialogueNode = {
+          id: `collect_${eventId}`,
+          speaker: "",
+          portrait: "",
+          text: message,
+        };
+        set({ activeDialogue: collectDialogue, phase: "dialogue" as GamePhase });
+
         return message;
+      },
+
+      resetTriggeredEvent: (eventId) => {
+        set((s) => {
+          const newChests = new Set(s.openedChests);
+          newChests.delete(eventId);
+          return { openedChests: newChests };
+        });
       },
 
       // Quest management
@@ -1589,23 +2208,40 @@ export const useGameStore = create<GameState & GameActions>()(
         const questDef = getQuestById(questId);
         if (!questDef) return;
 
+        // Build reward items list for notification
+        const rewardItems: { itemId: string; name: string; quantity: number }[] = [];
+
         // Award rewards
         if (questDef.rewards.gold) {
           get().addGold(questDef.rewards.gold);
         }
+        // TODO: Add experience to party when leveling system supports it
         if (questDef.rewards.items) {
           for (const { itemId, quantity } of questDef.rewards.items) {
             get().addItem(itemId, quantity);
+            const item = getItemById(itemId);
+            const itemName = item?.name ?? itemId;
+            rewardItems.push({ itemId, name: itemName, quantity });
           }
         }
         if (questDef.rewards.shards) {
           for (const shardId of questDef.rewards.shards) {
             get().addShard(shardId);
+            rewardItems.push({ itemId: shardId, name: shardId, quantity: 1 });
           }
         }
         if (questDef.rewards.storyFlags) {
           for (const flag of questDef.rewards.storyFlags) {
             get().setStoryFlag(flag, true);
+          }
+        }
+
+        // Special handling: Add party members for specific quests
+        if (questId === "the_ladys_curiosity") {
+          // Lyra joins the party!
+          const lyraInParty = get().party.find((c) => c.id === "lyra");
+          if (!lyraInParty) {
+            get().addPartyMember(LYRA);
           }
         }
 
@@ -1620,7 +2256,17 @@ export const useGameStore = create<GameState & GameActions>()(
 
         // Set completion flag
         get().setStoryFlag(`quest_${questId}_completed`, true);
-        get().addMessage(`Quest Complete: ${questDef.name}!`);
+
+        // Set pending quest complete notification
+        set({
+          pendingQuestComplete: {
+            questId,
+            questName: questDef.name,
+            gold: questDef.rewards.gold ?? 0,
+            experience: questDef.rewards.experience ?? 0,
+            items: rewardItems,
+          },
+        });
       },
 
       failQuest: (questId) => {
@@ -1911,6 +2557,7 @@ export const useGameStore = create<GameState & GameActions>()(
       // Level-up and rewards
       clearLevelUps: () => set({ pendingLevelUps: [] }),
       clearBattleRewards: () => set({ pendingBattleRewards: null }),
+      clearQuestComplete: () => set({ pendingQuestComplete: null }),
 
       // Save/Load
       saveGame: (slot) => {

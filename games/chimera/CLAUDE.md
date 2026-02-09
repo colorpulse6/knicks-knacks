@@ -1,5 +1,38 @@
 # Chimera Development Guide
 
+## Navigation
+
+> **Detailed implementation docs are in feature-level files.** This document covers world lore, characters, and content creation guidelines.
+
+| Topic | Location |
+|-------|----------|
+| **Engine** (ATB, damage, AI) | `web/app/engine/CLAUDE.md` |
+| **Data** (items, maps, dialogues, quests) | `web/app/data/CLAUDE.md` |
+| **State** (Zustand patterns) | `web/app/stores/CLAUDE.md` |
+| **Story docs** | `docs/story/` |
+| **Asset list** | `docs/ASSETS.md` |
+
+---
+
+## Expanding This Documentation
+
+**These docs should grow with the game.** When you:
+
+- **Discover an undocumented system** → Add it to the appropriate `CLAUDE.md`
+- **Build a new feature** → Document the pattern before finishing
+- **Find outdated info** → Update it immediately
+
+**Where to add:**
+| Content Type | Add To |
+|--------------|--------|
+| World lore, characters, tone | This file |
+| Engine systems (ATB, damage, AI) | `web/app/engine/CLAUDE.md` |
+| Data patterns (items, maps, quests) | `web/app/data/CLAUDE.md` |
+| State management | `web/app/stores/CLAUDE.md` |
+| New story flags | Story Flags Reference section below |
+
+---
+
 ## Project Overview
 
 **Chimera** is an FF6-style JRPG that presents itself as a medieval fantasy but slowly reveals itself to be a simulation controlled by an amoral AI. The game blends two realities—a "Light Facade" (medieval kingdom) and a "Dark Core" (AI-controlled simulation)—creating an existential narrative about free will, consciousness, and meaning.
@@ -223,201 +256,25 @@ Warding Incense - Fragrant smoke that cleanses afflictions of the humors.
 
 ---
 
-## Coding Practices & Patterns
+## Implementation Patterns
 
-### Static Object Collision System
+> **For detailed patterns, see feature-level docs:**
+> - `web/app/engine/CLAUDE.md` - Battle, ATB, damage, AI patterns
+> - `web/app/data/CLAUDE.md` - Items, maps, dialogues, quests patterns
+> - `web/app/stores/CLAUDE.md` - Zustand state management patterns
 
-Buildings and objects use a **sprite position + collision offset** pattern:
+### Quick Reference: Key Patterns
 
-```typescript
-{
-  id: "shop",
-  sprite: "/assets/shop.png",
-  x: 13,           // Sprite draws starting at tile (13, 4)
-  y: 4,
-  width: 3,        // Sprite is 3 tiles wide
-  height: 4,       // Sprite is 4 tiles tall
-  collision: [
-    // Collision at sprite position + offset
-    // offsetY: 2 means y = 4 + 2 = 6 is blocked
-    { offsetX: 0, offsetY: 2 },  // Block left wall at (13, 6)
-    { offsetX: 2, offsetY: 2 },  // Block right wall at (15, 6)
-    // Center (14, 6) is open for door
-  ],
-}
-```
-
-**Key Points:**
-- Sprite renders at `(x, y)` with given `width × height`
-- Collision tiles are `(x + offsetX, y + offsetY)`
-- Leave gaps in collision for doors/entrances
-- Collision row is typically 1-2 rows above sprite bottom
-
-### Map Event Types
-
-Events are positioned on tiles and trigger different behaviors:
-
-| Type | Trigger | Behavior |
-|------|---------|----------|
-| `teleport` | Step on tile | Auto-triggers map transition |
-| `shop` | Step on tile + interact | Shows prompt, Enter opens shop |
-| `treasure` | Face tile + interact | Opens chest, adds items |
-| `collectible` | Face tile + interact | Quest item pickup |
-| `save_point` | Face tile + interact | Save game (TODO) |
-| `npc` | Face NPC + interact | Start dialogue |
-
-**Shop Events Require Interaction:**
-```typescript
-// In movePlayer: Shops do NOT auto-trigger
-// Shop events don't auto-trigger - require interaction (Enter/Space)
-
-// In interact(): Check for shop at player's position
-const shopEvent = currentMap.events.find(
-  (e) => e.type === "shop" && e.x === playerX && e.y === playerY
-);
-```
-
-### Item Effect Display Pattern
-
-Items show description (gray) + effect (cyan):
-
-```typescript
-// types/item.ts
-export function getEffectDescription(item: Item): string | null {
-  if (!item.effect) return null;
-
-  switch (item.effect.type) {
-    case "heal_hp": return `Restores ${item.effect.power} HP`;
-    case "heal_mp": return `Restores ${item.effect.power} MP`;
-    case "cure_status": return "Cures status ailments";
-    // ...
-  }
-}
-
-// In components:
-<p className="text-gray-400">{item.description}</p>
-{getEffectDescription(item) && (
-  <p className="text-cyan-400">{getEffectDescription(item)}</p>
-)}
-```
-
-### Map Transition Pattern
-
-Transitions use a **pending state + visual fade** pattern:
-
-```typescript
-// State
-pendingMapTransition: { mapId: string; x: number; y: number } | null;
-
-// 1. Trigger transition (in movePlayer)
-return { pendingMapTransition: { mapId, x, y } };
-
-// 2. Game.tsx watches for pending transition
-useEffect(() => {
-  if (pendingMapTransition && !showMapTransition) {
-    setShowMapTransition(true);  // Start fade-out
-  }
-}, [pendingMapTransition]);
-
-// 3. MapTransition component calls onMidpoint when screen is black
-// 4. executeMapTransition() loads new map
-// 5. onComplete clears state, fade-in completes
-```
-
-### Interaction Prompt Pattern
-
-Show prompts when player can interact:
-
-```typescript
-const interactionPrompt = useMemo(() => {
-  // 1. Check shop events at player's current position
-  const shopEvent = currentMap.events.find(
-    (e) => e.type === "shop" && e.x === playerX && e.y === playerY
-  );
-  if (shopEvent) return shopEvent.data.message || "Enter Shop";
-
-  // 2. Check NPCs player is facing
-  const npc = getNpcPlayerIsFacing(...);
-  if (npc) return `Talk to ${npc.name}`;
-
-  // 3. Check events player is facing
-  const event = getEventPlayerIsFacing(...);
-  if (event) return getInteractionPrompt(event);
-
-  return null;
-}, [currentMap, playerPosition]);
-```
-
-### Zustand State Management
-
-Use partial state returns in `set()` callbacks:
-
-```typescript
-// Good - only return changed fields
-movePlayer: (dx, dy) => set((state) => {
-  // ... logic ...
-  return { playerPosition: newPosition };  // Merges with existing state
-}),
-
-// For shop entry - return multiple fields
-return {
-  playerPosition: newPosition,
-  phase: "shop" as const,
-  shop: { currentShop: shop, ... },
-};
-```
-
-### Quest-Gated Collectibles
-
-Collectibles can require an active quest:
-
-```typescript
-// In map data
-{
-  id: "moonpetal_1",
-  type: "collectible",
-  x: 2, y: 2,
-  data: {
-    itemId: "moonpetal_flower",
-    quantity: 1,
-    requiredQuest: "herbalists_request",  // Only visible/collectible if quest active
-    message: "Found a Moonpetal Flower!",
-  },
-}
-
-// In movePlayer - block if quest active and not collected
-if (e.type === "collectible") {
-  const data = e.data as CollectibleContents;
-  if (data.requiredQuest) {
-    return get().hasActiveQuest(data.requiredQuest);
-  }
-}
-```
-
-### Dynamic Dialogue Pattern
-
-NPCs can have dialogue that changes based on game state:
-
-```typescript
-// data/dialogues/herbalist-mira.ts
-export function getMiraDialogue(
-  questStatus: QuestStatus,
-  hasEnoughFlowers: boolean,
-  flowerCount: number
-): DialogueNode {
-  if (questStatus === "completed") {
-    return MIRA_DIALOGUES.post_quest;
-  }
-  if (questStatus === "active" && hasEnoughFlowers) {
-    return MIRA_DIALOGUES.turn_in;
-  }
-  if (questStatus === "active") {
-    return { ...MIRA_DIALOGUES.in_progress,
-      text: `You have ${flowerCount}/3 flowers...` };
-  }
-  return MIRA_DIALOGUES.first_meeting;
-}
-```
+| Pattern | See |
+|---------|-----|
+| Static object collision | `data/CLAUDE.md` → Maps System |
+| Map event types | `data/CLAUDE.md` → Maps System |
+| Dynamic dialogue | `data/CLAUDE.md` → Dialogues System |
+| Quest tracking | `data/CLAUDE.md` → Quests System |
+| Battle flow | `engine/CLAUDE.md` → Battle Engine |
+| ATB gauges | `engine/CLAUDE.md` → ATB System |
+| Damage formulas | `engine/CLAUDE.md` → Damage Calculator |
+| State updates | `stores/CLAUDE.md` → Common Patterns |
 
 ---
 
@@ -427,14 +284,20 @@ export function getMiraDialogue(
 |---------|------|
 | Characters | `web/app/data/characters.ts` |
 | Items & Equipment | `web/app/data/items.ts` |
+| Item Icons | `web/public/icons/items/` |
 | Enemies | `web/app/data/enemies.ts` |
+| Quests | `web/app/data/quests.ts` |
+| Dialogues | `web/app/data/dialogues/` |
 | Map Data | `web/app/data/maps/` |
 | Battle Engine | `web/app/engine/battleEngine.ts` |
+| Interaction Engine | `web/app/engine/interactionEngine.ts` |
 | ATB System | `web/app/engine/atbSystem.ts` |
 | Damage Formulas | `web/app/engine/damageCalculator.ts` |
 | Enemy AI | `web/app/engine/aiController.ts` |
 | Animations | `web/app/data/animations.ts` |
 | Game Store | `web/app/stores/gameStore.ts` |
+| Menu Screens | `web/app/components/menu/` |
+| Item Types | `web/app/types/item.ts` |
 | Story Docs | `docs/story/` |
 | Items Lore | `docs/items-guide.md` |
 | Asset List | `docs/ASSETS.md` |
@@ -491,25 +354,56 @@ export function getMiraDialogue(
 - [x] Interaction prompts
 - [x] Building collision system
 
-### Phase 3: Polish & Content (Current)
+### Phase 3: Act I Story Content (Current)
+- [x] Bandit Camp dungeon with prisoner rescue
+- [x] Boss fight: Bandit Chief Vorn with pre-battle dialogue
+- [x] Interior maps (Vorn's Tent, Hidden Cellar)
+- [x] Story-gated equipment (Lightning Blade)
+- [x] Key items from investigation (Vorn's Orders, Broken Mechanism)
+- [x] Item icons system for menu display
 - [ ] Save/Load UI screens
-- [ ] More enemy types
-- [ ] Lyra recruitment sequence
+- [ ] Lyra recruitment sequence (Rusted Cog Tavern → Lumina Estate)
 - [ ] Sound effects and music
-- [ ] Inn/rest system
 
-### Phase 4: Story Expansion
-- [ ] Full Act I content
-- [ ] Additional party members
-- [ ] More side quests
-- [ ] Boss battles with unique mechanics
+### Phase 4: Act I Completion
+- [ ] Return to Elder Morris quest turn-in
 - [ ] First "Glitch" cutscene
+- [ ] Whispering Ruins expansion
+- [ ] Act I finale and transition to Act II
 
-### Immediate Next Steps
-1. Complete Save/Load UI screens
-2. Add more enemy variety
-3. Implement Lyra recruitment
-4. Create first scripted "Glitch" cutscene
+### Current Story Progress (Act I)
+```
+Havenwood (Starting Village)
+├── Elder Morris gives "The Bandit Problem" quest
+├── Aldric's Shop (buy/sell)
+├── Herbalist Mira side quest
+└── Connects to: Outskirts, Tavern
+
+Havenwood Outskirts
+├── Random encounters (wolves, bandits)
+├── Path to Bandit Camp (requires quest)
+└── Connects to: Havenwood, Bandit Camp
+
+Bandit Camp (30x30)
+├── 3 prisoners to rescue (gates boss)
+├── Supply chests, weapon rack
+├── Vorn's Tent entrance (requires all prisoners freed)
+└── Connects to: Outskirts, Tent
+
+Vorn's Tent (12x10) [INTERIOR]
+├── Boss fight: Bandit Chief Vorn
+├── Investigation: Vorn's Orders (key item)
+├── Investigation: Strange weapons
+├── Treasure chest (requires vorn_defeated)
+├── Hidden cellar entrance (requires vorn_defeated)
+└── Connects to: Camp, Cellar
+
+Hidden Cellar (15x12) [INTERIOR]
+├── Strange glowing artifact device
+├── Broken Mechanism (key item)
+├── Stolen documents (lore)
+└── Connects to: Tent
+```
 
 ---
 
@@ -538,3 +432,97 @@ Press 2                   # Teleport to Whispering Ruins (encounters)
 Press B                   # Trigger test battle
 Arrow keys / WASD         # Movement
 ```
+
+---
+
+## Quest System
+
+> **For detailed quest implementation patterns, see `web/app/data/CLAUDE.md` → Quests System**
+
+### Quick Reference: Files to Touch When Adding a Quest
+
+| File | Purpose |
+|------|---------|
+| `data/quests.ts` | Quest definition (objectives, rewards) |
+| `data/dialogues/[npc].ts` | NPC dialogue with quest offers/turn-ins |
+| `data/dialogues/index.ts` | Register dialogue in `getDialogueById()` |
+| `data/maps/[map].ts` | Events, NPCs, collectibles |
+| `stores/gameStore.ts` | Quest tracking logic |
+| `data/items.ts` | New items if quest involves collectibles |
+
+### Objective Types
+
+| Type | Completes When |
+|------|----------------|
+| `talk` | Dialogue with NPC finishes |
+| `explore` | Player enters specified map |
+| `collect` | Manual progress tracking via flags |
+| `defeat` | Boss defeated (postBattleFlag set) |
+| `deliver` | Talk to NPC while carrying items |
+
+### Checklist for New Quests
+
+```
+□ Define quest in data/quests.ts (ID, objectives, rewards)
+□ Create NPC dialogue file with quest states
+□ Register dialogue in index.ts
+□ Create map events (triggers, battles, collectibles)
+□ Add tracking to gameStore.ts
+□ Test the full flow
+```
+
+---
+
+## Feature Reference (Summary)
+
+> **For detailed implementation, see feature-level docs:**
+> - Items & Icons: `web/app/data/CLAUDE.md` → Items System
+> - Maps & Events: `web/app/data/CLAUDE.md` → Maps System
+> - Battle patterns: `web/app/engine/CLAUDE.md`
+> - State management: `web/app/stores/CLAUDE.md`
+
+### Item Icons
+
+Icons auto-derive from item properties via `getItemIcon()` in `data/items.ts`. Custom icons use the `icon` field.
+
+### Story-Gated Equipment
+
+```typescript
+// Equipment with requiredFlag can't be equipped until flag is set
+lightning_blade: {
+  requiredFlag: "awareness_restored",
+  lockedDescription: "Your fingers pass through...",
+}
+```
+
+### Trigger Events with Item Giving
+
+```typescript
+// Triggers can give items via onTrigger.giveItem
+onTrigger: {
+  setFlags: ["found_orders"],
+  giveItem: "vorns_orders",  // Added to inventory
+}
+```
+
+### Boss Multi-Entry Prevention
+
+Boss events check both `oneTime` flag AND `postBattleFlag` to prevent re-triggering from multiple tiles.
+
+---
+
+## Story Flags Reference (Act I)
+
+| Flag | Set By | Enables |
+|------|--------|---------|
+| `bandit_threat_known` | Elder Morris dialogue | Start "The Bandit Problem" |
+| `bandit_camp_discovered` | Accepting quest | Access to Bandit Camp map |
+| `prisoner_1_freed` | Rescue trigger | Progress towards boss |
+| `prisoner_2_freed` | Rescue trigger | Progress towards boss |
+| `prisoner_3_freed` | Rescue trigger | Entry to Vorn's Tent |
+| `vorn_defeated` | Battle victory | Access to cellar, treasure |
+| `found_vorns_orders` | Desk examine | Story progression |
+| `found_kidnapping_evidence` | Desk examine | Quest objective |
+| `strange_tech_seen` | Cellar artifact | Story flag |
+| `found_mechanism` | Cellar artifact | Quest objective |
+| `awareness_restored` | Act III | Equip Lightning Blade |

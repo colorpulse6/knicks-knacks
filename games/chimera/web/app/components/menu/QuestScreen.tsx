@@ -290,7 +290,10 @@ export default function QuestScreen() {
                     const objProgress = selectedQuest.progress?.objectives.find(
                       (o) => o.objectiveId === objective.id
                     );
-                    const isComplete = objProgress?.isComplete ?? false;
+                    // If quest is completed, all objectives should show as complete
+                    const isComplete = selectedQuest.status === "completed"
+                      ? true
+                      : (objProgress?.isComplete ?? false);
                     const currentProgress = objProgress?.currentProgress ?? 0;
                     const targetProgress = objective.targetQuantity ?? 1;
 

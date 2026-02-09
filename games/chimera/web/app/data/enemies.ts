@@ -624,9 +624,9 @@ export function createBanditChiefVorn(level: number = 3): Enemy {
     experience: 80 + level * 15,
     gold: 150 + level * 20,
     drops: [
+      { itemId: "lightning_blade", chance: 1.0 }, // Vorn's signature weapon - can't be used until awareness restored
       { itemId: "sanguine_draught", chance: 1.0 }, // Guaranteed
-      { itemId: "sanguine_draught", chance: 1.0 }, // Guaranteed x2
-      { itemId: "broken_mechanism", chance: 1.0 }, // Quest item, guaranteed
+      { itemId: "theriac_electuary", chance: 1.0 }, // Guaranteed better potion
     ],
   };
 }

@@ -882,19 +882,10 @@ function executeSteal(
     targetLuck: targetLuck,
   };
 
-  // Add a special battle log entry that contains steal data
-  // The BattleScreen will parse this and handle the actual item removal
+  // Store pending steal event for the UI to process
+  // The actual log message is added in BattleScreen when the steal resolves
   newState = {
     ...newState,
-    battleLog: [
-      ...newState.battleLog,
-      {
-        timestamp: Date.now(),
-        message: `STEAL_ATTEMPT:${JSON.stringify(stealEventData)}`,
-        type: "action" as const,
-      }
-    ],
-    // Store pending steal event for the UI to process
     pendingStealEvent: stealEventData,
   };
 

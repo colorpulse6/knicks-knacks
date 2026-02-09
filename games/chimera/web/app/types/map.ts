@@ -87,6 +87,9 @@ export interface NPC {
   dialogueId: string;
   movement?: "static" | "wander" | "patrol";
   patrolPath?: { x: number; y: number }[];
+  // Visibility conditions based on story flags
+  visibleWhenFlag?: string;  // Only show when this flag is true
+  hiddenWhenFlag?: string;   // Hide when this flag is true
 }
 
 export interface EnemyEncounter {
@@ -122,6 +125,9 @@ export interface StaticObject {
   collision?: { offsetX: number; offsetY: number }[];
   // Z-order for rendering (higher = rendered later/on top)
   zIndex?: number;
+  // Visibility conditions based on story flags (like NPCs)
+  visibleWhenFlag?: string;  // Only show when this flag is true
+  hiddenWhenFlag?: string;   // Hide when this flag is true
 }
 
 export interface GameMap {
@@ -184,4 +190,44 @@ export function isValidPosition(
     return false;
   }
   return map.layers.collision[y][x];
+}
+
+/**
+ * Get NPCs that should be visible based on story flags
+ */
+export function getVisibleNpcs(
+  npcs: NPC[],
+  storyFlags: Record<string, boolean>
+): NPC[] {
+  return npcs.filter((npc) => {
+    // If NPC has a visibleWhenFlag, check if that flag is true
+    if (npc.visibleWhenFlag && !storyFlags[npc.visibleWhenFlag]) {
+      return false;
+    }
+    // If NPC has a hiddenWhenFlag, check if that flag is true (hide if so)
+    if (npc.hiddenWhenFlag && storyFlags[npc.hiddenWhenFlag]) {
+      return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * Get static objects that should be visible based on story flags
+ */
+export function getVisibleStaticObjects(
+  objects: StaticObject[],
+  storyFlags: Record<string, boolean>
+): StaticObject[] {
+  return objects.filter((obj) => {
+    // If object has a visibleWhenFlag, check if that flag is true
+    if (obj.visibleWhenFlag && !storyFlags[obj.visibleWhenFlag]) {
+      return false;
+    }
+    // If object has a hiddenWhenFlag, check if that flag is true (hide if so)
+    if (obj.hiddenWhenFlag && storyFlags[obj.hiddenWhenFlag]) {
+      return false;
+    }
+    return true;
+  });
 }

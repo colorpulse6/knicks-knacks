@@ -5,7 +5,8 @@ import { useGameStore } from "../../stores/gameStore";
 import type { Character } from "../../types";
 
 export default function StatusScreen() {
-  const { party } = useGameStore();
+  const { party, story, openedChests, setStoryFlag, resetTriggeredEvent } = useGameStore();
+  const [showDebug, setShowDebug] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Keyboard navigation for party member selection
@@ -149,6 +150,79 @@ export default function StatusScreen() {
           [←/→] Switch character
         </div>
       )}
+
+      {/* Debug Panel */}
+      <div className="mt-4 pt-2 border-t border-gray-700/50">
+        <button
+          onClick={() => setShowDebug(!showDebug)}
+          className="text-xs text-gray-500 hover:text-gray-400"
+        >
+          {showDebug ? "▼ Hide Debug" : "▶ Show Debug"}
+        </button>
+        {showDebug && (
+          <div className="mt-2 p-2 bg-gray-800/50 rounded border border-gray-700 text-xs">
+            <h4 className="text-cyan-400 font-bold mb-2">Debug Info</h4>
+
+            {/* Party Info */}
+            <div className="mb-2">
+              <span className="text-gray-400">Party Members: </span>
+              <span className="text-white">{party.map(p => p.name).join(", ")}</span>
+            </div>
+
+            {/* Key Flags */}
+            <div className="mb-2">
+              <span className="text-gray-400">Story Flags:</span>
+              <div className="ml-2 mt-1 space-y-1">
+                <FlagStatus name="lyra_recruited" value={story.flags.lyra_recruited} />
+                <FlagStatus name="guardian_defeated" value={story.flags.guardian_defeated} />
+                <FlagStatus name="found_laboratory_entrance" value={story.flags.found_laboratory_entrance} />
+              </div>
+            </div>
+
+            {/* Triggered Events */}
+            <div className="mb-2">
+              <span className="text-gray-400">Guardian Event Triggered: </span>
+              <span className={openedChests.has("terminal_guardian_battle") ? "text-red-400" : "text-green-400"}>
+                {openedChests.has("terminal_guardian_battle") ? "Yes (blocked)" : "No (ready)"}
+              </span>
+            </div>
+
+            {/* Reset Buttons */}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => {
+                  resetTriggeredEvent("terminal_guardian_battle");
+                  if (story.flags.guardian_defeated) {
+                    setStoryFlag("guardian_defeated", false);
+                  }
+                }}
+                className="px-2 py-1 bg-red-800/50 hover:bg-red-700/50 border border-red-500/50 rounded text-red-300"
+              >
+                Reset Guardian Battle
+              </button>
+              {!story.flags.lyra_recruited && (
+                <button
+                  onClick={() => setStoryFlag("lyra_recruited", true)}
+                  className="px-2 py-1 bg-green-800/50 hover:bg-green-700/50 border border-green-500/50 rounded text-green-300"
+                >
+                  Set Lyra Recruited
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FlagStatus({ name, value }: { name: string; value?: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className={value ? "text-green-400" : "text-gray-500"}>
+        {value ? "✓" : "✗"}
+      </span>
+      <span className="text-gray-300">{name}</span>
     </div>
   );
 }

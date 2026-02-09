@@ -281,6 +281,18 @@ const STATIC_OBJECTS: StaticObject[] = [
       { offsetX: 0, offsetY: 2 }, { offsetX: 1, offsetY: 2 },
     ],
   },
+
+  // === HIDDEN PASSAGE (revealed after defeating guardian) ===
+  {
+    id: "hidden_passage_entrance",
+    sprite: "/assets/secret_passage.png",
+    x: 16,
+    y: 2,
+    width: 3,
+    height: 3,
+    collision: [], // Walkable - leads to trigger
+    visibleWhenFlag: "guardian_defeated",
+  },
 ];
 
 // NPCs - Lyra accompanies you here during the quest
@@ -316,39 +328,20 @@ const EVENTS: MapEvent[] = [
     },
   },
 
-  // === THE TERMINAL - Key story event ===
+  // === THE TERMINAL - Triggers Guardian Boss ===
   {
-    id: "terminal_interaction",
-    type: "trigger",
-    x: 17,
-    y: 6,
-    data: {
-      triggerType: "story",
-      requiredFlag: "lyra_recruited",
-      notTriggeredIf: "awakening_triggered",
-      message: "",
-      onTrigger: {
-        setFlags: ["awakening_triggered"],
-        dialogue: "terminal_awakening",
-        // This triggers the awakening cutscene
-      },
-    },
-    triggered: false,
-  },
-
-  // === CORRUPTED GUARDIAN BOSS ===
-  {
-    id: "boss_corrupted_guardian",
+    id: "terminal_guardian_battle",
     type: "battle",
     x: 17,
-    y: 10,
+    y: 6,
     data: {
       enemies: ["corrupted_guardian"],
       isBoss: true,
       oneTime: true,
-      requiredFlag: "awakening_triggered",
+      requiredFlags: ["showed_mechanism"], // Lyra is with you
       preBattleDialogue: "guardian_awakens",
       postBattleFlag: "guardian_defeated",
+      notMetMessage: "The terminal hums with dormant energy. You sense you shouldn't approach alone...",
     },
     triggered: false,
   },
@@ -508,5 +501,5 @@ export const WHISPERING_RUINS_LOWER_MAP: GameMap = {
   ],
   ambientColor: "#1a1a2e", // Deep dark blue
   music: "ancient_depths",
-  requiredFlags: ["lyra_recruited"],
+  requiredFlags: ["showed_mechanism"], // Lyra has agreed to join expedition
 };

@@ -83,12 +83,18 @@ function getDamageNumberPosition(
 }
 
 export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
-  const { party, removeItem, playerPosition, inventory, pendingBattleRewards, finalizeBattleRewards, updateBattle } = useGameStore();
-  const battleBackground = getBattleBackground(playerPosition.mapId);
+  const { party, removeItem, playerPosition, inventory, pendingBattleRewards, finalizeBattleRewards, updateBattle, battle: storeBattle } = useGameStore();
+
+  // Check for boss battles that have custom backgrounds
+  // Note: Enemy IDs are dynamically generated (e.g., "vorn_1738776000000_1"), so we check by name
+  const vornEnemy = storeBattle?.enemies.find(e => e.name === "Bandit Chief Vorn");
+  const bossId = vornEnemy ? "bandit_chief_vorn" : undefined;
+  const battleBackground = getBattleBackground(playerPosition.mapId, bossId);
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showVictoryScreen, setShowVictoryScreen] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
   const { numbers, addNumber, removeNumber } = useDamageNumbers();
   const gameLoopRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -97,12 +103,42 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
   // Animation hooks
   const { triggerAttack, triggerMagic, triggerDamage, triggerDeath, triggerVictory, triggerCritical } = useBattleAnimations();
 
-  // Initialize battle
+  // Track if battle has been initialized to prevent re-initialization
+  const battleInitializedRef = useRef(false);
+
+  // Initialize battle (sets up battleState, but doesn't start it yet)
   useEffect(() => {
+    // Prevent re-initialization - this is crucial to avoid double battles
+    // when endBattle updates party stats and clears storeBattle
+    if (battleInitializedRef.current) {
+      return;
+    }
+
+    // Wait until we have party data before initializing
+    if (party.length === 0) {
+      return;
+    }
+
+    // Check if there's a pre-initialized battle in the store (for boss/event battles)
+    // Only use it if there are ALIVE enemies (hp > 0)
+    const hasAliveEnemies = storeBattle &&
+      storeBattle.enemies.length > 0 &&
+      storeBattle.enemies.some(e => e.stats.hp > 0);
+
+    if (hasAliveEnemies && storeBattle) {
+      // Use the battle from the store (boss battles, scripted encounters)
+      battleInitializedRef.current = true;
+      setBattleState(storeBattle);
+      return;
+    }
+
+    // Fallback: create random encounter (for random battles, test battles)
     const partyCharacters = party.map((char) => char);
     // Use varied encounters based on map area for enemy diversity
     const areaMap: Record<string, "forest" | "ruins" | "village" | "deep_ruins"> = {
       havenwood: "forest",
+      havenwood_outskirts: "forest",
+      bandit_camp: "forest",
       village: "village",
       ruins: "ruins",
       deep_ruins: "deep_ruins",
@@ -110,16 +146,32 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
     const area = areaMap[playerPosition.mapId] || "forest";
     // Use "normal" difficulty for more enemy variety
     const enemies = getRandomEncounter(area, "normal");
+
+    // Safety check: if no enemies were generated, don't start a battle
+    if (!enemies || enemies.length === 0) {
+      console.warn("No enemies generated for battle, ending early");
+      onBattleEnd(true);
+      return;
+    }
+
+    battleInitializedRef.current = true;
     const initialState = initializeBattle(partyCharacters, enemies);
     setBattleState(initialState);
+  }, [party, storeBattle, playerPosition.mapId, onBattleEnd]);
 
-    // Start battle after intro delay
+  // Separate effect to transition from intro to active phase
+  // This is separate so it doesn't get cancelled by the initialization effect's cleanup
+  useEffect(() => {
+    if (battleState?.phase !== "intro") {
+      return;
+    }
+
     const introTimer = setTimeout(() => {
       setBattleState((prev) => prev ? startBattle(prev) : prev);
     }, 1000);
 
     return () => clearTimeout(introTimer);
-  }, [party]);
+  }, [battleState?.phase]);
 
   // Handle steal events from enemies
   useEffect(() => {
@@ -348,11 +400,27 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
     };
   }, [gameLoop]);
 
+  // Toggle battle log with 'L' key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "l" || e.key === "L") {
+        setShowLogs(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Track if victory has been processed to avoid re-running
+  const victoryProcessedRef = useRef(false);
+
   // Handle battle end
   useEffect(() => {
     if (!battleState) return;
 
-    if (battleState.phase === "victory") {
+    if (battleState.phase === "victory" && !victoryProcessedRef.current) {
+      victoryProcessedRef.current = true;
+
       // Trigger victory animation for all party members
       const aliveParty = battleState.party
         .filter(p => p.character.stats.hp > 0)
@@ -364,11 +432,11 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
       updateBattle({ party: battleState.party, enemies: battleState.enemies });
 
       // Calculate and store rewards ONCE when victory is detected
-      finalizeBattleRewards();
+      // Pass enemies directly to avoid state sync timing issues
+      finalizeBattleRewards(battleState.enemies);
 
       // Show victory screen after a brief delay for animations
-      const timer = setTimeout(() => setShowVictoryScreen(true), 800);
-      return () => clearTimeout(timer);
+      setTimeout(() => setShowVictoryScreen(true), 800);
     }
     if (battleState.phase === "defeat") {
       const timer = setTimeout(() => onBattleEnd(false), 2000);
@@ -378,7 +446,7 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
       const timer = setTimeout(() => onBattleEnd(true), 1000);
       return () => clearTimeout(timer);
     }
-  }, [battleState?.phase, onBattleEnd, triggerVictory, finalizeBattleRewards, updateBattle, battleState?.party, battleState?.enemies]);
+  }, [battleState, onBattleEnd, triggerVictory, finalizeBattleRewards, updateBattle]);
 
   // Handle victory screen completion
   const handleVictoryComplete = useCallback(() => {
@@ -491,9 +559,9 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
             activeActorId={battleState.activeActorId}
           />
 
-          {/* Command Menu or Battle Log */}
+          {/* Command Menu */}
           <div className="flex-1">
-            {showCommandMenu && activePartyMember ? (
+            {showCommandMenu && activePartyMember && (
               <CommandMenu
                 actor={activePartyMember}
                 enemies={battleState.enemies}
@@ -501,12 +569,33 @@ export default function BattleScreen({ onBattleEnd }: BattleScreenProps) {
                 onSelectAction={handleSelectAction}
                 onCancel={() => setShowCommandMenu(false)}
               />
-            ) : (
-              <BattleLog entries={battleState.battleLog} />
             )}
           </div>
         </div>
+
+        {/* Log Toggle Hint */}
+        <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+          Press [L] for battle log
+        </div>
       </div>
+
+      {/* Battle Log Overlay (toggleable) */}
+      {showLogs && (
+        <div className="absolute top-4 right-4 z-40 w-80 max-h-64 overflow-hidden">
+          <div className="bg-black/80 border border-gray-700 rounded-lg p-2">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-400 font-bold">Battle Log</span>
+              <button
+                onClick={() => setShowLogs(false)}
+                className="text-gray-500 hover:text-white text-xs"
+              >
+                [L] Close
+              </button>
+            </div>
+            <BattleLog entries={battleState.battleLog} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

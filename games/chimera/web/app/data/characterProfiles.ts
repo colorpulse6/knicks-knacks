@@ -2,15 +2,15 @@
 
 export interface CharacterProfile {
   id: string;
-  title: string;           // Character title/epithet
-  quote: string;           // Signature quote
-  backstory: string;       // Main backstory text
-  traits: string[];        // Personality traits
-  secrets: string[];       // Hidden lore (revealed as story progresses)
-  illustration: string;    // Path to full illustration
-  systemDesignation?: string;  // AI designation (sci-fi layer)
-  element?: string;        // Elemental affinity
-  hometown?: string;       // Place of origin
+  title: string; // Character title/epithet
+  quote: string; // Signature quote
+  backstory: string; // Main backstory text
+  traits: string[]; // Personality traits
+  secrets: string[]; // Hidden lore (revealed as story progresses)
+  illustration: string; // Path to full illustration
+  systemDesignation?: string; // AI designation (sci-fi layer)
+  element?: string; // Elemental affinity
+  hometown?: string; // Place of origin
 }
 
 export const CHARACTER_PROFILES: Record<string, CharacterProfile> = {
@@ -23,23 +23,17 @@ export const CHARACTER_PROFILES: Record<string, CharacterProfile> = {
 What Kai himself struggles to understand are his abilities—moments when reality seems to flicker around him, when he glimpses patterns and "seams" that others cannot see. These visions come unbidden, like static interference in an otherwise clear picture.
 
 His search for Elara has led him to the Whispering Ruins, where ancient secrets stir. What he discovers there may shatter everything he believes about himself and the world around him.`,
-    traits: [
-      "Determined",
-      "Questioning",
-      "Direct",
-      "Protective",
-      "Anomalous"
-    ],
+    traits: ["Determined", "Questioning", "Direct", "Protective", "Anomalous"],
     secrets: [
       "Designated as Anomaly KAI_7.34 in System records",
       "Unlinked to the Lumina genetic control protocols",
       "Glitch manifestation indicates reality perception beyond normal parameters",
-      "Sister Elara disappeared under similar anomalous circumstances"
+      "Sister Elara disappeared under similar anomalous circumstances",
     ],
     illustration: "/sprites/characters/illustrations/kai_1.png",
     systemDesignation: "ANOMALY_KAI_7.34",
     element: "Temporal",
-    hometown: "Unknown (Memories fragmented)"
+    hometown: "Unknown (Memories fragmented)",
   },
 
   lyra: {
@@ -56,19 +50,19 @@ When she encountered Kai near the Whispering Ruins, she sensed something familia
       "Diplomatic",
       "Unusually Lucky",
       "Scholarly",
-      "Compassionate"
+      "Compassionate",
     ],
     secrets: [
       "Bears the Lumina Mark—a genetic imprint of the Prime Code Lineage",
       "Her luck may be a subtle System intervention or protection protocol",
       "Family archives contain forbidden knowledge about the world's true nature",
-      "Drawn to anomalies, possibly due to latent code resonance"
+      "Drawn to anomalies, possibly due to latent code resonance",
     ],
     illustration: "/sprites/characters/illustrations/lyra.png",
     systemDesignation: "LUMINA_SCION_L7.19",
     element: "Fortune",
-    hometown: "Lumina Estate, Western Reaches"
-  }
+    hometown: "Lumina Estate, Western Reaches",
+  },
 };
 
 export function getCharacterProfile(id: string): CharacterProfile | undefined {
@@ -78,11 +72,11 @@ export function getCharacterProfile(id: string): CharacterProfile | undefined {
 // Get secrets based on system awareness level
 export function getRevealedSecrets(
   profile: CharacterProfile,
-  systemAwareness: number
+  systemAwareness: number,
 ): string[] {
   // Each secret requires higher awareness to unlock
   const thresholds = [15, 35, 60, 85];
-  return profile.secrets.filter((_, index) =>
-    systemAwareness >= thresholds[index]
+  return profile.secrets.filter(
+    (_, index) => systemAwareness >= thresholds[index],
   );
 }

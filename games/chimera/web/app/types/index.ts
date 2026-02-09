@@ -29,7 +29,11 @@ export interface DialogueNode {
   portrait?: string;
   choices?: DialogueChoice[];
   next?: string;
-  onComplete?: () => void;
+  onComplete?: {
+    callback?: () => void;
+    startBattle?: boolean;  // If true, starts pending battle when dialogue ends
+    setFlags?: string[];    // Flags to set when dialogue ends
+  };
 }
 
 export interface DialogueChoice {

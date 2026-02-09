@@ -3,7 +3,8 @@
 import { useRef, useEffect, useCallback } from "react";
 import { useGameStore } from "../../stores/gameStore";
 import type { CollectibleContents, StaticObject } from "../../types/map";
-import { getQuestsByGiver } from "../../data/quests";
+import { getVisibleNpcs, getVisibleStaticObjects } from "../../types/map";
+import { getQuestsByGiver, QUESTS } from "../../data/quests";
 import { OBJECT_SPRITES } from "../../data/animations";
 
 // Cache for loaded sprite/tileset images
@@ -107,7 +108,7 @@ function drawStaticObject(
 
 export default function MapView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { currentMap, playerPosition, party, openedChests, getQuestStatus, hasActiveQuest } = useGameStore();
+  const { currentMap, playerPosition, party, openedChests, getQuestStatus, hasActiveQuest, story, quests } = useGameStore();
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -175,8 +176,9 @@ export default function MapView() {
 
     // Draw static objects (buildings, trees, rocks with explicit sprites)
     if (currentMap.staticObjects && currentMap.staticObjects.length > 0) {
-      // Sort by y position for correct draw order (back to front)
-      const sortedObjects = [...currentMap.staticObjects].sort(
+      // Filter by story flags and sort by y position for correct draw order
+      const visibleObjects = getVisibleStaticObjects(currentMap.staticObjects, story.flags);
+      const sortedObjects = [...visibleObjects].sort(
         (a, b) => (a.y + a.height) - (b.y + b.height)
       );
 
@@ -345,8 +347,9 @@ export default function MapView() {
       }
     });
 
-    // Draw NPCs
-    currentMap.npcs.forEach((npc) => {
+    // Draw NPCs (filter by story flags)
+    const visibleNpcs = getVisibleNpcs(currentMap.npcs, story.flags);
+    visibleNpcs.forEach((npc) => {
       const screenX = npc.x * TILE_SIZE - cameraX;
       const screenY = npc.y * TILE_SIZE - cameraY;
 
@@ -403,37 +406,73 @@ export default function MapView() {
       }
 
       // Draw quest marker above NPC
-      const npcQuests = getQuestsByGiver(npc.id);
-      if (npcQuests.length > 0) {
-        let markerType: "available" | "in_progress" | null = null;
+      let markerType: "available" | "in_progress" | "objective" | null = null;
 
-        for (const quest of npcQuests) {
-          const status = getQuestStatus(quest.id);
-          if (status === "not_started") {
+      // Check if NPC gives any quests
+      const npcQuests = getQuestsByGiver(npc.id);
+      for (const quest of npcQuests) {
+        const status = getQuestStatus(quest.id);
+
+        // Check if required flags are met for not_started quests
+        if (status === "not_started") {
+          const hasRequiredFlags = !quest.requiredFlags ||
+            quest.requiredFlags.every(flag => story.flags[flag]);
+          if (hasRequiredFlags) {
             markerType = "available";
             break; // Available quest takes priority
-          } else if (status === "active") {
-            markerType = "in_progress";
+          }
+        } else if (status === "active") {
+          markerType = "in_progress";
+        }
+      }
+
+      // If no marker yet, check if NPC is an objective target for any active quest
+      if (!markerType) {
+        for (const quest of Object.values(QUESTS)) {
+          const status = getQuestStatus(quest.id);
+          if (status === "active") {
+            // Find the quest progress from active quests array
+            const questProgress = quests.active.find((q) => q.questId === quest.id);
+            for (const objective of quest.objectives) {
+              // Check if this objective targets this NPC (for talk/deliver types)
+              if (objective.targetId === npc.id) {
+                // Check if objective is not yet complete
+                const objProgress = questProgress?.objectives.find(
+                  (o) => o.objectiveId === objective.id
+                );
+                if (!objProgress?.isComplete) {
+                  markerType = "objective";
+                  break;
+                }
+              }
+            }
+            if (markerType) break;
           }
         }
+      }
 
-        if (markerType) {
-          const markerY = screenY - 8;
-          const bounce = Math.sin(Date.now() / 200) * 2;
+      if (markerType) {
+        const markerY = screenY - 8;
+        const bounce = Math.sin(Date.now() / 200) * 2;
 
-          if (markerType === "available") {
-            // Yellow "!" for available quest
-            ctx.fillStyle = "#FFD700";
-            ctx.font = "bold 16px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("!", screenX + TILE_SIZE / 2, markerY + bounce);
-          } else {
-            // Silver "?" for quest in progress
-            ctx.fillStyle = "#C0C0C0";
-            ctx.font = "bold 14px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("?", screenX + TILE_SIZE / 2, markerY + bounce);
-          }
+        if (markerType === "available") {
+          // Yellow "!" for available quest
+          ctx.fillStyle = "#FFD700";
+          ctx.font = "bold 16px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("!", screenX + TILE_SIZE / 2, markerY + bounce);
+        } else if (markerType === "objective") {
+          // Cyan "!" for quest objective target
+          ctx.fillStyle = "#00BFFF";
+          ctx.font = "bold 16px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("!", screenX + TILE_SIZE / 2, markerY + bounce);
+        } else {
+          // Silver "?" for quest in progress (turn-in)
+          ctx.fillStyle = "#C0C0C0";
+          ctx.font = "bold 14px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("?", screenX + TILE_SIZE / 2, markerY + bounce);
         }
       }
     });
@@ -500,7 +539,7 @@ export default function MapView() {
         2
       );
     }
-  }, [currentMap, playerPosition, party, openedChests, getQuestStatus, hasActiveQuest]);
+  }, [currentMap, playerPosition, party, openedChests, getQuestStatus, hasActiveQuest, story, quests]);
 
   // Animation loop
   useEffect(() => {

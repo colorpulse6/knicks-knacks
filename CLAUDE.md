@@ -1,5 +1,39 @@
 # Knicks-Knacks Development Guide
 
+## Agent Navigation
+
+> **Important:** This monorepo contains multiple projects with their own documentation. Navigate to the relevant project's `CLAUDE.md` for context-specific guidance.
+
+| Project | Documentation | Purpose |
+|---------|---------------|---------|
+| **Chimera** | `games/chimera/CLAUDE.md` | FF6-style JRPG - world lore, characters, content creation |
+| Chimera Engine | `games/chimera/web/app/engine/CLAUDE.md` | Battle system, ATB, damage calculations |
+| Chimera Data | `games/chimera/web/app/data/CLAUDE.md` | Items, maps, dialogues, quests patterns |
+| Chimera Store | `games/chimera/web/app/stores/CLAUDE.md` | Zustand state management patterns |
+
+**Documentation Principle:** Context is documented at the narrowest applicable scope. Check the nearest `CLAUDE.md` to your working directory first.
+
+---
+
+## Self-Improving Documentation
+
+**This documentation should grow as the codebase grows.** When working on this project:
+
+1. **If you encounter a gap** - a system, pattern, or convention that isn't documented but should be - add it to the appropriate `CLAUDE.md` file.
+
+2. **If you build something new** - document the pattern, API, or system in the nearest relevant `CLAUDE.md` before finishing.
+
+3. **If documentation is wrong** - update it immediately. Stale docs are worse than no docs.
+
+**Where to add:**
+- Global conventions → Root `CLAUDE.md`
+- Project-specific patterns → Project's `CLAUDE.md`
+- Feature implementation details → Feature-level `CLAUDE.md`
+
+**Format:** Keep entries concise and actionable. Include code examples for patterns. Link to separate files if content exceeds ~50 lines.
+
+---
+
 ## Project Overview
 
 Knicks-Knacks is a monorepo containing multiple web and mobile applications built with modern technologies. The repository uses **Turborepo** for build orchestration and **Yarn Berry (v4.9.1)** for package management.

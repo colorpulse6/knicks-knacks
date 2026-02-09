@@ -22,6 +22,8 @@ export interface MorrisDialogueState {
     bandits_defeated: boolean;
     found_mechanism: boolean;
     met_lyra: boolean;
+    found_bandit_evidence: boolean;
+    talked_to_bren: boolean;
   };
 }
 
@@ -62,8 +64,12 @@ export function getMorrisDialogue(state: MorrisDialogueState): DialogueNode {
     return MORRIS_BANDIT_INTRO;
   }
 
-  // Whispers of Trouble active
+  // Whispers of Trouble active - check if evidence was found
   if (questStatuses.whispers_of_trouble === "active") {
+    // Player found evidence - ready to report and complete quest
+    if (flags.found_bandit_evidence) {
+      return MORRIS_EVIDENCE_REPORT;
+    }
     return MORRIS_WHISPERS_ACTIVE;
   }
 
@@ -148,6 +154,33 @@ const MORRIS_WHISPERS_ACTIVE: DialogueNode = {
   id: "morris_whispers_active",
   speaker: "Elder Morris",
   text: "Have you spoken with Captain Bren yet? He's been gathering information about the bandits. Check the outskirts for any signs of their activity—abandoned camps, tracks, anything unusual.",
+  portrait: "elder_morris",
+};
+
+// ============================================
+// WHISPERS OF TROUBLE - Evidence Found
+// ============================================
+
+const MORRIS_EVIDENCE_REPORT: DialogueNode = {
+  id: "morris_evidence_report",
+  speaker: "Elder Morris",
+  text: "You've found something? Let me see...",
+  portrait: "elder_morris",
+  next: "morris_evidence_reaction",
+};
+
+export const MORRIS_EVIDENCE_REACTION: DialogueNode = {
+  id: "morris_evidence_reaction",
+  speaker: "Elder Morris",
+  text: "*examines the evidence* A recent campfire, you say? And signs of organized activity? This is exactly what we feared—there's definitely a bandit camp out there. Your investigation has confirmed our worst suspicions.",
+  portrait: "elder_morris",
+  next: "morris_evidence_complete",
+};
+
+export const MORRIS_EVIDENCE_COMPLETE: DialogueNode = {
+  id: "morris_evidence_complete",
+  speaker: "Elder Morris",
+  text: "You've done well, traveler. Take this gold for your trouble. But I fear our work is not done—now that we know they're out there, we must act before they grow bolder.",
   portrait: "elder_morris",
 };
 
@@ -317,6 +350,9 @@ export const MORRIS_DIALOGUES: Record<string, DialogueNode> = {
   morris_quest_accept: MORRIS_QUEST_ACCEPT,
   morris_decline: MORRIS_DECLINE,
   morris_whispers_active: MORRIS_WHISPERS_ACTIVE,
+  morris_evidence_report: MORRIS_EVIDENCE_REPORT,
+  morris_evidence_reaction: MORRIS_EVIDENCE_REACTION,
+  morris_evidence_complete: MORRIS_EVIDENCE_COMPLETE,
   morris_bandit_intro: MORRIS_BANDIT_INTRO,
   morris_vorn_info: MORRIS_VORN_INFO,
   morris_bandit_accept: MORRIS_BANDIT_ACCEPT,

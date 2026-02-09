@@ -1,9 +1,10 @@
 "use client";
 
 import { useGameStore } from "../../stores/gameStore";
+import { getVisibleNpcs } from "../../types/map";
 
 export default function HUD() {
-  const { party, currentMap, playerPosition, inventory } = useGameStore();
+  const { party, currentMap, playerPosition, inventory, story } = useGameStore();
 
   // Get active party members
   const activeParty = party.slice(0, 4);
@@ -106,7 +107,7 @@ export default function HUD() {
                 />
 
                 {/* NPCs on minimap */}
-                {currentMap.npcs.map((npc) => (
+                {getVisibleNpcs(currentMap.npcs, story.flags).map((npc) => (
                   <div
                     key={npc.id}
                     className="absolute w-1.5 h-1.5 bg-yellow-400 rounded-full"

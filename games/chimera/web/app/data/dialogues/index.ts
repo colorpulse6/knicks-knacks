@@ -32,6 +32,39 @@ export {
   type AldricDialogueState,
 } from "./merchant-aldric";
 
+// Barkeep Greta - The Rusted Cog Tavern, Hooded Stranger quest
+export {
+  getGretaDialogue,
+  GRETA_DIALOGUES,
+  type GretaDialogueState,
+} from "./barkeep-greta";
+
+// The Hooded Stranger - Mysterious AI avatar
+export {
+  getStrangerDialogue,
+  STRANGER_DIALOGUES,
+  type StrangerDialogueState,
+} from "./hooded-stranger";
+
+// Lady Lyra Lumina - Noble scholar, party member
+export {
+  getLyraDialogue,
+  LYRA_DIALOGUES,
+  type LyraDialogueState,
+} from "./lady-lyra";
+
+// Bandit Chief Vorn - Boss confrontation dialogue
+export {
+  getVornConfrontationDialogue,
+  VORN_DIALOGUES,
+} from "./vorn-confrontation";
+
+// Bandit Camp Prisoners - Captured villagers
+export {
+  getPrisonerDialogue,
+  PRISONER_DIALOGUES,
+} from "./bandit-camp-prisoners";
+
 // ============================================
 // DIALOGUE UTILITY FUNCTIONS
 // ============================================
@@ -41,6 +74,11 @@ import { getMiraDialogue, MIRA_DIALOGUES } from "./herbalist-mira";
 import { getMorrisDialogue, MORRIS_DIALOGUES, type MorrisDialogueState } from "./elder-morris";
 import { getBrenDialogue, BREN_DIALOGUES, type BrenDialogueState } from "./captain-bren";
 import { getAldricDialogue, ALDRIC_DIALOGUES, type AldricDialogueState } from "./merchant-aldric";
+import { getGretaDialogue, GRETA_DIALOGUES, type GretaDialogueState } from "./barkeep-greta";
+import { getStrangerDialogue, STRANGER_DIALOGUES, type StrangerDialogueState } from "./hooded-stranger";
+import { getLyraDialogue, LYRA_DIALOGUES, type LyraDialogueState } from "./lady-lyra";
+import { VORN_DIALOGUES } from "./vorn-confrontation";
+import { getPrisonerDialogue, PRISONER_DIALOGUES } from "./bandit-camp-prisoners";
 
 /**
  * Get a dialogue node by ID from any character's dialogue
@@ -52,6 +90,11 @@ export function getDialogueById(nodeId: string): DialogueNode | undefined {
     ...MORRIS_DIALOGUES,
     ...BREN_DIALOGUES,
     ...ALDRIC_DIALOGUES,
+    ...GRETA_DIALOGUES,
+    ...STRANGER_DIALOGUES,
+    ...LYRA_DIALOGUES,
+    ...VORN_DIALOGUES,
+    ...PRISONER_DIALOGUES,
   };
 
   return allDialogues[nodeId];
@@ -99,6 +142,8 @@ export function buildMorrisDialogueState(storyState: StoryState): MorrisDialogue
       bandits_defeated: storyState.flags.bandits_defeated ?? false,
       found_mechanism: storyState.flags.found_mechanism ?? false,
       met_lyra: storyState.flags.met_lyra ?? false,
+      found_bandit_evidence: storyState.flags.found_bandit_evidence ?? false,
+      talked_to_bren: storyState.flags.talked_to_bren ?? false,
     },
   };
 }
@@ -139,6 +184,59 @@ export function buildAldricDialogueState(storyState: StoryState): AldricDialogue
 }
 
 /**
+ * Build Greta dialogue state from story state
+ */
+export function buildGretaDialogueState(storyState: StoryState): GretaDialogueState {
+  return {
+    questStatuses: {
+      the_hooded_stranger: getQuestStatus("the_hooded_stranger", storyState),
+    },
+    flags: {
+      met_greta: storyState.flags.met_greta ?? false,
+      asked_about_stranger: storyState.flags.asked_about_stranger ?? false,
+      stranger_riddle_solved: storyState.flags.stranger_riddle_solved ?? false,
+    },
+  };
+}
+
+/**
+ * Build Stranger dialogue state from story state
+ */
+export function buildStrangerDialogueState(storyState: StoryState): StrangerDialogueState {
+  return {
+    questStatuses: {
+      the_hooded_stranger: getQuestStatus("the_hooded_stranger", storyState),
+    },
+    flags: {
+      asked_about_stranger: storyState.flags.asked_about_stranger ?? false,
+      met_stranger: storyState.flags.met_stranger ?? false,
+      riddle_asked: storyState.flags.riddle_asked ?? false,
+      riddle_solved: storyState.flags.riddle_solved ?? false,
+      found_cache: storyState.flags.found_cache ?? false,
+      ai_first_contact: storyState.flags.ai_first_contact ?? false,
+    },
+  };
+}
+
+/**
+ * Build Lyra dialogue state from story state
+ */
+export function buildLyraDialogueState(storyState: StoryState): LyraDialogueState {
+  return {
+    questStatuses: {
+      seeking_answers: getQuestStatus("seeking_answers", storyState),
+      the_ladys_curiosity: getQuestStatus("the_ladys_curiosity", storyState),
+    },
+    flags: {
+      met_lyra: storyState.flags.met_lyra ?? false,
+      showed_mechanism: storyState.flags.showed_mechanism ?? false,
+      lyra_recruited: storyState.flags.lyra_recruited ?? false,
+      lyra_saw_terminal: storyState.flags.lyra_saw_terminal ?? false,
+    },
+  };
+}
+
+/**
  * Get dynamic dialogue for an NPC based on their ID and current story state
  */
 export function getDynamicDialogue(
@@ -167,6 +265,40 @@ export function getDynamicDialogue(
     case "merchant_aldric": {
       const state = buildAldricDialogueState(storyState);
       return getAldricDialogue(state);
+    }
+
+    case "barkeep_greta": {
+      const state = buildGretaDialogueState(storyState);
+      return getGretaDialogue(state);
+    }
+
+    case "hooded_stranger": {
+      const state = buildStrangerDialogueState(storyState);
+      return getStrangerDialogue(state);
+    }
+
+    case "lady_lyra": {
+      const state = buildLyraDialogueState(storyState);
+      return getLyraDialogue(state);
+    }
+
+    // Bandit Camp Prisoners
+    case "prisoner_1":
+    case "prisoner_farmer": {
+      const isFreed = storyState.flags.prisoner_1_freed ?? false;
+      return getPrisonerDialogue("prisoner_farmer", isFreed);
+    }
+
+    case "prisoner_2":
+    case "prisoner_merchant": {
+      const isFreed = storyState.flags.prisoner_2_freed ?? false;
+      return getPrisonerDialogue("prisoner_merchant", isFreed);
+    }
+
+    case "prisoner_3":
+    case "prisoner_guard": {
+      const isFreed = storyState.flags.prisoner_3_freed ?? false;
+      return getPrisonerDialogue("prisoner_guard", isFreed);
     }
 
     default:

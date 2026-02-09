@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useGameStore } from "../../stores/gameStore";
-import { getRarityColor } from "../../data/items";
+import { getRarityColor, getItemIcon } from "../../data/items";
 import { getShardById, getShardColorClasses } from "../../data/shards";
 import type { Item, EquipmentSlot, Equipment, Shard } from "../../types";
 
@@ -318,9 +318,19 @@ export default function EquipScreen() {
                   `}
                 >
                   <div className="text-gray-500 text-xs">{slot.label}</div>
-                  <div className={`flex items-center ${equipped ? rarityColor : "text-gray-600"}`}>
-                    {isSelected && mode === "slots" && "▸ "}
-                    {equipped?.name || "— Empty —"}
+                  <div className={`flex items-center gap-2 ${equipped ? rarityColor : "text-gray-600"}`}>
+                    {isSelected && mode === "slots" && <span>▸</span>}
+                    {equipped && (
+                      <img
+                        src={getItemIcon(equipped)}
+                        alt=""
+                        className="w-5 h-5 pixelated"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span>{equipped?.name || "— Empty —"}</span>
                     {equipped && <ShardSlotIndicator item={equipped} />}
                   </div>
                 </button>
@@ -376,11 +386,19 @@ export default function EquipScreen() {
                       disabled={isCurrentlyEquipped}
                     >
                       <div className="flex items-center justify-between">
-                        <span className={getRarityColor(item.rarity)}>
-                          {isSelected && "▸ "}
-                          {item.name}
+                        <span className={`flex items-center gap-2 ${getRarityColor(item.rarity)}`}>
+                          {isSelected && <span>▸</span>}
+                          <img
+                            src={getItemIcon(item)}
+                            alt=""
+                            className="w-5 h-5 pixelated"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          <span>{item.name}</span>
                           {slots > 0 && (
-                            <span className="text-gray-500 ml-2">
+                            <span className="text-gray-500 ml-1">
                               [{Array(slots).fill("·").join("")}]
                             </span>
                           )}
@@ -511,11 +529,21 @@ export default function EquipScreen() {
               <h4 className="text-gray-400 text-sm mb-2">Current Equipment</h4>
               {currentEquipped ? (
                 <div>
-                  <p
-                    className={`font-bold ${isItem(currentEquipped) ? getRarityColor(currentEquipped.rarity) : "text-gray-300"}`}
-                  >
-                    {currentEquipped.name}
-                  </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <img
+                      src={getItemIcon(currentEquipped)}
+                      alt=""
+                      className="w-8 h-8 pixelated"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <p
+                      className={`font-bold ${isItem(currentEquipped) ? getRarityColor(currentEquipped.rarity) : "text-gray-300"}`}
+                    >
+                      {currentEquipped.name}
+                    </p>
+                  </div>
                   <p className="text-gray-400 text-sm mt-1">{currentEquipped.description}</p>
 
                   {/* Stats */}

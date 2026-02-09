@@ -95,6 +95,7 @@ export default function EnemyDisplay({
 
 function getEnemyColor(name: string): string {
   if (name.includes("Rat")) return "bg-amber-900";
+  if (name.includes("Vorn") || name.includes("Chief")) return "bg-red-900";
   if (name.includes("Bandit")) return "bg-orange-900";
   if (name.includes("Wolf") || name.includes("Hound")) return "bg-gray-700";
   if (name.includes("Knight")) return "bg-slate-700";
@@ -106,6 +107,7 @@ function getEnemyColor(name: string): string {
 
 function getEnemyEmoji(name: string): string {
   if (name.includes("Rat")) return "🐀";
+  if (name.includes("Vorn") || name.includes("Chief")) return "⚡";
   if (name.includes("Bandit")) return "🗡️";
   if (name.includes("Wolf") || name.includes("Hound")) return "🐺";
   if (name.includes("Knight")) return "⚔️";

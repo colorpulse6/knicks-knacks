@@ -70,6 +70,7 @@ export interface Item {
   maxStack: number;
   usableInBattle: boolean;
   usableInField: boolean;
+  icon?: string; // Icon filename (e.g., "potion_red" -> /icons/items/potion_red.png)
   effect?: ItemEffect;
   // Equipment stats (if equippable)
   equipStats?: {
@@ -84,6 +85,9 @@ export interface Item {
   // Shard slot system (for equipment)
   shardSlots?: number; // How many shards can be attached (0-4 based on rarity)
   socketedShards?: string[]; // IDs of currently socketed shards
+  // Equipment requirements (story-gated items)
+  requiredFlag?: string; // Story flag that must be true to equip
+  lockedDescription?: string; // Description shown when item can't be equipped
 }
 
 export interface InventorySlot {

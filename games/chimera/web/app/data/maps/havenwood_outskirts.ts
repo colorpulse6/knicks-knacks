@@ -67,6 +67,7 @@ function createCollisionLayer(): boolean[][] {
   const collision: boolean[][] = [];
   const ground = createGroundLayer();
 
+  // Start with terrain collision
   for (let y = 0; y < HEIGHT; y++) {
     const row: boolean[] = [];
     for (let x = 0; x < WIDTH; x++) {
@@ -76,6 +77,19 @@ function createCollisionLayer(): boolean[][] {
       row.push(tile !== 3 && tile !== 4);
     }
     collision.push(row);
+  }
+
+  // Add static object collision
+  for (const obj of STATIC_OBJECTS) {
+    if (obj.collision) {
+      for (const block of obj.collision) {
+        const bx = obj.x + block.offsetX;
+        const by = obj.y + block.offsetY;
+        if (by >= 0 && by < HEIGHT && bx >= 0 && bx < WIDTH) {
+          collision[by][bx] = false;
+        }
+      }
+    }
   }
 
   return collision;
@@ -95,7 +109,7 @@ const STATIC_OBJECTS: StaticObject[] = [
   // === OLD WATCHTOWER (ruined) ===
   {
     id: "watchtower_ruins",
-    sprite: "/assets/ruins_tower.png",
+    sprite: "/assets/watchtower.png",
     x: 4,
     y: 3,
     width: 4,
@@ -284,13 +298,60 @@ const STATIC_OBJECTS: StaticObject[] = [
     height: 2,
     collision: [{ offsetX: 0, offsetY: 1 }],
   },
+
+  // === ABANDONED CAMPFIRE (bandit evidence) ===
+  {
+    id: "campfire_remains",
+    sprite: "/assets/campfire_remains.png",
+    x: 25,
+    y: 8,
+    width: 1,
+    height: 1,
+    collision: [{ offsetX: 0, offsetY: 0 }], // Blocks movement - face and interact
+  },
+
+  // === PATH MARKERS for area transitions ===
+  // South path to Havenwood Village
+  {
+    id: "path_marker_south",
+    sprite: "/assets/path_marker.png",
+    x: 16,
+    y: 22,
+    width: 3,
+    height: 3,
+    collision: [], // Path is walkable
+  },
+  // East path to Bandit Camp area
+  {
+    id: "path_marker_east",
+    sprite: "/assets/path_marker.png",
+    x: 32,
+    y: 10,
+    width: 3,
+    height: 3,
+    collision: [], // Path is walkable
+  },
+  // North archway to Whispering Ruins
+  {
+    id: "ruins_archway",
+    sprite: "/assets/archway_ruins.png",
+    x: 16,
+    y: 0,
+    width: 3,
+    height: 3,
+    collision: [
+      // Block sides, leave center open for passage
+      { offsetX: 0, offsetY: 2 },
+      { offsetX: 2, offsetY: 2 },
+    ],
+  },
 ];
 
 // NPCs in outskirts
 const NPCS: NPC[] = [
   // Traveling merchant on the road
   {
-    id: "traveling_merchant",
+    id: "pedler",
     name: "Peddler",
     x: 15,
     y: 15,
@@ -301,7 +362,7 @@ const NPCS: NPC[] = [
   },
   // Guard patrolling the road
   {
-    id: "road_guard",
+    id: "guard",
     name: "Guard",
     x: 17,
     y: 20,
@@ -370,6 +431,7 @@ const EVENTS: MapEvent[] = [
       targetY: 12,
       message: "The path leads to a suspicious camp...",
       requiredFlag: "bandit_camp_discovered",
+      notMetMessage: "The path ahead looks dangerous and unfamiliar. Perhaps Elder Morris or the guards know more about what lies this way.",
     },
   },
 

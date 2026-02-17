@@ -15,10 +15,62 @@ This directory contains game content definitions. See `games/chimera/CLAUDE.md` 
 | `characters.ts` | Party member definitions, starting stats |
 | `quests.ts` | Quest definitions, objectives, rewards |
 | `abilities.ts` | Skills and spells |
-| `animations.ts` | Battle animation data |
+| `animations.ts` | Battle + world sprite animation data |
 | `shards.ts` | Shard socket system |
 | `maps/` | Map definitions (see below) |
 | `dialogues/` | NPC dialogue trees (see below) |
+
+---
+
+## World Sprite System
+
+The world exploration engine supports sprite sheets for player and NPC walk animations via `WorldSpriteConfig` (defined in `types/animation.ts`).
+
+### WorldSpriteConfig
+
+```typescript
+interface WorldSpriteConfig {
+  src: string;            // Path to sprite sheet in public/
+  columns: number;        // Frames per row (e.g., 5)
+  rows: number;           // Number of rows (e.g., 3)
+  directions: Record<string, {
+    row: number;          // Row index for this direction
+    frames: number;       // Number of walk frames
+    idleFrame: number;    // Standing pose frame index
+    flipX?: boolean;      // Mirror horizontally (left→right)
+  }>;
+  removeBackground?: boolean; // Strip checker backgrounds from AI output
+}
+```
+
+### Adding a Character Walk Cycle
+
+1. Place sprite sheet in `web/public/sprites/characters/[name]_walk.png`
+2. Add config to `WORLD_SPRITE_CONFIGS` in `animations.ts`:
+```typescript
+[name]: {
+  src: "/sprites/characters/[name]_walk.png",
+  columns: 5, rows: 3,
+  directions: {
+    down:  { row: 0, frames: 5, idleFrame: 0 },
+    left:  { row: 1, frames: 5, idleFrame: 0 },
+    right: { row: 1, frames: 5, idleFrame: 0, flipX: true },
+    up:    { row: 2, frames: 5, idleFrame: 0 },
+  },
+  removeBackground: true,
+},
+```
+3. MapView automatically picks it up — no other changes needed.
+
+### Adding an Animated NPC
+
+1. Place sprite sheet in `web/public/sprites/characters/[npc_id]_walk.png`
+2. Add config to `NPC_SPRITE_CONFIGS` in `animations.ts`
+3. NPC still has `sprite: "..."` as fallback for when sheet isn't available
+
+### Legacy System
+
+Individual frame files (`kai_down_0.png` through `kai_up_5.png`) still work as fallback. If no `WorldSpriteConfig` exists for a character, the engine uses the `PLAYER_SPRITE_LEGACY` individual-file system.
 
 ---
 

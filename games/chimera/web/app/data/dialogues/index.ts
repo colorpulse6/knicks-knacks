@@ -79,6 +79,25 @@ import { getStrangerDialogue, STRANGER_DIALOGUES, type StrangerDialogueState } f
 import { getLyraDialogue, LYRA_DIALOGUES, type LyraDialogueState } from "./lady-lyra";
 import { VORN_DIALOGUES } from "./vorn-confrontation";
 import { getPrisonerDialogue, PRISONER_DIALOGUES } from "./bandit-camp-prisoners";
+import {
+  getAnnaDialogue,
+  getTownCrierDialogue,
+  getVillagerTomDialogue,
+  getFridaDialogue,
+  getWeaverHoltDialogue,
+  getStreetUrchinDialogue,
+  getInnkeeperRowanDialogue,
+  getGrandmotherEdithDialogue,
+  getCatWhiskersDialogue,
+  getFishermanReedDialogue,
+  getDockWorkerSalDialogue,
+  getMarshHermitOrinDialogue,
+  getGateGuardDialogue,
+  getNobleServantDialogue,
+  getEstateButlerDialogue,
+  getEstateGuardDialogue,
+  getTavernPatronDialogue,
+} from "./havenwood-villagers";
 
 /**
  * Get a dialogue node by ID from any character's dialogue
@@ -300,6 +319,53 @@ export function getDynamicDialogue(
       const isFreed = storyState.flags.prisoner_3_freed ?? false;
       return getPrisonerDialogue("prisoner_guard", isFreed);
     }
+
+    // Havenwood Village NPCs
+    case "villager_tom":
+      return getVillagerTomDialogue();
+    case "villager_anna":
+      return getAnnaDialogue();
+    case "town_crier":
+      return getTownCrierDialogue();
+    case "market_vendor_fruit":
+      return getFridaDialogue();
+    case "market_vendor_cloth":
+      return getWeaverHoltDialogue();
+    case "market_child":
+      return getStreetUrchinDialogue();
+    case "innkeeper_rowan":
+      return getInnkeeperRowanDialogue();
+    case "old_woman_edith":
+      return getGrandmotherEdithDialogue();
+    case "cat_whiskers":
+      return getCatWhiskersDialogue();
+    case "fisherman_reed":
+      return getFishermanReedDialogue();
+    case "dock_worker_sal":
+      return getDockWorkerSalDialogue();
+    case "marsh_hermit_orin":
+      return getMarshHermitOrinDialogue();
+    case "estate_gate_guard":
+      return getGateGuardDialogue(storyState.flags.found_mechanism ?? false);
+    case "noble_servant_walking":
+      return getNobleServantDialogue();
+    case "estate_butler":
+      return getEstateButlerDialogue();
+    case "estate_guard":
+      return getEstateGuardDialogue();
+    case "tavern_patron_1":
+    case "tavern_patron_2":
+      return getTavernPatronDialogue();
+
+    // Desert prologue — silent hooded strangers
+    case "desert_stranger_1":
+    case "desert_stranger_2":
+    case "desert_stranger_3":
+      return {
+        id: "desert_stranger_silent",
+        speaker: "???",
+        text: "...",
+      };
 
     default:
       return null;

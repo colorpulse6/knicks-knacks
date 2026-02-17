@@ -224,11 +224,16 @@ export default function SystemBootScreen({ onComplete }: SystemBootScreenProps) 
   }, [displayedLines]);
 
   const renderProgressBar = () => {
-    const filled = Math.floor(progressValue / 5);
-    const empty = 20 - filled;
     return (
-      <span className="text-green-400">
-        {" "}[{"█".repeat(filled)}{"░".repeat(empty)}] {progressValue}%
+      <span className="inline-flex items-center gap-2 text-green-400 align-middle">
+        {" ["}
+        <span className="inline-block w-40 h-3 bg-green-900/50 border border-green-700 relative align-middle">
+          <span
+            className="absolute inset-0 bg-green-400 transition-all duration-100"
+            style={{ width: `${progressValue}%` }}
+          />
+        </span>
+        {`] ${progressValue}%`}
       </span>
     );
   };

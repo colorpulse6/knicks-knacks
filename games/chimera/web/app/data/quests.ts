@@ -138,8 +138,8 @@ the Havenwood Outskirts for any signs of the culprits.
     medievalLore: `
 The roads around Havenwood have always been relatively safe, protected by
 the local militia and the watchful eye of the village elders. But lately,
-dark rumors have spread of bandits with strange weapons—devices that spark
-and crackle like summer lightning.
+dark rumors have spread of bandits grown bold—well-armed and fearless,
+as though something has emboldened them beyond mere greed.
     `.trim(),
 
     hiddenTruth: `
@@ -300,7 +300,10 @@ The Lumina family carries a genetic marker—the "Prime Code Lineage"—that
 gives them elevated access privileges within the System. Their "archives"
 contain fragmentary data from before the current simulation iteration.
 Lady Lyra's "unusual luck" is actually subtle System protection protocols
-activated by her lineage marker.
+activated by her lineage marker. Lyra finding Kai at the village gates may
+not have been coincidence—her lineage code could have drawn her to the
+anomaly, a System-engineered encounter to study the interaction between a
+Prime Code holder and an unregistered anomaly.
     `.trim(),
   },
 
@@ -313,9 +316,9 @@ Lady Lyra Lumina is intrigued by your discoveries and the strange mechanism.
 She recognizes some of the markings from ancient texts in her family's
 archives—texts that speak of "the builders who came before."
 
-She wishes to accompany you to the Whispering Ruins to see the Terminal
-you mentioned. Perhaps together, you can uncover more answers about the
-true nature of these artifacts.
+She wishes to accompany you to the Whispering Ruins to find the sanctum
+described in her family's oldest records. Perhaps together, you can uncover
+more about the origins of these strange relics.
     `.trim(),
     giver: "lyra_lumina",
     chapter: 1,
@@ -334,14 +337,14 @@ true nature of these artifacts.
       {
         id: "reach_terminal",
         type: "explore",
-        description: "Navigate to the Terminal chamber",
+        description: "Find the inner sanctum",
         targetId: "ruins_terminal",
         isComplete: false,
       },
       {
         id: "witness_reaction",
         type: "talk",
-        description: "Witness Lyra's reaction to the technology",
+        description: "Witness Lyra's discovery",
         targetId: "lyra_reaction",
         isComplete: false,
       },

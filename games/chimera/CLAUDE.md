@@ -11,6 +11,9 @@
 | **State** (Zustand patterns) | `web/app/stores/CLAUDE.md` |
 | **Story docs** | `docs/story/` |
 | **Asset list** | `docs/ASSETS.md` |
+| **Content pipeline** | See "Content Pipeline" section below |
+| **Prompt templates** | `prompts/gemini/`, `prompts/gpt/` |
+| **Draft templates** | `drafts/` (Gemini output landing zone) |
 
 ---
 
@@ -331,6 +334,59 @@ Warding Incense - Fragrant smoke that cleanses afflictions of the humors.
 - System Agents are "dark enforcers" before their true nature is revealed
 - Technical terminology (data, code, system) only appears in late game
 - Corrupted enemies are "cursed" or "tainted" in early descriptions
+
+---
+
+## Content Pipeline
+
+### Three-Tool Workflow
+
+| Tool | Role | Output |
+|------|------|--------|
+| **Gemini** | Creative brain — storylines, quests, dialogue, lore | Markdown files in `drafts/` |
+| **GPT** | Art studio — sprites, portraits, backgrounds | PNG files in `drafts/sprites/` |
+| **Claude Code** | Integrator — converts drafts into game code | TypeScript in `web/app/data/` |
+
+### Workflow
+
+1. **Gemini** creates draft → save to `games/chimera/drafts/[type]/`
+2. **Claude** reads draft → `/import-draft drafts/story/quests/my-quest.md`
+3. **GPT** creates art → use `/art-prompt [name] --type [type]` for the prompt
+4. Save art to `drafts/sprites/` → `/import-sprite` to process and wire in
+
+### Slash Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/import-draft [path]` | Convert Gemini creative draft into game code |
+| `/import-sprite [path] --type [t] --name [n]` | Process sprite sheet and wire into engine |
+| `/art-prompt [name] --type [type]` | Generate GPT prompt for art assets |
+
+### Drafts Directory (`drafts/`)
+
+```
+story/quests/          # Quest outlines from Gemini
+story/dialogues/       # Dialogue trees from Gemini
+characters/npcs/       # NPC concepts
+characters/party/      # Party member designs
+enemies/               # Enemy designs
+maps/                  # Map layout descriptions
+items/                 # Item concepts
+sprites/               # Raw sprite sheets from GPT (not tracked in git)
+```
+
+Each subdirectory has a `_template.md` for reference.
+
+### Sprite Sheet System
+
+The engine supports two sprite systems for world exploration:
+1. **Sprite sheets** (preferred): Single image with grid of frames, configured via `WorldSpriteConfig`
+2. **Individual files** (legacy): Separate PNG per direction/frame (`kai_down_0.png` etc.)
+
+Standard GPT/Gemini output is **5 columns x 3 rows**:
+- Row 0: Down (front), Row 1: Side (left, flipX for right), Row 2: Up (back)
+
+Configs live in `data/animations.ts` under `WORLD_SPRITE_CONFIGS` (player) or `NPC_SPRITE_CONFIGS` (NPCs).
 
 ---
 

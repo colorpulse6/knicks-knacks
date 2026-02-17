@@ -525,6 +525,7 @@ export const HIDDEN_LABORATORY_MAP: GameMap = {
       type: "door",
     },
   ],
+  background: "/backgrounds/hidden_laboratory.png",
   ambientColor: "#0a0a1a", // Deep cold blue-black
   music: "hidden_truth",
   requiredFlags: ["found_laboratory_entrance"],

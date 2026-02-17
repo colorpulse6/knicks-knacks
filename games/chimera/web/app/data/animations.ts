@@ -1,6 +1,6 @@
-// Animation definitions for battle system
+// Animation definitions for battle and world exploration systems
 
-import type { SpriteSheetConfig, ParticleConfig } from "../types/animation";
+import type { SpriteSheetConfig, ParticleConfig, WorldSpriteConfig } from "../types/animation";
 
 // Kai sprite sheet: 1024×1024, 4×3 grid
 // Row 0: Idle animation (4 frames) - standing poses with sword
@@ -8,16 +8,34 @@ import type { SpriteSheetConfig, ParticleConfig } from "../types/animation";
 // Row 2: Cast/Hurt/Death (cast1, cast2, hurt, collapsed)
 export const KAI_SPRITE_CONFIG: SpriteSheetConfig = {
   src: "/sprites/characters/kai_battle.png",
-  frameWidth: 256,   // 1024 / 4
-  frameHeight: 341,  // 1024 / 3 (rounded)
+  frameWidth: 256, // 1024 / 4
+  frameHeight: 341, // 1024 / 3 (rounded)
   columns: 4,
   rows: 3,
   animations: {
     idle: { row: 0, frameCount: 4, frameDuration: 200, loop: true },
     attack: { row: 1, frameCount: 4, frameDuration: 120, loop: false },
-    cast: { row: 2, frameCount: 2, frameDuration: 200, loop: false, startFrame: 0 },
-    hurt: { row: 2, frameCount: 1, frameDuration: 200, loop: false, startFrame: 2 },
-    death: { row: 2, frameCount: 1, frameDuration: 500, loop: false, startFrame: 3 },
+    cast: {
+      row: 2,
+      frameCount: 2,
+      frameDuration: 200,
+      loop: false,
+      startFrame: 0,
+    },
+    hurt: {
+      row: 2,
+      frameCount: 1,
+      frameDuration: 200,
+      loop: false,
+      startFrame: 2,
+    },
+    death: {
+      row: 2,
+      frameCount: 1,
+      frameDuration: 500,
+      loop: false,
+      startFrame: 3,
+    },
     victory: { row: 0, frameCount: 4, frameDuration: 250, loop: true }, // reuse idle for victory
   },
 };
@@ -32,10 +50,35 @@ export const BANDIT_SPRITE_CONFIG: SpriteSheetConfig = {
   rows: 2,
   animations: {
     // Breathing: alternate between row 0 and row 1 at column 0 (slow, relaxed)
-    idle: { row: 0, frameCount: 2, frameDuration: 1600, loop: true, startFrame: 0, alternateRows: true },
-    attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-    hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-    death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+    idle: {
+      row: 0,
+      frameCount: 2,
+      frameDuration: 1600,
+      loop: true,
+      startFrame: 0,
+      alternateRows: true,
+    },
+    attack: {
+      row: 0,
+      frameCount: 1,
+      frameDuration: 300,
+      loop: false,
+      startFrame: 1,
+    },
+    hurt: {
+      row: 0,
+      frameCount: 1,
+      frameDuration: 300,
+      loop: false,
+      startFrame: 2,
+    },
+    death: {
+      row: 0,
+      frameCount: 1,
+      frameDuration: 1000,
+      loop: false,
+      startFrame: 3,
+    },
   },
 };
 
@@ -73,10 +116,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     rows: 2,
     animations: {
       // Breathing: alternate between row 0 and row 1 at column 0 (slow, relaxed)
-      idle: { row: 0, frameCount: 2, frameDuration: 1500, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 1500,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // Wild Wolf: 1536×1024 (4×2 grid, 384×512 frames)
@@ -89,10 +157,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     rows: 2,
     animations: {
       // Breathing: alternate between row 0 and row 1 at column 0 (slow, relaxed)
-      idle: { row: 0, frameCount: 2, frameDuration: 1800, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 1800,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // Corrupted Sprite: 1536×1024 (4×2 grid, 384×512 frames)
@@ -103,10 +196,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     columns: 4,
     rows: 2,
     animations: {
-      idle: { row: 0, frameCount: 2, frameDuration: 1200, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 1200,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // Rogue Knight: 1536×1024 (4×2 grid, 384×512 frames)
@@ -117,10 +235,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     columns: 4,
     rows: 2,
     animations: {
-      idle: { row: 0, frameCount: 2, frameDuration: 2000, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 2000,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // Static Wraith: 1536×1024 (4×2 grid, 384×512 frames)
@@ -132,10 +275,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     columns: 4,
     rows: 2,
     animations: {
-      idle: { row: 0, frameCount: 2, frameDuration: 1400, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 1400,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // Flickering Hound: 1536×1024 (4×2 grid, 384×512 frames) - glitched wolf
@@ -147,10 +315,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     columns: 4,
     rows: 2,
     animations: {
-      idle: { row: 0, frameCount: 2, frameDuration: 800, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 800,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // System Agent: 1536×1024 (4×2 grid, 384×512 frames) - mini-boss
@@ -162,10 +355,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     columns: 4,
     rows: 2,
     animations: {
-      idle: { row: 0, frameCount: 2, frameDuration: 1000, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 1000,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
   // Bandit Chief Vorn: 1536×1024 (4×2 grid, 384×512 frames) - Bandit Camp boss
@@ -177,10 +395,35 @@ export const ENEMY_SPRITES: Record<string, SpriteSheetConfig> = {
     columns: 4,
     rows: 2,
     animations: {
-      idle: { row: 0, frameCount: 2, frameDuration: 1500, loop: true, startFrame: 0, alternateRows: true },
-      attack: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 1 },
-      hurt: { row: 0, frameCount: 1, frameDuration: 300, loop: false, startFrame: 2 },
-      death: { row: 0, frameCount: 1, frameDuration: 1000, loop: false, startFrame: 3 },
+      idle: {
+        row: 0,
+        frameCount: 2,
+        frameDuration: 1500,
+        loop: true,
+        startFrame: 0,
+        alternateRows: true,
+      },
+      attack: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 1,
+      },
+      hurt: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 300,
+        loop: false,
+        startFrame: 2,
+      },
+      death: {
+        row: 0,
+        frameCount: 1,
+        frameDuration: 1000,
+        loop: false,
+        startFrame: 3,
+      },
     },
   },
 };
@@ -205,8 +448,8 @@ export const OBJECT_SPRITES: Record<string, SpriteSheetConfig> = {
 
 // UI icon configurations (for reference)
 export const UI_ICONS = {
-  save_icon: "/sprites/ui/save_icon.png",           // 32×32 save button
-  load_icon: "/sprites/ui/load_icon.png",           // 32×32 load button
+  save_icon: "/sprites/ui/save_icon.png", // 32×32 save button
+  load_icon: "/sprites/ui/load_icon.png", // 32×32 load button
   save_slot_empty: "/sprites/ui/save_slot_empty.png", // 32×32 empty slot indicator
   save_slot_frame: "/sprites/ui/save_slot_frame.png", // 320×80 slot frame (optional)
   // Combined sprite sheet: 1024×1536, two icons side by side
@@ -411,4 +654,55 @@ export const ANIMATION_SEQUENCES = {
       { name: "celebrate", duration: 1000 },
     ],
   },
+};
+
+// ============================================
+// WORLD EXPLORATION SPRITE CONFIGS
+// ============================================
+
+// Kai world sprite sheet: 5 columns x 3 rows (GPT/Gemini format)
+// Row 0: Down (front-facing), Row 1: Side (left), Row 2: Up (back-facing)
+// Right direction uses left row with flipX
+export const KAI_WORLD_CONFIG: WorldSpriteConfig = {
+  src: "/sprites/characters/kai_walk.png",
+  columns: 5,
+  rows: 3,
+  directions: {
+    down:  { row: 0, frames: 5, idleFrame: 0 },
+    left:  { row: 1, frames: 5, idleFrame: 0 },
+    right: { row: 1, frames: 5, idleFrame: 0, flipX: true },
+    up:    { row: 2, frames: 5, idleFrame: 0 },
+  },
+  removeBackground: true,
+};
+
+// Player character world sprite configs (keyed by character ID)
+// Characters not in this registry fall back to individual-file sprites
+export const WORLD_SPRITE_CONFIGS: Record<string, WorldSpriteConfig> = {
+  // kai: KAI_WORLD_CONFIG,  // Uncomment when kai_walk.png sprite sheet exists
+};
+
+// Hooded Stranger world sprite sheet: 5 columns x 4 rows (1024x1536)
+// Row 0: Down (front-facing), Row 1: Left, Row 2: Right, Row 3: Up
+// Has explicit right-facing row (no flipX needed)
+const HOODED_STRANGER_WORLD_CONFIG: WorldSpriteConfig = {
+  src: "/sprites/characters/hooded_stranger_walk.png",
+  columns: 5,
+  rows: 4,
+  directions: {
+    down:  { row: 0, frames: 5, idleFrame: 0 },
+    left:  { row: 1, frames: 5, idleFrame: 0 },
+    right: { row: 2, frames: 5, idleFrame: 0 },
+    up:    { row: 3, frames: 5, idleFrame: 0 },
+  },
+  removeBackground: true,
+};
+
+// NPC world sprite configs — for NPCs with animated walk cycle sheets
+// Most NPCs use a single static sprite; only NPCs here get walk animation
+export const NPC_SPRITE_CONFIGS: Record<string, WorldSpriteConfig> = {
+  hooded_stranger: HOODED_STRANGER_WORLD_CONFIG,
+  desert_stranger_1: HOODED_STRANGER_WORLD_CONFIG,
+  desert_stranger_2: HOODED_STRANGER_WORLD_CONFIG,
+  desert_stranger_3: HOODED_STRANGER_WORLD_CONFIG,
 };

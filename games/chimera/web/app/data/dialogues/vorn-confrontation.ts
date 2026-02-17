@@ -35,7 +35,7 @@ const VORN_TAUNT: DialogueNode = {
   id: "vorn_taunt",
   speaker: "Bandit Chief Vorn",
   portrait: "vorn",
-  text: "The old ways are ending, fool. Soon this whole region will kneel to those who embrace the new order. But you... you won't live to see it.",
+  text: "You village rats cling to your little lives, never asking where the road leads. I've seen what waits at the end of it. And I chose the winning side.",
   next: "vorn_battle_start",
 };
 
@@ -66,7 +66,7 @@ export const VORN_DYING_WORDS: DialogueNode = {
   id: "vorn_dying_words",
   speaker: "Bandit Chief Vorn",
   portrait: "vorn",
-  text: "*coughs* You think... this changes anything? They're already here... watching... waiting...",
+  text: "*coughs* You think... you won something? The rod was just a taste. There's a whole cellar full of... *trails off*",
   next: "vorn_final",
 };
 

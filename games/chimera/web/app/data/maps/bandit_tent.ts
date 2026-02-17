@@ -325,6 +325,7 @@ export const BANDIT_TENT_MAP: GameMap = {
       type: "door",
     },
   ],
+  background: "/backgrounds/vorn_tent_interior.png",
   ambientColor: "#2a1810", // Dark tent interior
   music: "tension_theme",
   requiredFlags: ["prisoner_1_freed", "prisoner_2_freed", "prisoner_3_freed"],

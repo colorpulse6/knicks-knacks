@@ -258,7 +258,7 @@ const NPCS: NPC[] = [
 
 // Events in the tavern
 const EVENTS: MapEvent[] = [
-  // Exit to Havenwood (back to tavern entrance area)
+  // Exit to Havenwood (one tile south of tavern entrance to avoid re-trigger)
   {
     id: "tavern_exit",
     type: "teleport",
@@ -266,8 +266,8 @@ const EVENTS: MapEvent[] = [
     y: 11,
     data: {
       targetMapId: "havenwood",
-      targetX: 21,
-      targetY: 8,
+      targetX: 36,
+      targetY: 12,
       message: "Exit to Havenwood Village",
     },
   },
@@ -325,6 +325,7 @@ export const RUSTED_COG_TAVERN_MAP: GameMap = {
   staticObjects: STATIC_OBJECTS,
   encounters: [], // No random encounters inside tavern
   connections: [], // Use teleport events for transitions
+  background: "/backgrounds/rusted_cog_tavern.png",
   ambientColor: "#3d2817", // Warm, dim interior lighting
   music: "tavern_theme",
 };

@@ -11,7 +11,11 @@ export * from "./shop";
 // Game state types
 export type GamePhase =
   | "title"
+  | "intro_cinematic"
   | "system_boot"
+  | "execution_scene"
+  | "desert_awakening"
+  | "desert_collapse"
   | "loading"
   | "exploring"
   | "combat"

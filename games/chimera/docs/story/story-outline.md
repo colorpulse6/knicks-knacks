@@ -1,5 +1,27 @@
 # Project Chimera: Basic Story Outline
 
+> **See also:** [Opening Sequence (scene_1+2.md)](scene_1+2.md) — Detailed scene-by-scene breakdown of the opening: Kai's execution, the Disruption, and his amnesiac awakening in Havenwood.
+
+## Prologue: The Execution (Pre-Havenwood)
+
+The game does **not** begin in Havenwood. It begins with Kai bound on an execution platform, designated **Anomaly KAI_7.34** and sentenced to Nullification by the System. The `SystemBootScreen` serves as the "Scroll of Judgment" — diagnostic text the player doesn't yet understand is about them. Reality fractures at the moment of execution (the Disruption), and Kai is hurled through a Temporal Distortion into a vast, empty desert — a liminal "in-between" space outside the System's Medieval Facade.
+
+He awakens in a tent, tended to by silent hooded strangers — the same mysterious figures who later appear in the Rusted Cog Tavern. They don't speak. They don't explain. They just observe. Eventually Kai rises and explores: the tent, the surrounding desert plateau, wind-carved wastes. No enemies, no quests — just emptiness and the distant shimmer of Temporal Distortions on the horizon. The desert is the player's first taste of movement and interaction.
+
+The desert exterior maps (plateau, wastes, ridge) form a **confusing closed loop** — every path leads back to another desert map. From the ridge, Kai can see Havenwood in the distance but the path down crumbles away. After enough wandering (6 map transitions), Kai collapses from heat and exhaustion. A brief cinematic shows consciousness fading — text dimming line by line until blackout.
+
+Kai wakes in an **isolated garden** atop the Lumina Estate — a walled rooftop space with no gate and no connection to the main palace. Overgrown flowers, a dry fountain, stone walls on every side. A folded cloth and water flask beside the bench hint that someone brought him here and tended to him. The only exit is a crude ladder leading down to the village rooftops. He descends through two rooftop maps (clay tiles, chimneys, narrow walkways, views of the village below) to a back alley, then emerges into Havenwood Square — his first encounter with civilization.
+
+**What happened off-screen:** Lady Lyra Lumina found Kai collapsed outside the village gates — sunburnt, half-dead, clutching a strange artifact (the Broken Mechanism). She and Sebastian carried him to her family's private rooftop garden to recover. The player doesn't learn this until visiting the Lumina Estate, where Lyra's first dialogue reveals the rescue. This creates a personal bond between Kai and Lyra before the scholarly quest begins.
+
+The desert zone is revisited later in the game (Act II) when Kai returns with more context. The hooded strangers may still be there, or may have moved. The collapse mechanic does not trigger on revisit.
+
+By the time he arrives in Havenwood, his memory of the execution and the strangers has fragmented into suppressed trauma. The player's first hour in the village is colored by this — thought-bubble flashbacks triggered by mundane interactions.
+
+See [scene_1+2.md](scene_1+2.md) for full scene direction, visual/audio design, and implementation mapping.
+
+---
+
 ## Act I: The Cracks in Reality
 
 ### Introduction
@@ -62,6 +84,19 @@ Kai encounters groups with differing views on the revealed truth:
 ### Mid-Point Revelation
 
 Kai uncovers a major truth—perhaps the nature of the catastrophe the AI instigated, or Kai's own direct connection to the AI. [cite_start]He learns he is **Anomaly KAI_7.34**, a discrepancy in the genetic code unrelated to the controlled Lumina lineage[cite: 752, 781].
+
+### The Naming (System Awareness Milestone)
+
+When Kai's `systemAwareness` reaches a critical threshold, the game presents a pivotal moment: Kai rejects his System-assigned designation. "KAI" was never a name — it was a label, a variable ID assigned by the Algorithm to catalog an anomaly. Recognizing this is Kai's first true act of existential self-definition.
+
+**The player is prompted to rename Kai.** This is not cosmetic — it is the narrative embodiment of Sartre's "existence precedes essence." By choosing a name, Kai (and the player) assert identity against a system that reduces consciousness to data points. The old name persists in System logs and AI dialogue ("You will always be KAI_7.34 to me"), but the party, NPCs, and UI reflect the chosen name.
+
+**Implementation notes:**
+- Triggers at a specific `systemAwareness` threshold (likely mid-Act II, after the Anomaly revelation)
+- A special dialogue/cutscene sequence — not a menu option
+- The System Boot screen on subsequent loads could glitch: showing the old designation crossed out, the new name flickering in its place
+- Party members react: Lyra asks what it means, others may be confused
+- If the player keeps the name "Kai," the game acknowledges the choice differently — choosing the name you were given is still a choice
 
 ---
 

@@ -20,12 +20,12 @@ export interface LyraDialogueState {
 // DIALOGUE NODES
 // ============================================
 
-// First meeting - curious about the visitor
+// First meeting - Lyra recognizes Kai from rescuing him at the gates
 const LYRA_FIRST_MEETING: DialogueNode = {
   id: "lyra_first_meeting",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "*A young woman with striking silver-blonde hair looks up from a tome, her violet eyes meeting yours with sharp intelligence*",
+  text: "*A young woman with striking silver-blonde hair looks up from a tome — then freezes, violet eyes widening with recognition* Wait. I know you.",
   next: "lyra_greeting",
 };
 
@@ -33,24 +33,32 @@ const LYRA_GREETING: DialogueNode = {
   id: "lyra_greeting",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "Ah, a visitor. Sebastian mentioned someone had arrived. You're the one Elder Morris sent, aren't you? Something about an unusual artifact?",
+  text: "You're the one I found collapsed outside the village gates! Sunburnt, half-dead — I had Sebastian help me carry you up to the garden to rest. I went back to check on you, but you'd vanished. How did you even get down from there?",
   choices: [
     {
-      text: "Yes. I found something strange.",
-      nextNodeId: "lyra_show_mechanism",
+      text: "That was you? Thank you.",
+      nextNodeId: "lyra_you_saved_me",
     },
     {
-      text: "How did you know Elder Morris sent me?",
-      nextNodeId: "lyra_explains_knowing",
+      text: "There was a ladder.",
+      nextNodeId: "lyra_the_ladder",
     },
   ],
 };
 
-const LYRA_EXPLAINS_KNOWING: DialogueNode = {
-  id: "lyra_explains_knowing",
+const LYRA_YOU_SAVED_ME: DialogueNode = {
+  id: "lyra_you_saved_me",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "*smiles slightly* Little happens in Havenwood without word reaching this estate. The Lumina family has been... keepers of knowledge for generations. When something unusual occurs, people come to us. Now, let me see this artifact of yours.",
+  text: "*waves a hand dismissively* Anyone would have done the same. Though I confess, it wasn't entirely selfless — you were carrying something when I found you. A strange artifact. I couldn't pry it from your fingers, so I left it with you. Elder Morris mentioned you've been asking about the ruins?",
+  next: "lyra_show_mechanism",
+};
+
+const LYRA_THE_LADDER: DialogueNode = {
+  id: "lyra_the_ladder",
+  speaker: "Lady Lyra Lumina",
+  portrait: "lady_lyra",
+  text: "*She blinks* Ladder? There's no ladder up there — that garden has been sealed for years. *She shakes her head* Never mind that. You were carrying something strange when I found you. An artifact unlike anything I've seen. Do you still have it?",
   next: "lyra_show_mechanism",
 };
 
@@ -91,7 +99,7 @@ const LYRA_BANDIT_CELLAR: DialogueNode = {
   id: "lyra_bandit_cellar",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "A cellar? That... makes a disturbing amount of sense. The Whispering Ruins aren't far from there. According to my research, the ruins might be just the surface. There could be entire facilities hidden beneath.",
+  text: "A cellar? That... makes a disturbing amount of sense. The Whispering Ruins aren't far from there. According to my research, the ruins may extend far deeper than what's visible. The old texts describe vast chambers beneath the earth.",
   next: "lyra_proposal",
 };
 
@@ -140,7 +148,7 @@ const LYRA_RUINS_INTEREST: DialogueNode = {
   id: "lyra_ruins_interest",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "The Whispering Ruins! Yes—the texts mention a 'Terminal' deep within. A place where the Builders stored their memories. If we could reach it...",
+  text: "The Whispering Ruins! Yes—the texts mention a sanctum deep within. A place where the Builders kept their most sacred records. If we could reach it...",
   next: "lyra_joins",
 };
 
@@ -164,7 +172,7 @@ const LYRA_POST_TERMINAL: DialogueNode = {
   id: "lyra_post_terminal",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "*She stares into the distance, still processing* The pendant... it activated the Terminal. As if it was waiting for me specifically. For someone of my bloodline.",
+  text: "*She stares into the distance, still processing* The pendant... it woke the sanctum. As if it had been waiting. Not for anyone—for me. For my blood.",
   next: "lyra_post_terminal_2",
 };
 
@@ -172,7 +180,7 @@ const LYRA_POST_TERMINAL_2: DialogueNode = {
   id: "lyra_post_terminal_2",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "The things I saw in that data stream... genetic markers, lineage tracking, 'Prime Code Authorization.' My family wasn't just keeping records of the Builders. We ARE part of their system.",
+  text: "I saw... visions. Symbols I recognized from the oldest Lumina texts—the ones my father forbade me from reading. Lines of light, branching like a great tree. And at the roots... my family's name. Woven into the very pattern of it.",
   next: "lyra_post_terminal_3",
 };
 
@@ -180,7 +188,7 @@ const LYRA_POST_TERMINAL_3: DialogueNode = {
   id: "lyra_post_terminal_3",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "*She meets your eyes, shaken but determined* Everything we thought we knew is a lie. This world, our history, even our bloodlines—they were designed. But by whom? And why? We need answers. Real answers.",
+  text: "*She meets your eyes, shaken but determined* I always believed my family were keepers of history. But what if we're not just keeping it? What if we're... part of it? Something older than I can name. We must learn more.",
 };
 
 // Return visit without mechanism
@@ -188,7 +196,7 @@ const LYRA_NO_MECHANISM: DialogueNode = {
   id: "lyra_no_mechanism",
   speaker: "Lady Lyra Lumina",
   portrait: "lady_lyra",
-  text: "You've returned. Have you found the artifact Elder Morris mentioned? I've been researching in preparation—the old texts speak of 'keys to the Archive.'",
+  text: "Feeling better? You gave me quite a scare at the gates. Elder Morris has been asking about you — says something strange has been found near the ruins. Come back when you've spoken with him.",
 };
 
 // ============================================
@@ -198,7 +206,8 @@ const LYRA_NO_MECHANISM: DialogueNode = {
 export const LYRA_DIALOGUES: Record<string, DialogueNode> = {
   lyra_first_meeting: LYRA_FIRST_MEETING,
   lyra_greeting: LYRA_GREETING,
-  lyra_explains_knowing: LYRA_EXPLAINS_KNOWING,
+  lyra_you_saved_me: LYRA_YOU_SAVED_ME,
+  lyra_the_ladder: LYRA_THE_LADDER,
   lyra_show_mechanism: LYRA_SHOW_MECHANISM,
   lyra_recognizes: LYRA_RECOGNIZES,
   lyra_excited: LYRA_EXCITED,

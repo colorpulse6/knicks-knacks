@@ -499,6 +499,7 @@ export const WHISPERING_RUINS_LOWER_MAP: GameMap = {
       type: "stairs",
     },
   ],
+  background: "/backgrounds/whispering_ruins_lower.png",
   ambientColor: "#1a1a2e", // Deep dark blue
   music: "ancient_depths",
   requiredFlags: ["showed_mechanism"], // Lyra has agreed to join expedition

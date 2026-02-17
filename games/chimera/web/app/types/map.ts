@@ -87,6 +87,7 @@ export interface NPC {
   dialogueId: string;
   movement?: "static" | "wander" | "patrol";
   patrolPath?: { x: number; y: number }[];
+  scale?: number; // Render scale multiplier (default 1.5)
   // Visibility conditions based on story flags
   visibleWhenFlag?: string;  // Only show when this flag is true
   hiddenWhenFlag?: string;   // Hide when this flag is true
@@ -146,8 +147,16 @@ export interface GameMap {
   staticObjects?: StaticObject[]; // Buildings, trees, rocks with sprites
   encounters: EnemyEncounter[];
   connections: MapConnection[];
+  // Overhead regions — portions of the background re-drawn ON TOP of characters
+  // to create "walk behind" occlusion (pillars, archways, tall furniture, etc.)
+  // Coordinates are in tile units. The renderer re-draws these background
+  // regions after characters, so sprites naturally appear behind them.
+  overheadRegions?: { x: number; y: number; width: number; height: number; baseY?: number }[];
   // Visual settings
+  tileset?: string; // Tileset name (outdoor, cave, interior, ruins, glitch)
+  background?: string; // Pre-rendered background image path (skips tile rendering)
   ambientColor?: string;
+  flickerLight?: boolean; // Subtle ambient light flicker (firelight, torches)
   music?: string;
   // Story flags required to access
   requiredFlags?: string[];

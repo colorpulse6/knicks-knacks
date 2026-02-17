@@ -1,39 +1,24 @@
-// Lumina Estate - Noble family manor
+// Lumina Estate - Noble family manor (fine-grid interior)
 // Home of Lady Lyra Lumina and the Lumina family archives
+// Background: 1280x1024 at 32px/tile = 40x32 grid
 
 import type { GameMap, NPC, MapEvent, StaticObject } from "../../types";
 
-// Map dimensions - elegant manor interior
-const WIDTH = 20;
-const HEIGHT = 16;
+// Map dimensions — doubled from 20x16 for finer collision control at 32px tiles
+const WIDTH = 40;
+const HEIGHT = 32;
 
-// Tile types: 0 = marble floor, 1 = carpet (red), 2 = wood paneling
+// Ground layer (background image handles visuals)
 function createGroundLayer(): number[][] {
   const ground: number[][] = [];
   for (let y = 0; y < HEIGHT; y++) {
-    const row: number[] = [];
-    for (let x = 0; x < WIDTH; x++) {
-      // Default marble floor
-      let tile = 0;
-
-      // Red carpet runner down the center
-      if (x >= 9 && x <= 10 && y >= 4 && y <= 14) {
-        tile = 1;
-      }
-
-      // Carpet in front of throne/study area
-      if (y >= 1 && y <= 3 && x >= 7 && x <= 12) {
-        tile = 1;
-      }
-
-      row.push(tile);
-    }
-    ground.push(row);
+    ground.push(new Array(WIDTH).fill(0));
   }
   return ground;
 }
 
 // Create collision layer (true = walkable, false = blocked)
+// Minimal boundaries: edge walls, single-tile pillars, narrow furniture
 function createCollisionLayer(): boolean[][] {
   const collision: boolean[][] = [];
   for (let y = 0; y < HEIGHT; y++) {
@@ -41,33 +26,45 @@ function createCollisionLayer(): boolean[][] {
     for (let x = 0; x < WIDTH; x++) {
       let walkable = true;
 
-      // Walls around the edge
-      if (x === 0 || x === WIDTH - 1 || y === 0) {
+      // === EDGE WALLS ===
+      // Top wall
+      if (y === 0) walkable = false;
+      // Bottom wall (with exit opening)
+      if (y === HEIGHT - 1) {
         walkable = false;
+        // Exit doorway at center bottom
+        if (x >= 18 && x <= 21) walkable = true;
       }
+      // Left wall
+      if (x === 0) walkable = false;
+      // Right wall
+      if (x === WIDTH - 1) walkable = false;
 
-      // Pillars
-      if ((x === 3 || x === 16) && (y === 4 || y === 8 || y === 12)) {
-        walkable = false;
-      }
+      // === PILLAR BASES (perspective-scaled, wider toward bottom) ===
+      // Left pillar 1 (top): 2 wide, 1 tall
+      if ((x === 9 || x === 10) && y === 10) walkable = false;
+      // Left pillar 2 (middle): 3 wide, 1 tall
+      if (x >= 5 && x <= 7 && y === 15) walkable = false;
+      // Left pillar 3 (bottom): 3 wide, 2 tall
+      if (x >= 1 && x <= 3 && y >= 22 && y <= 23) walkable = false;
+      // Right pillar 1 (top, mirrored): 2 wide, 1 tall
+      if ((x === 29 || x === 30) && y === 10) walkable = false;
+      // Right pillar 2 (middle, mirrored): 3 wide, 1 tall
+      if (x >= 32 && x <= 34 && y === 15) walkable = false;
+      // Right pillar 3 (bottom, mirrored): 3 wide, 2 tall
+      if (x >= 36 && x <= 38 && y >= 22 && y <= 23) walkable = false;
 
-      // Study desk at the north end
-      if (y === 2 && x >= 8 && x <= 11) {
-        walkable = false;
-      }
+      // === STUDY DESK at north end ===
+      if (y >= 3 && y <= 4 && x >= 16 && x <= 23) walkable = false;
 
-      // Bookshelf walls on sides
-      if (x === 1 && y >= 2 && y <= 6) {
-        walkable = false;
-      }
-      if (x === 18 && y >= 2 && y <= 6) {
-        walkable = false;
-      }
+      // === BOOKSHELVES along walls ===
+      // Left bookshelves: x=1-2, y=3-12
+      if (x >= 1 && x <= 2 && y >= 3 && y <= 12) walkable = false;
+      // Right bookshelves: x=37-38, y=3-12
+      if (x >= 37 && x <= 38 && y >= 3 && y <= 12) walkable = false;
 
-      // Exit doorway frame (sides blocked, center walkable)
-      if ((x === 8 || x === 11) && (y === 14 || y === 15)) {
-        walkable = false;
-      }
+      // === EXIT DOORFRAME sides ===
+      if ((x === 17 || x === 22) && y >= 29 && y <= 31) walkable = false;
 
       row.push(walkable);
     }
@@ -76,123 +73,122 @@ function createCollisionLayer(): boolean[][] {
   return collision;
 }
 
-// Create overhead layer
+// Overhead layer (empty — background image handles visuals)
 function createOverheadLayer(): number[][] {
   const overhead: number[][] = [];
   for (let y = 0; y < HEIGHT; y++) {
-    const row: number[] = [];
-    for (let x = 0; x < WIDTH; x++) {
-      row.push(0);
-    }
-    overhead.push(row);
+    overhead.push(new Array(WIDTH).fill(-1));
   }
   return overhead;
 }
 
-// Static objects - furniture, decorations
+// Static objects — furniture & decorations (coordinates doubled for 32px grid)
 const STATIC_OBJECTS: StaticObject[] = [
-  // Grand desk at the study area
   {
     id: "study_desk",
     sprite: "/assets/desk.png",
-    x: 8,
-    y: 1,
-    width: 4,
-    height: 2,
+    x: 16,
+    y: 2,
+    width: 8,
+    height: 3,
     collision: [
-      { offsetX: 0, offsetY: 1 },
-      { offsetX: 1, offsetY: 1 },
-      { offsetX: 2, offsetY: 1 },
-      { offsetX: 3, offsetY: 1 },
+      { offsetX: 0, offsetY: 1 }, { offsetX: 1, offsetY: 1 },
+      { offsetX: 2, offsetY: 1 }, { offsetX: 3, offsetY: 1 },
+      { offsetX: 4, offsetY: 1 }, { offsetX: 5, offsetY: 1 },
+      { offsetX: 6, offsetY: 1 }, { offsetX: 7, offsetY: 1 },
     ],
   },
-  // Left bookshelf
   {
     id: "bookshelf_left",
     sprite: "/assets/bookshelf.png",
     x: 1,
-    y: 1,
+    y: 2,
     width: 2,
-    height: 6,
-    collision: [
-      { offsetX: 0, offsetY: 5 },
-      { offsetX: 1, offsetY: 5 },
-    ],
+    height: 11,
+    collision: [],
   },
-  // Right bookshelf
   {
     id: "bookshelf_right",
     sprite: "/assets/bookshelf.png",
-    x: 17,
-    y: 1,
+    x: 37,
+    y: 2,
     width: 2,
-    height: 6,
-    collision: [
-      { offsetX: 0, offsetY: 5 },
-      { offsetX: 1, offsetY: 5 },
-    ],
+    height: 11,
+    collision: [],
   },
-  // Pillars
   {
     id: "pillar_left_1",
     sprite: "/assets/pillar.png",
-    x: 3,
-    y: 3,
-    width: 1,
-    height: 2,
-    collision: [{ offsetX: 0, offsetY: 1 }],
+    x: 9,
+    y: 5,
+    width: 2,
+    height: 6,
+    collision: [
+      { offsetX: 0, offsetY: 5 }, { offsetX: 1, offsetY: 5 },
+    ],
   },
   {
     id: "pillar_left_2",
     sprite: "/assets/pillar.png",
-    x: 3,
-    y: 7,
-    width: 1,
-    height: 2,
-    collision: [{ offsetX: 0, offsetY: 1 }],
+    x: 6,
+    y: 10,
+    width: 3,
+    height: 6,
+    collision: [
+      { offsetX: 0, offsetY: 5 }, { offsetX: 1, offsetY: 5 }, { offsetX: 2, offsetY: 5 },
+    ],
   },
   {
     id: "pillar_left_3",
     sprite: "/assets/pillar.png",
-    x: 3,
-    y: 11,
-    width: 1,
-    height: 2,
-    collision: [{ offsetX: 0, offsetY: 1 }],
+    x: 1,
+    y: 16,
+    width: 3,
+    height: 8,
+    collision: [
+      { offsetX: 0, offsetY: 6 }, { offsetX: 1, offsetY: 6 }, { offsetX: 2, offsetY: 6 },
+      { offsetX: 0, offsetY: 7 }, { offsetX: 1, offsetY: 7 }, { offsetX: 2, offsetY: 7 },
+    ],
   },
   {
     id: "pillar_right_1",
     sprite: "/assets/pillar.png",
-    x: 16,
-    y: 3,
-    width: 1,
-    height: 2,
-    collision: [{ offsetX: 0, offsetY: 1 }],
+    x: 29,
+    y: 5,
+    width: 2,
+    height: 6,
+    collision: [
+      { offsetX: 0, offsetY: 5 }, { offsetX: 1, offsetY: 5 },
+    ],
   },
   {
     id: "pillar_right_2",
     sprite: "/assets/pillar.png",
-    x: 16,
-    y: 7,
-    width: 1,
-    height: 2,
-    collision: [{ offsetX: 0, offsetY: 1 }],
+    x: 31,
+    y: 10,
+    width: 3,
+    height: 6,
+    collision: [
+      { offsetX: 0, offsetY: 5 }, { offsetX: 1, offsetY: 5 }, { offsetX: 2, offsetY: 5 },
+    ],
   },
   {
     id: "pillar_right_3",
     sprite: "/assets/pillar.png",
-    x: 16,
-    y: 11,
-    width: 1,
-    height: 2,
-    collision: [{ offsetX: 0, offsetY: 1 }],
+    x: 36,
+    y: 16,
+    width: 3,
+    height: 8,
+    collision: [
+      { offsetX: 0, offsetY: 6 }, { offsetX: 1, offsetY: 6 }, { offsetX: 2, offsetY: 6 },
+      { offsetX: 0, offsetY: 7 }, { offsetX: 1, offsetY: 7 }, { offsetX: 2, offsetY: 7 },
+    ],
   },
-  // Decorative armor stands
   {
     id: "armor_left",
     sprite: "/assets/armor_stand.png",
-    x: 5,
-    y: 2,
+    x: 10,
+    y: 4,
     width: 1,
     height: 2,
     collision: [{ offsetX: 0, offsetY: 1 }],
@@ -200,97 +196,102 @@ const STATIC_OBJECTS: StaticObject[] = [
   {
     id: "armor_right",
     sprite: "/assets/armor_stand.png",
-    x: 14,
-    y: 2,
+    x: 29,
+    y: 4,
     width: 1,
     height: 2,
     collision: [{ offsetX: 0, offsetY: 1 }],
   },
-  // Chandelier visual marker (no collision)
   {
     id: "chandelier",
     sprite: "/assets/chandelier.png",
-    x: 9,
-    y: 7,
-    width: 2,
-    height: 2,
+    x: 18,
+    y: 14,
+    width: 4,
+    height: 4,
     collision: [],
   },
-  // Grand entrance doorway
   {
     id: "exit_doorway",
     sprite: "/assets/door_ornate.png",
-    x: 8,
-    y: 12,
-    width: 4,
-    height: 4,
+    x: 16,
+    y: 26,
+    width: 8,
+    height: 6,
     collision: [
-      { offsetX: 0, offsetY: 2 },
-      { offsetX: 0, offsetY: 3 },
-      { offsetX: 3, offsetY: 2 },
-      { offsetX: 3, offsetY: 3 },
+      { offsetX: 0, offsetY: 4 }, { offsetX: 0, offsetY: 5 },
+      { offsetX: 7, offsetY: 4 }, { offsetX: 7, offsetY: 5 },
     ],
   },
 ];
 
-// NPCs in the estate
+// NPCs in the estate (coordinates doubled for 32px grid)
 const NPCS: NPC[] = [
-  // Lady Lyra Lumina - at the study desk
   {
     id: "lady_lyra",
     name: "Lady Lyra Lumina",
-    x: 10,
-    y: 3,
+    x: 20,
+    y: 6,
     sprite: "/sprites/characters/lyra.png",
     facing: "down",
     dialogueId: "lyra_dynamic",
     movement: "static",
   },
-  // Butler/Servant
   {
     id: "estate_butler",
     name: "Sebastian",
-    x: 6,
-    y: 10,
+    x: 12,
+    y: 20,
     sprite: "/sprites/characters/butler.png",
     facing: "right",
     dialogueId: "butler_estate",
     movement: "static",
   },
-  // Guard at entrance
   {
     id: "estate_guard",
     name: "Estate Guard",
-    x: 9,
-    y: 13,
+    x: 24,
+    y: 26,
     sprite: "/sprites/characters/guard.png",
-    facing: "down",
+    facing: "left",
     dialogueId: "estate_guard",
     movement: "static",
   },
 ];
 
-// Events in the estate
+// Events in the estate (coordinates doubled for 32px grid)
 const EVENTS: MapEvent[] = [
-  // Exit to Havenwood
+  // Exit to Estate Road
   {
     id: "estate_exit",
     type: "teleport",
-    x: 9,
-    y: 15,
+    x: 19,
+    y: 31,
     data: {
-      targetMapId: "havenwood",
-      targetX: 15,
-      targetY: 12,
-      message: "Return to Havenwood Village",
+      targetMapId: "havenwood_estate_road",
+      targetX: 21,
+      targetY: 9,
+      message: "Return to Estate Road",
+    },
+  },
+  {
+    id: "estate_exit_2",
+    type: "teleport",
+    x: 20,
+    y: 31,
+    data: {
+      targetMapId: "havenwood_estate_road",
+      targetX: 21,
+      targetY: 9,
+      message: "Return to Estate Road",
     },
   },
   // Examine bookshelves - left
   {
     id: "bookshelf_examine_left",
     type: "trigger",
-    x: 2,
-    y: 4,
+    x: 3,
+    y: 7,
     data: {
       triggerType: "examine",
       message:
@@ -301,8 +302,8 @@ const EVENTS: MapEvent[] = [
   {
     id: "bookshelf_examine_right",
     type: "trigger",
-    x: 17,
-    y: 4,
+    x: 36,
+    y: 7,
     data: {
       triggerType: "examine",
       message:
@@ -313,8 +314,8 @@ const EVENTS: MapEvent[] = [
   {
     id: "desk_examine",
     type: "trigger",
-    x: 10,
-    y: 2,
+    x: 20,
+    y: 4,
     data: {
       triggerType: "examine",
       requiredFlag: "met_lyra",
@@ -326,7 +327,7 @@ const EVENTS: MapEvent[] = [
   {
     id: "portrait_examine",
     type: "trigger",
-    x: 10,
+    x: 20,
     y: 1,
     data: {
       triggerType: "examine",
@@ -338,8 +339,8 @@ const EVENTS: MapEvent[] = [
   {
     id: "armor_examine",
     type: "trigger",
-    x: 5,
-    y: 3,
+    x: 10,
+    y: 6,
     data: {
       triggerType: "examine",
       message:
@@ -350,12 +351,28 @@ const EVENTS: MapEvent[] = [
   {
     id: "estate_save",
     type: "save_point",
-    x: 14,
-    y: 10,
+    x: 28,
+    y: 20,
     data: {
       message: "A sense of calm washes over you in this grand hall.",
     },
   },
+];
+
+// Overhead regions — portions of the background re-drawn ON TOP of characters
+// so sprites appear to walk behind pillars, bookshelves, etc.
+// Each region covers the upper portion of a tall object (above its base).
+// Characters south of the object don't overlap these tiles, so they stay visible.
+const OVERHEAD_REGIONS: { x: number; y: number; width: number; height: number; baseY?: number }[] = [
+  // Left pillars — overhead covers the column visual above each base
+  // baseY = the Y where the solid base sits; characters at or below appear IN FRONT
+  { x: 9, y: 5, width: 2, height: 5, baseY: 10 },    // pillar 1: y=5..9 above base y=10
+  { x: 5, y: 10, width: 3, height: 5, baseY: 15 },   // pillar 2: y=10..14 above base y=15
+  { x: 1, y: 16, width: 3, height: 6, baseY: 22 },   // pillar 3: y=16..21 above base y=22
+  // Right pillars (mirrored)
+  { x: 29, y: 5, width: 2, height: 5, baseY: 10 },   // pillar 1
+  { x: 32, y: 10, width: 3, height: 5, baseY: 15 },  // pillar 2
+  { x: 36, y: 16, width: 3, height: 6, baseY: 22 },  // pillar 3
 ];
 
 export const LUMINA_ESTATE_MAP: GameMap = {
@@ -372,8 +389,10 @@ export const LUMINA_ESTATE_MAP: GameMap = {
   events: EVENTS,
   npcs: NPCS,
   staticObjects: STATIC_OBJECTS,
-  encounters: [], // No random encounters in the estate
-  connections: [], // Use teleport events for transitions
-  ambientColor: "#e8dcc8", // Warm, elegant lighting
+  overheadRegions: OVERHEAD_REGIONS,
+  encounters: [],
+  connections: [],
+  background: "/backgrounds/lumina_estate.png",
+  ambientColor: "#e8dcc8",
   music: "noble_theme",
 };

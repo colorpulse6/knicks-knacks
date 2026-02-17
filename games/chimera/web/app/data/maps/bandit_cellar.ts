@@ -238,6 +238,7 @@ export const BANDIT_CELLAR_MAP: GameMap = {
       type: "stairs",
     },
   ],
+  background: "/backgrounds/bandit_cellar.png",
   ambientColor: "#1a1a2e", // Dark mysterious blue
   music: "mystery_discovery",
   // No requiredFlags - access is controlled by the tent's cellar entrance

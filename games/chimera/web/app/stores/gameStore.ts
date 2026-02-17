@@ -21,7 +21,11 @@ import {
   EQUIPMENT,
 } from "../data/items";
 import type { Item, EquipmentSlot } from "../types";
-import { HAVENWOOD_MAP } from "../data/maps/havenwood";
+import { HAVENWOOD_SQUARE_MAP } from "../data/maps/havenwood_square";
+import { HAVENWOOD_MARKET_MAP } from "../data/maps/havenwood_market";
+import { HAVENWOOD_RESIDENTIAL_MAP } from "../data/maps/havenwood_residential";
+import { HAVENWOOD_WATERFRONT_MAP } from "../data/maps/havenwood_waterfront";
+import { HAVENWOOD_ESTATE_ROAD_MAP } from "../data/maps/havenwood_estate_road";
 import { WHISPERING_RUINS_MAP } from "../data/maps/whispering_ruins";
 import { HAVENWOOD_OUTSKIRTS_MAP } from "../data/maps/havenwood_outskirts";
 import { BANDIT_CAMP_MAP } from "../data/maps/bandit_camp";
@@ -31,6 +35,14 @@ import { WHISPERING_RUINS_LOWER_MAP } from "../data/maps/whispering_ruins_lower"
 import { HIDDEN_LABORATORY_MAP } from "../data/maps/hidden_laboratory";
 import { RUSTED_COG_TAVERN_MAP } from "../data/maps/rusted_cog_tavern";
 import { LUMINA_ESTATE_MAP } from "../data/maps/lumina_estate";
+import { STRANGER_TENT_MAP } from "../data/maps/stranger_tent";
+import { DESERT_PLATEAU_MAP } from "../data/maps/desert_plateau";
+import { DESERT_WASTES_MAP } from "../data/maps/desert_wastes";
+import { DESERT_RIDGE_MAP } from "../data/maps/desert_ridge";
+import { PALACE_GARDEN_MAP } from "../data/maps/palace_garden";
+import { HAVENWOOD_ROOFTOPS_WEST_MAP } from "../data/maps/havenwood_rooftops_west";
+import { HAVENWOOD_ROOFTOPS_EAST_MAP } from "../data/maps/havenwood_rooftops_east";
+import { HAVENWOOD_ALLEY_MAP } from "../data/maps/havenwood_alley";
 import {
   checkForEncounter,
   createStepCounter,
@@ -124,10 +136,12 @@ export interface GameState {
   showMenu: boolean;
   showSaveScreen: boolean;
   showInn: boolean;
+  showVillageMap: boolean;
 
   // Admin/Debug
   adminMode: boolean;
   battlesPaused: boolean;
+  showCollisionDebug: boolean;
 
   // Level-up tracking
   pendingLevelUps: { characterId: string; results: LevelUpResult[] }[];
@@ -140,6 +154,13 @@ export interface GameState {
 
   // Flag to set on battle victory (for boss fights)
   pendingVictoryFlag: string | null;
+
+  // Desert loop — timer-based collapse
+  desertTimerStart: number | null; // timestamp when desert exploration began
+  desertCollapsing: boolean; // true during the collapse animation
+
+  // Garden awakening — in-map cinematic overlay
+  gardenAwakeningPhase: "pan" | "text" | "wake" | null;
 }
 
 export interface GameActions {
@@ -147,10 +168,18 @@ export interface GameActions {
   setPhase: (phase: GamePhase) => void;
   togglePause: () => void;
   completeSystemBoot: () => void;
+  completeIntroCinematic: () => void;
+  completeExecutionScene: () => void;
+  completeDesertAwakening: () => void;
+  completeDesertCollapse: () => void;
+  triggerDesertCollapse: () => void; // Start collapse animation (lying sprite → cinematic)
+  setGardenAwakeningPhase: (phase: "pan" | "text" | "wake" | null) => void;
+  completeGardenAwakening: () => void;
 
   // Admin/Debug
   toggleAdminMode: () => void;
   toggleBattlesPaused: () => void;
+  toggleCollisionDebug: () => void;
 
   // Party management
   addPartyMember: (character: Character) => void;
@@ -238,6 +267,7 @@ export interface GameActions {
 
   // Menu
   toggleMenu: () => void;
+  toggleVillageMap: () => void;
   openSaveScreen: () => void;
   closeSaveScreen: () => void;
 
@@ -265,8 +295,8 @@ const initialState: GameState = {
   inventory: createInitialInventory(),
   currentMap: null,
   playerPosition: {
-    x: 5,
-    y: 5,
+    x: 10,
+    y: 10,
     mapId: "havenwood",
     facing: "down",
   },
@@ -299,12 +329,17 @@ const initialState: GameState = {
   showMenu: false,
   showSaveScreen: false,
   showInn: false,
+  showVillageMap: false,
   adminMode: false,
   battlesPaused: false,
+  showCollisionDebug: false,
   pendingLevelUps: [],
   pendingBattleRewards: null,
   pendingQuestComplete: null,
   pendingVictoryFlag: null,
+  desertTimerStart: null,
+  desertCollapsing: false,
+  gardenAwakeningPhase: null,
 };
 
 export const useGameStore = create<GameState & GameActions>()(
@@ -315,11 +350,45 @@ export const useGameStore = create<GameState & GameActions>()(
       // Phase management
       setPhase: (phase) => set({ phase }),
       togglePause: () => set((state) => ({ isPaused: !state.isPaused })),
-      completeSystemBoot: () => set({ phase: "exploring" }),
+      completeSystemBoot: () => set({ phase: "execution_scene" }),
+      completeIntroCinematic: () => set({ phase: "system_boot" }),
+      completeExecutionScene: () => set({ phase: "desert_awakening" }),
+      completeDesertAwakening: () => set({ phase: "exploring" }),
+      completeDesertCollapse: () => {
+        set({
+          phase: "exploring",
+          playerPosition: {
+            x: 10,
+            y: 10,
+            mapId: "palace_garden",
+            facing: "down",
+          },
+          desertTimerStart: null,
+          desertCollapsing: false,
+          gardenAwakeningPhase: "pan",
+        });
+        get().loadMap("palace_garden");
+      },
+
+      triggerDesertCollapse: () => {
+        set({ desertCollapsing: true });
+        get().setStoryFlag("desert_collapse_happened", true);
+        // After 3s of lying sprite, transition to desert_collapse cinematic
+        setTimeout(() => {
+          if (get().desertCollapsing) {
+            set({ phase: "desert_collapse", desertCollapsing: false });
+          }
+        }, 3000);
+      },
+
+      // Garden awakening
+      setGardenAwakeningPhase: (phase) => set({ gardenAwakeningPhase: phase }),
+      completeGardenAwakening: () => set({ gardenAwakeningPhase: null }),
 
       // Admin/Debug
       toggleAdminMode: () => set((state) => ({ adminMode: !state.adminMode })),
       toggleBattlesPaused: () => set((state) => ({ battlesPaused: !state.battlesPaused })),
+      toggleCollisionDebug: () => set((state) => ({ showCollisionDebug: !state.showCollisionDebug })),
 
       // Party management
       addPartyMember: (character) =>
@@ -590,8 +659,16 @@ export const useGameStore = create<GameState & GameActions>()(
 
       // Map
       loadMap: (mapId) => {
-        // Handle quest objective updates for map entry
+        // Desert loop — start timer when first entering exterior desert
+        const desertExteriors = ["desert_plateau", "desert_wastes", "desert_ridge"];
         const state = get();
+        if (desertExteriors.includes(mapId) && !state.story.flags.desert_collapse_happened) {
+          if (state.desertTimerStart === null) {
+            set({ desertTimerStart: Date.now() });
+          }
+        }
+
+        // Handle quest objective updates for map entry
 
         // The Lady's Curiosity - Escort objectives
         if (state.hasActiveQuest("the_ladys_curiosity")) {
@@ -633,7 +710,11 @@ export const useGameStore = create<GameState & GameActions>()(
         return set((state) => {
           // Map registry
           const maps: Record<string, GameMap> = {
-            havenwood: HAVENWOOD_MAP,
+            havenwood: HAVENWOOD_SQUARE_MAP,
+            havenwood_market: HAVENWOOD_MARKET_MAP,
+            havenwood_residential: HAVENWOOD_RESIDENTIAL_MAP,
+            havenwood_waterfront: HAVENWOOD_WATERFRONT_MAP,
+            havenwood_estate_road: HAVENWOOD_ESTATE_ROAD_MAP,
             whispering_ruins: WHISPERING_RUINS_MAP,
             havenwood_outskirts: HAVENWOOD_OUTSKIRTS_MAP,
             bandit_camp: BANDIT_CAMP_MAP,
@@ -643,6 +724,14 @@ export const useGameStore = create<GameState & GameActions>()(
             hidden_laboratory: HIDDEN_LABORATORY_MAP,
             rusted_cog_tavern: RUSTED_COG_TAVERN_MAP,
             lumina_estate: LUMINA_ESTATE_MAP,
+            stranger_tent: STRANGER_TENT_MAP,
+            desert_plateau: DESERT_PLATEAU_MAP,
+            desert_wastes: DESERT_WASTES_MAP,
+            desert_ridge: DESERT_RIDGE_MAP,
+            palace_garden: PALACE_GARDEN_MAP,
+            havenwood_rooftops_west: HAVENWOOD_ROOFTOPS_WEST_MAP,
+            havenwood_rooftops_east: HAVENWOOD_ROOFTOPS_EAST_MAP,
+            havenwood_alley: HAVENWOOD_ALLEY_MAP,
           };
 
           const map = maps[mapId];
@@ -2524,6 +2613,7 @@ export const useGameStore = create<GameState & GameActions>()(
 
       // Menu
       toggleMenu: () => set((state) => ({ showMenu: !state.showMenu })),
+      toggleVillageMap: () => set((state) => ({ showVillageMap: !state.showVillageMap })),
       openSaveScreen: () => set({ showSaveScreen: true }),
       closeSaveScreen: () => set({ showSaveScreen: false }),
 
@@ -2620,18 +2710,18 @@ export const useGameStore = create<GameState & GameActions>()(
       newGame: () => {
         set({
           ...initialState,
-          phase: "system_boot",
+          phase: "intro_cinematic",
           party: [KAI],
           activePartyIds: [KAI.id],
-          // Start position - center of havenwood village
+          // Start position - desert stranger's tent (prologue area)
           playerPosition: {
-            x: 15,
-            y: 12,
-            mapId: "havenwood",
+            x: 8,
+            y: 8,
+            mapId: "stranger_tent",
             facing: "down",
           },
         });
-        get().loadMap("havenwood");
+        get().loadMap("stranger_tent");
       },
     }),
     {

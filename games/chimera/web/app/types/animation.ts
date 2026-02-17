@@ -180,6 +180,20 @@ export const EASING_FUNCTIONS: Record<EasingFunction, (t: number) => number> = {
   },
 };
 
+// World exploration sprite sheet config (walk cycles for player/NPCs)
+export interface WorldSpriteConfig {
+  src: string;
+  columns: number;
+  rows: number;
+  directions: Record<string, {
+    row: number;
+    frames: number;
+    idleFrame: number;
+    flipX?: boolean;
+  }>;
+  removeBackground?: boolean;
+}
+
 // Default animation timings (in ms)
 export const ANIMATION_TIMING = {
   SLIDE_FORWARD: 300,

@@ -273,7 +273,7 @@ export const MORRIS_CELLAR_REACTION: DialogueNode = {
 const MORRIS_MECHANISM_REACTION: DialogueNode = {
   id: "morris_mechanism_reaction",
   speaker: "Elder Morris",
-  text: "By the old gods... what IS this? Metal that moves on its own, lights without flame... This is no craft I've ever seen. This defies everything I thought I knew. We need someone with knowledge of ancient secrets—scholars, historians, anyone who might understand such things.",
+  text: "By the old gods... what IS this? The metal is warm to the touch, and those markings—I've never seen their like. No smith in Havenwood could make this. No smith anywhere, I'd wager. We need someone learned—scholars, historians, anyone who might recognize such craft.",
   portrait: "elder_morris",
   choices: [
     {
@@ -290,7 +290,7 @@ const MORRIS_MECHANISM_REACTION: DialogueNode = {
 export const MORRIS_SPECULATION: DialogueNode = {
   id: "morris_speculation",
   speaker: "Elder Morris",
-  text: "I've lived seventy winters, and I've never seen its like. Old legends speak of 'builders' who shaped the world before our time... but those are children's tales. Aren't they? Ask around the village—someone may know of scholars who study such mysteries. The Lumina family, perhaps. They're said to have extensive archives.",
+  text: "I've lived seventy winters, and I've never seen its like. My grandmother used to speak of craft from before the founding—relics buried in the earth that hummed when you held them. I thought she was telling stories. Ask around the village—the Lumina family keeps the oldest records in the region. Perhaps they'd know.",
   portrait: "elder_morris",
   choices: [
     {
@@ -316,7 +316,7 @@ export const MORRIS_SUGGEST_SCHOLAR: DialogueNode = {
 export const MORRIS_SEEKING_ACCEPT: DialogueNode = {
   id: "morris_seeking_accept",
   speaker: "Elder Morris",
-  text: "Good. This device... it frightens me, truth be told. Whatever it is, it's connected to Vorn's strange weapon. Perhaps connected to the disappearances, the strange lights in the ruins... Be careful who you show it to. Not everyone may have our best interests at heart.",
+  text: "Good. I won't pretend this doesn't unsettle me. Vorn had that lightning rod, and now this—both from the same cellar. Keep it close, and be careful who you show it to. Strange things draw strange attention.",
   portrait: "elder_morris",
 };
 
@@ -338,7 +338,7 @@ const MORRIS_SEEKING_ACTIVE: DialogueNode = {
 const MORRIS_POST_LYRA: DialogueNode = {
   id: "morris_post_lyra",
   speaker: "Elder Morris",
-  text: "So the Lady Lumina has taken an interest? Curious. The nobles rarely involve themselves with village matters. Perhaps this mystery runs deeper than any of us realized. Be careful, traveler. Questions about the nature of things... sometimes the answers change you.",
+  text: "So the Lady Lumina has taken an interest? Curious. The nobles rarely concern themselves with village affairs. Whatever you found in that cellar must be significant indeed. Watch yourself around the estate—old families keep old secrets.",
   portrait: "elder_morris",
 };
 

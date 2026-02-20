@@ -25,7 +25,7 @@ export default function Game() {
   });
   const shootPressedRef = useRef(false);
   const lastShootRef = useRef(0);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | null>(null);
 
   const startGame = useCallback(() => {
     const canvas = canvasRef.current;

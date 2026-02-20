@@ -327,7 +327,7 @@ export function updateGame(
   newAsteroids = [...newAsteroids, ...newAsteroidsToAdd];
 
   // Check ship-asteroid collision
-  let gameOver = state.gameOver;
+  let gameOver: boolean = state.gameOver;
   if (!ship.invincible) {
     for (const asteroid of newAsteroids) {
       if (

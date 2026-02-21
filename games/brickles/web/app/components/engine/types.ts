@@ -22,9 +22,9 @@ export const PADDLE_LERP = 0.18;
 
 // ─── Ball ────────────────────────────────────────────────────────────
 export const BALL_RADIUS = 7;
-export const BALL_INITIAL_SPEED = 5;
-export const BALL_MAX_SPEED = 12;
-export const BALL_SPEED_INCREMENT = 0.3;
+export const BALL_INITIAL_SPEED = 7;
+export const BALL_MAX_SPEED = 14;
+export const BALL_SPEED_INCREMENT = 0.5;
 export const BALL_TRAIL_LENGTH = 8;
 
 // ─── Power-ups ───────────────────────────────────────────────────────

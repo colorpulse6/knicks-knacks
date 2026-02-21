@@ -81,124 +81,368 @@ jobs:
           cp -r games/brickles/web/out ./deploy/brickles
 
           # Create index page
-          cat > ./deploy/index.html << 'EOF'
+          cat > ./deploy/index.html << 'HTMLEOF'
           <!DOCTYPE html>
           <html lang="en">
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Knicks-Knacks Games</title>
+            <title>Knicks-Knacks Arcade</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
             <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
+              *{margin:0;padding:0;box-sizing:border-box}
+
+              :root {
+                --bg-deep: #08080f;
+                --bg-surface: #0e0e1a;
+                --border: rgba(255,255,255,0.06);
+                --text-dim: #4a4a5a;
+                --text-mid: #8888a0;
+                --text-bright: #e0e0f0;
+                --accent-1: #ff3366;
+                --accent-2: #00e5ff;
+                --accent-3: #ffb800;
+                --accent-4: #a855f7;
+              }
+
               body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                font-family: 'Space Mono', monospace;
+                background: var(--bg-deep);
                 min-height: 100vh;
-                color: #fff;
+                color: var(--text-bright);
+                overflow-x: hidden;
               }
+
+              /* ── Animated background grid ── */
+              .bg-grid {
+                position: fixed;
+                inset: 0;
+                z-index: 0;
+                background-image:
+                  linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+                background-size: 60px 60px;
+                mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+                -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+              }
+
+              /* ── Floating glow orbs ── */
+              .orb {
+                position: fixed;
+                border-radius: 50%;
+                filter: blur(80px);
+                opacity: 0.12;
+                z-index: 0;
+                animation: drift 20s ease-in-out infinite alternate;
+              }
+              .orb-1 { width: 500px; height: 500px; background: var(--accent-1); top: -10%; left: -5%; animation-delay: 0s; }
+              .orb-2 { width: 400px; height: 400px; background: var(--accent-2); bottom: -10%; right: -5%; animation-delay: -7s; }
+              .orb-3 { width: 350px; height: 350px; background: var(--accent-4); top: 40%; left: 50%; animation-delay: -14s; }
+
+              @keyframes drift {
+                0% { transform: translate(0, 0) scale(1); }
+                33% { transform: translate(30px, -20px) scale(1.05); }
+                66% { transform: translate(-20px, 15px) scale(0.95); }
+                100% { transform: translate(10px, -10px) scale(1.02); }
+              }
+
+              /* ── Layout ── */
+              .page { position: relative; z-index: 1; }
+
               .container {
-                max-width: 1200px;
+                max-width: 960px;
                 margin: 0 auto;
-                padding: 2rem;
+                padding: 3rem 1.5rem;
               }
-              h1 {
+
+              /* ── Header ── */
+              header {
                 text-align: center;
-                font-size: 3rem;
-                margin-bottom: 0.5rem;
-                background: linear-gradient(90deg, #00d9ff, #00ff88);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+                padding: 4rem 0 3rem;
               }
-              .subtitle {
-                text-align: center;
-                color: #888;
-                margin-bottom: 3rem;
+
+              .logo {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 0.65rem;
+                letter-spacing: 0.3em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                margin-bottom: 1.5rem;
               }
-              .games-grid {
+
+              .title {
+                font-family: 'Space Mono', monospace;
+                font-size: clamp(2rem, 5vw, 3.2rem);
+                font-weight: 700;
+                letter-spacing: -0.02em;
+                line-height: 1.1;
+                margin-bottom: 1rem;
+              }
+
+              .title .k { color: var(--text-bright); }
+              .title .dash { color: var(--text-dim); padding: 0 0.1em; }
+              .title .n { color: var(--text-mid); }
+
+              .tagline {
+                font-size: 0.85rem;
+                color: var(--text-dim);
+                letter-spacing: 0.08em;
+              }
+
+              .divider {
+                width: 40px;
+                height: 1px;
+                background: var(--border);
+                margin: 2.5rem auto;
+              }
+
+              /* ── Game cards ── */
+              .games {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 2rem;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1px;
+                background: var(--border);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
               }
-              .game-card {
-                background: rgba(255,255,255,0.05);
-                border-radius: 16px;
+
+              @media (max-width: 640px) {
+                .games { grid-template-columns: 1fr; }
+              }
+
+              .card {
+                background: var(--bg-surface);
                 padding: 2rem;
                 text-decoration: none;
-                color: #fff;
-                transition: transform 0.3s, box-shadow 0.3s;
-                border: 1px solid rgba(255,255,255,0.1);
+                color: inherit;
+                position: relative;
+                transition: background 0.3s, transform 0.2s;
+                display: flex;
+                flex-direction: column;
+                min-height: 200px;
               }
-              .game-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-                border-color: rgba(0,217,255,0.5);
+
+              .card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--card-accent);
+                opacity: 0;
+                transition: opacity 0.3s;
               }
-              .game-card h2 {
-                font-size: 1.5rem;
+
+              .card:hover {
+                background: #12121f;
+              }
+
+              .card:hover::before {
+                opacity: 1;
+              }
+
+              .card:hover .card-icon {
+                opacity: 1;
+                transform: translateY(0);
+              }
+
+              .card:hover .card-arrow {
+                opacity: 1;
+                transform: translateX(0);
+              }
+
+              .card-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 0.75rem;
+              }
+
+              .card-num {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 0.5rem;
+                color: var(--text-dim);
+                letter-spacing: 0.15em;
+              }
+
+              .card-icon {
+                font-size: 1.1rem;
+                opacity: 0.4;
+                transition: opacity 0.3s, transform 0.3s;
+                transform: translateY(3px);
+              }
+
+              .card h2 {
+                font-size: 1.25rem;
+                font-weight: 700;
                 margin-bottom: 0.5rem;
+                color: var(--text-bright);
               }
-              .game-card p {
-                color: #aaa;
-                line-height: 1.6;
+
+              .card p {
+                font-size: 0.78rem;
+                line-height: 1.65;
+                color: var(--text-mid);
+                flex: 1;
               }
-              .game-card .play-btn {
-                display: inline-block;
-                margin-top: 1rem;
-                padding: 0.75rem 1.5rem;
-                background: linear-gradient(90deg, #00d9ff, #00ff88);
-                color: #000;
-                border-radius: 8px;
-                font-weight: bold;
-                text-transform: uppercase;
-                font-size: 0.875rem;
+
+              .card-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-top: 1.25rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border);
               }
+
+              .card-tag {
+                font-size: 0.6rem;
+                font-family: 'Press Start 2P', monospace;
+                letter-spacing: 0.1em;
+                color: var(--card-accent);
+                opacity: 0.7;
+              }
+
+              .card-arrow {
+                font-size: 0.85rem;
+                color: var(--text-dim);
+                opacity: 0;
+                transform: translateX(-5px);
+                transition: opacity 0.3s, transform 0.3s, color 0.3s;
+              }
+
+              .card:hover .card-arrow {
+                color: var(--card-accent);
+              }
+
+              /* Per-card accent colors */
+              .card-wordle { --card-accent: #6aaa64; }
+              .card-2048 { --card-accent: var(--accent-3); }
+              .card-asteroids { --card-accent: var(--accent-2); }
+              .card-brickles { --card-accent: var(--accent-1); }
+
+              /* ── Footer ── */
               footer {
                 text-align: center;
-                margin-top: 4rem;
-                color: #666;
+                padding: 3rem 0 2rem;
+                font-size: 0.7rem;
+                color: var(--text-dim);
+                letter-spacing: 0.05em;
               }
-              footer a { color: #00d9ff; }
+
+              footer a {
+                color: var(--text-mid);
+                text-decoration: none;
+                border-bottom: 1px solid var(--border);
+                transition: color 0.2s, border-color 0.2s;
+              }
+
+              footer a:hover {
+                color: var(--text-bright);
+                border-color: var(--text-mid);
+              }
+
+              /* ── Scanline overlay ── */
+              .scanlines {
+                position: fixed;
+                inset: 0;
+                z-index: 2;
+                pointer-events: none;
+                background: repeating-linear-gradient(
+                  0deg,
+                  transparent,
+                  transparent 2px,
+                  rgba(0,0,0,0.08) 2px,
+                  rgba(0,0,0,0.08) 4px
+                );
+              }
             </style>
           </head>
           <body>
-            <div class="container">
-              <h1>Knicks-Knacks Games</h1>
-              <p class="subtitle">A collection of web-based games</p>
+            <div class="bg-grid"></div>
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+            <div class="scanlines"></div>
 
-              <div class="games-grid">
-                <a href="./wordle/" class="game-card">
-                  <h2>Wordle</h2>
-                  <p>Guess the 5-letter word in 6 tries. Get feedback on each guess with colored tiles showing how close you are.</p>
-                  <span class="play-btn">Play Now</span>
-                </a>
+            <div class="page">
+              <div class="container">
+                <header>
+                  <div class="logo">Player 1 Ready</div>
+                  <h1 class="title">
+                    <span class="k">Knicks</span><span class="dash">-</span><span class="n">Knacks</span>
+                  </h1>
+                  <p class="tagline">A curated arcade of browser-based games</p>
+                </header>
 
-                <a href="./2048/" class="game-card">
-                  <h2>2048</h2>
-                  <p>Slide numbered tiles on a grid to combine them and reach 2048. Use arrow keys or swipe to play.</p>
-                  <span class="play-btn">Play Now</span>
-                </a>
+                <div class="divider"></div>
 
-                <a href="./asteroids/" class="game-card">
-                  <h2>Asteroids</h2>
-                  <p>Classic arcade shooter. Navigate your ship, destroy asteroids, and survive as long as possible.</p>
-                  <span class="play-btn">Play Now</span>
-                </a>
+                <div class="games">
+                  <a href="./wordle/" class="card card-wordle">
+                    <div class="card-head">
+                      <span class="card-num">01</span>
+                      <span class="card-icon">W</span>
+                    </div>
+                    <h2>Wordle</h2>
+                    <p>Crack the five-letter code in six attempts. Each guess reveals which letters are in the right place.</p>
+                    <div class="card-footer">
+                      <span class="card-tag">WORD PUZZLE</span>
+                      <span class="card-arrow">&rarr;</span>
+                    </div>
+                  </a>
 
-                <a href="./brickles/" class="game-card">
-                  <h2>Brickles</h2>
-                  <p>Classic brick-breaking arcade game with neon visuals, power-ups, combos, and procedural audio.</p>
-                  <span class="play-btn">Play Now</span>
-                </a>
+                  <a href="./2048/" class="card card-2048">
+                    <div class="card-head">
+                      <span class="card-num">02</span>
+                      <span class="card-icon">2K</span>
+                    </div>
+                    <h2>2048</h2>
+                    <p>Slide and merge numbered tiles. Chain combos to reach 2048 and beyond. Deceptively addictive.</p>
+                    <div class="card-footer">
+                      <span class="card-tag">NUMBER PUZZLE</span>
+                      <span class="card-arrow">&rarr;</span>
+                    </div>
+                  </a>
+
+                  <a href="./asteroids/" class="card card-asteroids">
+                    <div class="card-head">
+                      <span class="card-num">03</span>
+                      <span class="card-icon">&Delta;</span>
+                    </div>
+                    <h2>Asteroids</h2>
+                    <p>Pilot your ship through a field of space rocks. Thrust, rotate, shoot. How long can you survive?</p>
+                    <div class="card-footer">
+                      <span class="card-tag">ARCADE SHOOTER</span>
+                      <span class="card-arrow">&rarr;</span>
+                    </div>
+                  </a>
+
+                  <a href="./brickles/" class="card card-brickles">
+                    <div class="card-head">
+                      <span class="card-num">04</span>
+                      <span class="card-icon">&#9608;</span>
+                    </div>
+                    <h2>Brickles</h2>
+                    <p>Neon brick-breaker with power-ups, combos, and procedural audio. Ten levels of arcade destruction.</p>
+                    <div class="card-footer">
+                      <span class="card-tag">BRICK BREAKER</span>
+                      <span class="card-arrow">&rarr;</span>
+                    </div>
+                  </a>
+                </div>
+
+                <footer>
+                  <p>Built with Next.js &middot; <a href="https://github.com/colorpulse6/knicks-knacks">Source</a></p>
+                </footer>
               </div>
-
-              <footer>
-                <p>Built with Next.js | <a href="https://github.com/colorpulse6/knicks-knacks">View Source</a></p>
-              </footer>
             </div>
           </body>
           </html>
-          EOF
+          HTMLEOF
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

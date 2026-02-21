@@ -29,12 +29,40 @@ function saveHighScore(score: number): void {
   }
 }
 
+function updateBricklesProfile(score: number, level: number, maxCombo: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    if (!profile) return;
+    const stats = profile.games?.brickles || { gamesPlayed: 0, highScore: 0, maxLevel: 0, maxCombo: 0, lastPlayed: null };
+    stats.gamesPlayed += 1;
+    if (score > stats.highScore) stats.highScore = score;
+    if (level > stats.maxLevel) stats.maxLevel = level;
+    if (maxCombo > stats.maxCombo) stats.maxCombo = maxCombo;
+    stats.lastPlayed = new Date().toISOString();
+    profile.games.brickles = stats;
+    profile.lastPlayed = stats.lastPlayed;
+    localStorage.setItem("knicks-knacks-profile", JSON.stringify(profile));
+  } catch {}
+}
+
+function getPlayerName(): string {
+  if (typeof window === "undefined") return "Guest";
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    return profile?.name || "Guest";
+  } catch { return "Guest"; }
+}
+
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [highScore, setHighScore] = useState(0);
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [muted, setMuted] = useState(false);
+  const [playerName, setPlayerName] = useState("Guest");
 
   const keysRef = useRef<Keys>({ left: false, right: false, space: false });
   const mouseXRef = useRef<number | null>(null);
@@ -198,17 +226,19 @@ export default function Game() {
     };
   }, [gameState, showStartScreen]);
 
-  // Save high score on game over
+  // Save high score and update profile on game over
   useEffect(() => {
     if (gameState?.gameOver) {
       saveHighScore(gameState.score);
       setHighScore(loadHighScore());
+      updateBricklesProfile(gameState.score, gameState.level, gameState.maxCombo);
     }
-  }, [gameState?.gameOver, gameState?.score]);
+  }, [gameState?.gameOver, gameState?.score, gameState?.level, gameState?.maxCombo]);
 
-  // Initial high score load
+  // Initial high score and player name load
   useEffect(() => {
     setHighScore(loadHighScore());
+    setPlayerName(getPlayerName());
   }, []);
 
   return (
@@ -223,6 +253,9 @@ export default function Game() {
       {/* HUD */}
       {gameState && !showStartScreen && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-6 text-white font-mono text-sm">
+          <div>
+            <span className="text-gray-500 text-xs">{playerName}</span>
+          </div>
           <div>
             <span className="text-gray-500">SCORE </span>
             <span className="text-lg font-bold">{gameState.score}</span>

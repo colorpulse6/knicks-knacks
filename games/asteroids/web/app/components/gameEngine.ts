@@ -474,4 +474,30 @@ export function saveHighScore(score: number): void {
   if (score > current) {
     localStorage.setItem("asteroids-high-score", score.toString());
   }
+  updateAsteroidsProfile(score);
+}
+
+function updateAsteroidsProfile(score: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    if (!profile) return;
+    const stats = profile.games?.asteroids || { gamesPlayed: 0, highScore: 0, lastPlayed: null };
+    stats.gamesPlayed += 1;
+    if (score > stats.highScore) stats.highScore = score;
+    stats.lastPlayed = new Date().toISOString();
+    profile.games.asteroids = stats;
+    profile.lastPlayed = stats.lastPlayed;
+    localStorage.setItem("knicks-knacks-profile", JSON.stringify(profile));
+  } catch {}
+}
+
+export function getPlayerName(): string {
+  if (typeof window === "undefined") return "Guest";
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    return profile?.name || "Guest";
+  } catch { return "Guest"; }
 }

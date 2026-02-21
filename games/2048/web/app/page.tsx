@@ -12,6 +12,7 @@ export default function Home() {
     gameOver,
     won,
     keepPlaying,
+    playerName,
     move,
     initGame,
     continueGame,
@@ -93,7 +94,10 @@ export default function Home() {
       {/* Header */}
       <div className="w-full max-w-[460px] mb-4">
         <div className="flex justify-between items-start mb-4">
-          <h1 className="text-6xl font-bold text-text-dark">2048</h1>
+          <div>
+            <h1 className="text-6xl font-bold text-text-dark">2048</h1>
+            <p className="text-sm text-[#776e65]/60 mt-1">{playerName}</p>
+          </div>
 
           <div className="flex gap-2">
             <div className="bg-board-bg rounded px-4 py-2 text-center min-w-[80px]">

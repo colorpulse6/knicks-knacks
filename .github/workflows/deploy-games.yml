@@ -325,6 +325,173 @@ jobs:
               .card-asteroids { --card-accent: var(--accent-2); }
               .card-brickles { --card-accent: var(--accent-1); }
 
+              /* ── Player bar ── */
+              .player-bar {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.75rem;
+                margin-bottom: 2rem;
+              }
+
+              .player-bar .name-display {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 0.6rem;
+                color: var(--accent-2);
+                letter-spacing: 0.1em;
+              }
+
+              .player-bar input {
+                background: var(--bg-surface);
+                border: 1px solid var(--border);
+                color: var(--text-bright);
+                font-family: 'Space Mono', monospace;
+                font-size: 0.8rem;
+                padding: 0.5rem 0.75rem;
+                border-radius: 6px;
+                outline: none;
+                width: 180px;
+                transition: border-color 0.2s;
+              }
+
+              .player-bar input:focus {
+                border-color: var(--accent-2);
+              }
+
+              .player-bar button {
+                background: transparent;
+                border: 1px solid var(--border);
+                color: var(--text-mid);
+                font-family: 'Space Mono', monospace;
+                font-size: 0.7rem;
+                padding: 0.5rem 0.75rem;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: color 0.2s, border-color 0.2s;
+              }
+
+              .player-bar button:hover {
+                color: var(--text-bright);
+                border-color: var(--text-mid);
+              }
+
+              /* ── Stats dashboard ── */
+              .stats-section {
+                margin-top: 2.5rem;
+              }
+
+              .stats-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 1.25rem;
+              }
+
+              .stats-title {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 0.55rem;
+                color: var(--text-dim);
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+              }
+
+              .stats-meta {
+                font-size: 0.7rem;
+                color: var(--text-dim);
+              }
+
+              .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1px;
+                background: var(--border);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+              }
+
+              @media (max-width: 640px) {
+                .stats-grid { grid-template-columns: 1fr; }
+              }
+
+              .stat-card {
+                background: var(--bg-surface);
+                padding: 1.25rem 1.5rem;
+              }
+
+              .stat-card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 0.75rem;
+              }
+
+              .stat-card-name {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: var(--text-bright);
+              }
+
+              .stat-card-accent {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 0.45rem;
+                letter-spacing: 0.1em;
+                opacity: 0.6;
+              }
+
+              .stat-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                padding: 0.3rem 0;
+              }
+
+              .stat-label {
+                font-size: 0.7rem;
+                color: var(--text-dim);
+              }
+
+              .stat-value {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: var(--text-mid);
+              }
+
+              .stat-value.highlight {
+                color: var(--text-bright);
+                font-size: 1.1rem;
+              }
+
+              .overall-bar {
+                display: flex;
+                justify-content: center;
+                gap: 2.5rem;
+                margin-top: 1.5rem;
+                padding: 1rem;
+                text-align: center;
+              }
+
+              .overall-stat .num {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-bright);
+                display: block;
+              }
+
+              .overall-stat .label {
+                font-size: 0.6rem;
+                color: var(--text-dim);
+                letter-spacing: 0.05em;
+                font-family: 'Press Start 2P', monospace;
+              }
+
+              .stats-empty {
+                text-align: center;
+                padding: 2rem;
+                color: var(--text-dim);
+                font-size: 0.8rem;
+              }
+
               /* ── Footer ── */
               footer {
                 text-align: center;
@@ -372,12 +539,15 @@ jobs:
             <div class="page">
               <div class="container">
                 <header>
-                  <div class="logo">Player 1 Ready</div>
+                  <div class="logo" id="greeting">Player 1 Ready</div>
                   <h1 class="title">
                     <span class="k">Knicks</span><span class="dash">-</span><span class="n">Knacks</span>
                   </h1>
                   <p class="tagline">A curated arcade of browser-based games</p>
                 </header>
+
+                <!-- Player name bar -->
+                <div class="player-bar" id="player-bar"></div>
 
                 <div class="divider"></div>
 
@@ -435,11 +605,204 @@ jobs:
                   </a>
                 </div>
 
+                <!-- Stats Dashboard -->
+                <div class="stats-section" id="stats-section"></div>
+
                 <footer>
                   <p>Built with Next.js &middot; <a href="https://github.com/colorpulse6/knicks-knacks">Source</a></p>
                 </footer>
               </div>
             </div>
+
+            <script>
+              (function() {
+                var PROFILE_KEY = 'knicks-knacks-profile';
+
+                function createDefaultProfile(name) {
+                  return {
+                    name: name || '',
+                    createdAt: new Date().toISOString(),
+                    lastPlayed: null,
+                    games: {
+                      wordle: { gamesPlayed: 0, gamesWon: 0, currentStreak: 0, maxStreak: 0, guessDistribution: [0,0,0,0,0,0], lastPlayed: null },
+                      '2048': { gamesPlayed: 0, highScore: 0, lastPlayed: null },
+                      asteroids: { gamesPlayed: 0, highScore: 0, lastPlayed: null },
+                      brickles: { gamesPlayed: 0, highScore: 0, maxLevel: 0, maxCombo: 0, lastPlayed: null }
+                    }
+                  };
+                }
+
+                function loadProfile() {
+                  try {
+                    var raw = localStorage.getItem(PROFILE_KEY);
+                    return raw ? JSON.parse(raw) : null;
+                  } catch(e) { return null; }
+                }
+
+                function saveProfile(profile) {
+                  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch(e) {}
+                }
+
+                function migrateExistingScores(profile) {
+                  try {
+                    var asteroid = localStorage.getItem('asteroids-high-score');
+                    if (asteroid && parseInt(asteroid, 10) > profile.games.asteroids.highScore) {
+                      profile.games.asteroids.highScore = parseInt(asteroid, 10);
+                    }
+                    var brickle = localStorage.getItem('brickles-high-score');
+                    if (brickle && parseInt(brickle, 10) > profile.games.brickles.highScore) {
+                      profile.games.brickles.highScore = parseInt(brickle, 10);
+                    }
+                    var best2048 = localStorage.getItem('2048-best-score');
+                    if (best2048 && parseInt(best2048, 10) > profile.games['2048'].highScore) {
+                      profile.games['2048'].highScore = parseInt(best2048, 10);
+                    }
+                    var wordleStats = localStorage.getItem('wordle-stats');
+                    if (wordleStats) {
+                      var ws = JSON.parse(wordleStats);
+                      if (ws.gamesPlayed > profile.games.wordle.gamesPlayed) {
+                        profile.games.wordle.gamesPlayed = ws.gamesPlayed;
+                        profile.games.wordle.gamesWon = ws.gamesWon;
+                        profile.games.wordle.currentStreak = ws.currentStreak;
+                        profile.games.wordle.maxStreak = ws.maxStreak;
+                        profile.games.wordle.guessDistribution = ws.guessDistribution || [0,0,0,0,0,0];
+                      }
+                    }
+                  } catch(e) {}
+                  return profile;
+                }
+
+                function formatDate(iso) {
+                  if (!iso) return '--';
+                  var d = new Date(iso);
+                  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                }
+
+                // Initialize or load profile
+                var profile = loadProfile();
+                if (!profile) {
+                  profile = createDefaultProfile('');
+                  profile = migrateExistingScores(profile);
+                  saveProfile(profile);
+                }
+
+                // Render player bar
+                function renderPlayerBar() {
+                  var bar = document.getElementById('player-bar');
+                  var greeting = document.getElementById('greeting');
+                  if (profile.name) {
+                    greeting.textContent = 'Welcome back, ' + profile.name;
+                    bar.innerHTML = '<span class="name-display">' + profile.name.replace(/</g,'&lt;') + '</span>' +
+                      '<button onclick="window._editName()">Change</button>';
+                  } else {
+                    greeting.textContent = 'Player 1 Ready';
+                    bar.innerHTML = '<input type="text" id="name-input" placeholder="Enter your name..." maxlength="20">' +
+                      '<button onclick="window._saveName()">Save</button>';
+                    var input = document.getElementById('name-input');
+                    if (input) {
+                      input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') window._saveName();
+                      });
+                    }
+                  }
+                }
+
+                window._saveName = function() {
+                  var input = document.getElementById('name-input');
+                  if (!input) return;
+                  var name = input.value.trim();
+                  if (!name) return;
+                  profile.name = name;
+                  if (!profile.createdAt) profile.createdAt = new Date().toISOString();
+                  saveProfile(profile);
+                  renderPlayerBar();
+                  renderStats();
+                };
+
+                window._editName = function() {
+                  var bar = document.getElementById('player-bar');
+                  bar.innerHTML = '<input type="text" id="name-input" placeholder="Enter your name..." maxlength="20" value="' +
+                    (profile.name || '').replace(/"/g,'&quot;') + '">' +
+                    '<button onclick="window._saveName()">Save</button>';
+                  var input = document.getElementById('name-input');
+                  if (input) {
+                    input.focus();
+                    input.select();
+                    input.addEventListener('keydown', function(e) {
+                      if (e.key === 'Enter') window._saveName();
+                    });
+                  }
+                };
+
+                // Render stats dashboard
+                function renderStats() {
+                  var section = document.getElementById('stats-section');
+                  var g = profile.games;
+                  var totalPlayed = (g.wordle.gamesPlayed || 0) + (g['2048'].gamesPlayed || 0) +
+                    (g.asteroids.gamesPlayed || 0) + (g.brickles.gamesPlayed || 0);
+
+                  if (totalPlayed === 0 && !profile.name) {
+                    section.innerHTML = '<div class="stats-empty">Set your name above and start playing to track your stats!</div>';
+                    return;
+                  }
+
+                  var winPct = g.wordle.gamesPlayed > 0 ? Math.round((g.wordle.gamesWon / g.wordle.gamesPlayed) * 100) : 0;
+
+                  var html = '<div class="stats-header">' +
+                    '<span class="stats-title">Player Stats</span>' +
+                    '<span class="stats-meta">Since ' + formatDate(profile.createdAt) + '</span>' +
+                    '</div>';
+
+                  html += '<div class="overall-bar">' +
+                    '<div class="overall-stat"><span class="num">' + totalPlayed + '</span><span class="label">Total Games</span></div>' +
+                    '</div>';
+
+                  html += '<div class="stats-grid">';
+
+                  // Wordle
+                  html += '<div class="stat-card">' +
+                    '<div class="stat-card-header"><span class="stat-card-name">Wordle</span>' +
+                    '<span class="stat-card-accent" style="color:#6aaa64">WORD PUZZLE</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Games Played</span><span class="stat-value">' + g.wordle.gamesPlayed + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Win %</span><span class="stat-value">' + winPct + '%</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Current Streak</span><span class="stat-value">' + g.wordle.currentStreak + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Max Streak</span><span class="stat-value highlight">' + g.wordle.maxStreak + '</span></div>' +
+                    '</div>';
+
+                  // 2048
+                  html += '<div class="stat-card">' +
+                    '<div class="stat-card-header"><span class="stat-card-name">2048</span>' +
+                    '<span class="stat-card-accent" style="color:var(--accent-3)">NUMBER PUZZLE</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Games Played</span><span class="stat-value">' + g['2048'].gamesPlayed + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value highlight">' + (g['2048'].highScore || 0).toLocaleString() + '</span></div>' +
+                    '</div>';
+
+                  // Asteroids
+                  html += '<div class="stat-card">' +
+                    '<div class="stat-card-header"><span class="stat-card-name">Asteroids</span>' +
+                    '<span class="stat-card-accent" style="color:var(--accent-2)">ARCADE SHOOTER</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Games Played</span><span class="stat-value">' + g.asteroids.gamesPlayed + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value highlight">' + (g.asteroids.highScore || 0).toLocaleString() + '</span></div>' +
+                    '</div>';
+
+                  // Brickles
+                  html += '<div class="stat-card">' +
+                    '<div class="stat-card-header"><span class="stat-card-name">Brickles</span>' +
+                    '<span class="stat-card-accent" style="color:var(--accent-1)">BRICK BREAKER</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Games Played</span><span class="stat-value">' + g.brickles.gamesPlayed + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value highlight">' + (g.brickles.highScore || 0).toLocaleString() + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Max Level</span><span class="stat-value">' + (g.brickles.maxLevel || 0) + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Max Combo</span><span class="stat-value">' + (g.brickles.maxCombo || 0) + 'x</span></div>' +
+                    '</div>';
+
+                  html += '</div>';
+                  section.innerHTML = html;
+                }
+
+                renderPlayerBar();
+                renderStats();
+              })();
+            </script>
           </body>
           </html>
           HTMLEOF

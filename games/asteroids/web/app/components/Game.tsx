@@ -9,6 +9,7 @@ import {
   drawGame,
   loadHighScore,
   saveHighScore,
+  getPlayerName,
 } from "./gameEngine";
 
 export default function Game() {
@@ -16,6 +17,7 @@ export default function Game() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [highScore, setHighScore] = useState(0);
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const [playerName, setPlayerName] = useState("Guest");
 
   const keysRef = useRef<Keys>({
     left: false,
@@ -168,9 +170,10 @@ export default function Game() {
     }
   }, [gameState?.gameOver, gameState?.score]);
 
-  // Initial high score load
+  // Initial high score and player name load
   useEffect(() => {
     setHighScore(loadHighScore());
+    setPlayerName(getPlayerName());
   }, []);
 
   return (
@@ -186,6 +189,9 @@ export default function Game() {
       {gameState && !showStartScreen && (
         <div className="absolute top-4 left-0 right-0 flex justify-between px-8 text-white font-mono">
           <div className="flex gap-8">
+            <div>
+              <span className="text-gray-400 text-sm">{playerName}</span>
+            </div>
             <div>
               <span className="text-gray-400">SCORE: </span>
               <span className="text-xl">{gameState.score}</span>

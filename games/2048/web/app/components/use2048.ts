@@ -170,6 +170,31 @@ function saveBestScore(score: number): void {
   localStorage.setItem("2048-best-score", score.toString());
 }
 
+function update2048Profile(score: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    if (!profile) return;
+    const stats = profile.games?.["2048"] || { gamesPlayed: 0, highScore: 0, lastPlayed: null };
+    stats.gamesPlayed += 1;
+    if (score > stats.highScore) stats.highScore = score;
+    stats.lastPlayed = new Date().toISOString();
+    profile.games["2048"] = stats;
+    profile.lastPlayed = stats.lastPlayed;
+    localStorage.setItem("knicks-knacks-profile", JSON.stringify(profile));
+  } catch {}
+}
+
+export function getPlayerName(): string {
+  if (typeof window === "undefined") return "Guest";
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    return profile?.name || "Guest";
+  } catch { return "Guest"; }
+}
+
 export function use2048() {
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [score, setScore] = useState(0);
@@ -177,6 +202,7 @@ export function use2048() {
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [keepPlaying, setKeepPlaying] = useState(false);
+  const [playerName, setPlayerName] = useState("Guest");
 
   const initGame = useCallback(() => {
     tileIdCounter = 0;
@@ -190,6 +216,7 @@ export function use2048() {
     setWon(false);
     setKeepPlaying(false);
     setBestScore(loadBestScore());
+    setPlayerName(getPlayerName());
   }, []);
 
   useEffect(() => {
@@ -224,6 +251,7 @@ export function use2048() {
       // Check for game over
       if (!canMove(newTiles)) {
         setGameOver(true);
+        update2048Profile(newScore);
       }
     },
     [tiles, score, bestScore, gameOver, won, keepPlaying]
@@ -240,6 +268,7 @@ export function use2048() {
     gameOver,
     won,
     keepPlaying,
+    playerName,
     move,
     initGame,
     continueGame,

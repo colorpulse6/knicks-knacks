@@ -15,6 +15,7 @@ export default function Home() {
     stats,
     shake,
     message,
+    playerName,
     currentRow,
   } = useWordle();
 
@@ -35,6 +36,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-center text-white tracking-wider">
           Wordle
         </h1>
+        <p className="text-center text-[#565758] text-xs mt-1">{playerName}</p>
       </header>
 
       {/* Message Toast */}

@@ -57,6 +57,34 @@ function saveGameState(guesses: string[], date: string): void {
   );
 }
 
+function updateWordleProfile(stats: GameStats): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    if (!profile) return;
+    profile.games.wordle = {
+      gamesPlayed: stats.gamesPlayed,
+      gamesWon: stats.gamesWon,
+      currentStreak: stats.currentStreak,
+      maxStreak: stats.maxStreak,
+      guessDistribution: [...stats.guessDistribution],
+      lastPlayed: new Date().toISOString(),
+    };
+    profile.lastPlayed = new Date().toISOString();
+    localStorage.setItem("knicks-knacks-profile", JSON.stringify(profile));
+  } catch {}
+}
+
+function getPlayerName(): string {
+  if (typeof window === "undefined") return "Guest";
+  try {
+    const raw = localStorage.getItem("knicks-knacks-profile");
+    const profile = raw ? JSON.parse(raw) : null;
+    return profile?.name || "Guest";
+  } catch { return "Guest"; }
+}
+
 export function useWordle() {
   const [solution, setSolution] = useState("");
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -66,11 +94,13 @@ export function useWordle() {
   const [stats, setStats] = useState<GameStats>(initialStats);
   const [shake, setShake] = useState(false);
   const [message, setMessage] = useState("");
+  const [playerName, setPlayerName] = useState("Guest");
 
   useEffect(() => {
     const word = getDailyWord();
     setSolution(word);
     setStats(loadStats());
+    setPlayerName(getPlayerName());
 
     const today = new Date().toISOString().split("T")[0];
     const savedState = loadGameState();
@@ -128,6 +158,7 @@ export function useWordle() {
       };
       setStats(newStats);
       saveStats(newStats);
+      updateWordleProfile(newStats);
       showMessage("Excellent!", 2000);
     } else if (newGuesses.length >= MAX_GUESSES) {
       setGameOver(true);
@@ -139,6 +170,7 @@ export function useWordle() {
       };
       setStats(newStats);
       saveStats(newStats);
+      updateWordleProfile(newStats);
       showMessage(solution, 3000);
     }
   }, [currentGuess, guesses, solution, stats, showMessage]);
@@ -279,6 +311,7 @@ export function useWordle() {
     stats,
     shake,
     message,
+    playerName,
     currentRow: guesses.length,
   };
 }

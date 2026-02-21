@@ -44,6 +44,7 @@ jobs:
           yarn build
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /knicks-knacks/wordle
 
       - name: Build 2048
         run: |
@@ -51,6 +52,7 @@ jobs:
           yarn build
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /knicks-knacks/2048
 
       - name: Build Asteroids
         run: |
@@ -58,6 +60,15 @@ jobs:
           yarn build
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /knicks-knacks/asteroids
+
+      - name: Build Brickles
+        run: |
+          cd games/brickles/web
+          yarn build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /knicks-knacks/brickles
 
       - name: Prepare deployment directory
         run: |
@@ -67,6 +78,7 @@ jobs:
           cp -r games/wordle/web/out ./deploy/wordle
           cp -r games/2048/web/out ./deploy/2048
           cp -r games/asteroids/web/out ./deploy/asteroids
+          cp -r games/brickles/web/out ./deploy/brickles
 
           # Create index page
           cat > ./deploy/index.html << 'EOF'
@@ -105,7 +117,7 @@ jobs:
               }
               .games-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
                 gap: 2rem;
               }
               .game-card {
@@ -172,6 +184,12 @@ jobs:
                   <p>Classic arcade shooter. Navigate your ship, destroy asteroids, and survive as long as possible.</p>
                   <span class="play-btn">Play Now</span>
                 </a>
+
+                <a href="./brickles/" class="game-card">
+                  <h2>Brickles</h2>
+                  <p>Classic brick-breaking arcade game with neon visuals, power-ups, combos, and procedural audio.</p>
+                  <span class="play-btn">Play Now</span>
+                </a>
               </div>
 
               <footer>
@@ -184,8 +202,6 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
-        with:
-          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

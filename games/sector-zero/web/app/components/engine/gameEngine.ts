@@ -466,10 +466,11 @@ function updateBossFight(
   s.dialog = updateDialog(s.dialog);
 
   // Check boss defeated
-  if (s.boss && isBossDefeated(s.boss)) {
+  if (s.boss && isBossDefeated(s.boss) && !s.boss.defeated) {
     s.boss = { ...s.boss, defeated: true };
     s.score += 5000;
     s.xp += 2000; // XP for boss defeat
+    s.xp += 500;  // XP for level completion
     s.screenShake = 10;
     s.audioEvents.push(AudioEvent.BOSS_DEFEAT);
 
@@ -484,13 +485,22 @@ function updateBossFight(
 
     s.enemyBullets = [];
     s.enemies = [];
-    s.screen = GameScreen.LEVEL_COMPLETE;
+    // Stay in BOSS_FIGHT so game loop keeps running (dialog + particles render)
+    s.levelCompleteTimer = 360;
     s.audioEvents.push(AudioEvent.LEVEL_COMPLETE);
 
     // Fire boss_defeat dialog
     const dr = checkDialogTriggers(s.dialogTriggers, { type: "boss_defeat" }, s.dialog);
     s.dialog = dr.dialog;
     s.dialogTriggers = dr.triggers;
+  }
+
+  // Boss level complete timer — let dialog play out, then transition
+  if (s.levelCompleteTimer > 0) {
+    s.levelCompleteTimer -= 1;
+    if (s.levelCompleteTimer <= 0) {
+      s.screen = GameScreen.LEVEL_COMPLETE;
+    }
   }
 
   // Check game over

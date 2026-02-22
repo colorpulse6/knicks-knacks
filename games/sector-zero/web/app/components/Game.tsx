@@ -39,6 +39,7 @@ import {
 } from "./engine/cockpit";
 import { checkQuestCompletion, type QuestCheckData } from "./engine/sideQuests";
 import { drawCockpit } from "./engine/cockpitRenderer";
+import { drawEnding, drawCredits, ENDING_TOTAL_FRAMES, CREDITS_TOTAL_FRAMES } from "./engine/ending";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -51,6 +52,8 @@ export default function Game() {
   const [showMap, setShowMap] = useState(false);
   const [starMapState, setStarMapState] = useState<StarMapState>(createStarMapState());
   const [saveData, setSaveData] = useState<SaveData>(loadSave());
+  const [showEnding, setShowEnding] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
   const [muted, setMuted] = useState(false);
   const [playerName, setPlayerName] = useState("Guest");
 
@@ -66,6 +69,8 @@ export default function Game() {
   const animationFrameRef = useRef<number | null>(null);
   const audioRef = useRef<AudioEngine | null>(null);
   const introFrameRef = useRef(0);
+  const endingFrameRef = useRef(0);
+  const creditsFrameRef = useRef(0);
 
   const ensureAudio = useCallback(() => {
     if (!audioRef.current) {
@@ -110,6 +115,27 @@ export default function Game() {
 
   const returnToCockpit = useCallback(() => {
     setGameState(null);
+    setShowEnding(false);
+    setShowCredits(false);
+    setShowCockpit(true);
+    setSaveData(loadSave());
+    resetCockpitKeys();
+  }, []);
+
+  const startEnding = useCallback(() => {
+    setGameState(null);
+    setShowEnding(true);
+    endingFrameRef.current = 0;
+  }, []);
+
+  const finishEnding = useCallback(() => {
+    setShowEnding(false);
+    setShowCredits(true);
+    creditsFrameRef.current = 0;
+  }, []);
+
+  const finishCredits = useCallback(() => {
+    setShowCredits(false);
     setShowCockpit(true);
     setSaveData(loadSave());
     resetCockpitKeys();
@@ -168,11 +194,11 @@ export default function Game() {
       if (nextWorld <= 8 && getWorldLevelCount(nextWorld) > 0) {
         setGameState(createGameState(nextWorld, 1, saveData.upgrades));
       } else {
-        // All worlds complete — return to map
-        returnToCockpit();
+        // All worlds complete — play ending sequence
+        startEnding();
       }
     }
-  }, [gameState, saveData, returnToCockpit]);
+  }, [gameState, saveData, returnToCockpit, startEnding]);
 
   const handleDevAction = useCallback(
     (action: string) => {
@@ -280,6 +306,10 @@ export default function Game() {
             openMap();
           } else if (showIntro) {
             finishIntro();
+          } else if (showEnding) {
+            finishEnding();
+          } else if (showCredits) {
+            finishCredits();
           } else if (showCockpit) {
             keysRef.current.shoot = true;
           } else if (showMap) {
@@ -361,7 +391,7 @@ export default function Game() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [showStartScreen, showIntro, showCockpit, showMap, gameState, openMap, finishIntro, restartGame, nextLevel, returnToCockpit]);
+  }, [showStartScreen, showIntro, showEnding, showCredits, showCockpit, showMap, gameState, openMap, finishIntro, finishEnding, finishCredits, restartGame, nextLevel, returnToCockpit]);
 
   // Touch input
   useEffect(() => {
@@ -407,6 +437,10 @@ export default function Game() {
         openMap();
       } else if (showIntro) {
         finishIntro();
+      } else if (showEnding) {
+        finishEnding();
+      } else if (showCredits) {
+        finishCredits();
       } else if (showCockpit) {
         const touch = e.changedTouches[0];
         if (touch) {
@@ -446,7 +480,7 @@ export default function Game() {
       canvas.removeEventListener("touchmove", handleTouchMove);
       canvas.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [showStartScreen, showIntro, showCockpit, cockpitState.screen, showMap, gameState, openMap, finishIntro, restartGame, nextLevel, returnToCockpit]);
+  }, [showStartScreen, showIntro, showEnding, showCredits, showCockpit, cockpitState.screen, showMap, gameState, openMap, finishIntro, finishEnding, finishCredits, restartGame, nextLevel, returnToCockpit]);
 
   // Intro crawl loop
   useEffect(() => {
@@ -477,6 +511,66 @@ export default function Game() {
       }
     };
   }, [showIntro, finishIntro]);
+
+  // Ending scene loop
+  useEffect(() => {
+    if (!showEnding) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const endingLoop = () => {
+      endingFrameRef.current += 1;
+      drawEnding(ctx, endingFrameRef.current);
+
+      if (endingFrameRef.current >= ENDING_TOTAL_FRAMES) {
+        finishEnding();
+        return;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(endingLoop);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(endingLoop);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [showEnding, finishEnding]);
+
+  // Credits scroll loop
+  useEffect(() => {
+    if (!showCredits) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const creditsLoop = () => {
+      creditsFrameRef.current += 1;
+      drawCredits(ctx, creditsFrameRef.current);
+
+      if (creditsFrameRef.current >= CREDITS_TOTAL_FRAMES) {
+        finishCredits();
+        return;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(creditsLoop);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(creditsLoop);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [showCredits, finishCredits]);
 
   // Star map loop
   useEffect(() => {
@@ -821,7 +915,7 @@ export default function Game() {
       )}
 
       {/* Mute button */}
-      {(gameState || showCockpit || showMap) && !showStartScreen && (
+      {(gameState || showCockpit || showMap || showEnding || showCredits) && !showStartScreen && (
         <button
           onClick={() => {
             if (audioRef.current) {

@@ -160,6 +160,12 @@ export const SPRITES = {
   MISSIONS_BG: "/sprites/cockpit/missions-bg.png",
   CODEX_BG: "/sprites/cockpit/codex-bg.png",
   UPGRADE_ICONS: "/sprites/cockpit/upgrade-icons.png",
+
+  // Ending Scenes
+  ENDING_1: "/sprites/ending/scene-1.png",
+  ENDING_2: "/sprites/ending/scene-2.png",
+  ENDING_3: "/sprites/ending/scene-3.png",
+  ENDING_4: "/sprites/ending/scene-4.png",
 };
 
 export async function preloadAll(): Promise<void> {

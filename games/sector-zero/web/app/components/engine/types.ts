@@ -17,6 +17,8 @@ export enum GameScreen {
   BOSS_FIGHT = "BOSS_FIGHT",
   LEVEL_COMPLETE = "LEVEL_COMPLETE",
   GAME_OVER = "GAME_OVER",
+  ENDING = "ENDING",
+  CREDITS = "CREDITS",
 }
 
 // ─── Directions ──────────────────────────────────────────────────────

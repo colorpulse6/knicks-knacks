@@ -82,7 +82,7 @@ export function drawGame(
     ctx.fillRect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT);
   }
 
-  // Level complete banner (non-boss levels — game keeps running)
+  // Level complete banner (game keeps running during countdown)
   if (state.levelCompleteTimer > 0) {
     drawLevelCompleteBanner(ctx, state);
   }
@@ -673,18 +673,20 @@ function drawLevelCompleteBanner(
   state: GameState
 ): void {
   const t = state.levelCompleteTimer;
-  const total = 180;
+  const total = 360;
 
-  // Fade in (first 30 frames) and fade out (last 30 frames)
+  // Fade in (first 30 frames) and fade out (last 45 frames)
   const fadeIn = Math.min(1, (total - t) / 30);
-  const fadeOut = Math.min(1, t / 30);
+  const fadeOut = Math.min(1, t / 45);
   const alpha = Math.min(fadeIn, fadeOut);
 
   ctx.save();
   ctx.globalAlpha = alpha;
 
+  const centerY = GAME_AREA_HEIGHT / 2;
+
   // Semi-transparent banner strip
-  const bannerY = CANVAS_HEIGHT / 2 - 50;
+  const bannerY = centerY - 50;
   const bannerH = 100;
   ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
   ctx.fillRect(0, bannerY, CANVAS_WIDTH, bannerH);
@@ -699,7 +701,7 @@ function drawLevelCompleteBanner(
   ctx.font = "bold 28px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("LEVEL COMPLETE", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 12);
+  ctx.fillText("LEVEL COMPLETE", CANVAS_WIDTH / 2, centerY - 12);
 
   // Score line
   ctx.fillStyle = "#aaaaaa";
@@ -707,7 +709,7 @@ function drawLevelCompleteBanner(
   ctx.fillText(
     `Score: ${state.score}  |  Kills: ${state.kills}`,
     CANVAS_WIDTH / 2,
-    CANVAS_HEIGHT / 2 + 18
+    centerY + 18
   );
 
   ctx.restore();

@@ -70,6 +70,14 @@ jobs:
           NODE_ENV: production
           NEXT_PUBLIC_BASE_PATH: /knicks-knacks/brickles
 
+      - name: Build Sector Zero
+        run: |
+          cd games/sector-zero/web
+          yarn build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /knicks-knacks/sector-zero
+
       - name: Prepare deployment directory
         run: |
           mkdir -p ./deploy
@@ -79,6 +87,7 @@ jobs:
           cp -r games/2048/web/out ./deploy/2048
           cp -r games/asteroids/web/out ./deploy/asteroids
           cp -r games/brickles/web/out ./deploy/brickles
+          cp -r games/sector-zero/web/out ./deploy/sector-zero
 
           # Create index page
           cat > ./deploy/index.html << 'HTMLEOF'
@@ -324,6 +333,7 @@ jobs:
               .card-2048 { --card-accent: var(--accent-3); }
               .card-asteroids { --card-accent: var(--accent-2); }
               .card-brickles { --card-accent: var(--accent-1); }
+              .card-sector-zero { --card-accent: var(--accent-4); }
 
               /* ── Player bar ── */
               .player-bar {
@@ -603,6 +613,19 @@ jobs:
                       <span class="card-arrow">&rarr;</span>
                     </div>
                   </a>
+
+                  <a href="./sector-zero/" class="card card-sector-zero" style="grid-column: 1 / -1;">
+                    <div class="card-head">
+                      <span class="card-num">05</span>
+                      <span class="card-icon">&#9733;</span>
+                    </div>
+                    <h2>Sector Zero</h2>
+                    <p>Vertical scrolling space shooter with 8 worlds, boss battles, upgrades, and a branching story. The last pilot of Sector Zero fights to reclaim the frontier.</p>
+                    <div class="card-footer">
+                      <span class="card-tag">SPACE SHOOTER</span>
+                      <span class="card-arrow">&rarr;</span>
+                    </div>
+                  </a>
                 </div>
 
                 <!-- Stats Dashboard -->
@@ -627,7 +650,8 @@ jobs:
                       wordle: { gamesPlayed: 0, gamesWon: 0, currentStreak: 0, maxStreak: 0, guessDistribution: [0,0,0,0,0,0], lastPlayed: null },
                       '2048': { gamesPlayed: 0, highScore: 0, lastPlayed: null },
                       asteroids: { gamesPlayed: 0, highScore: 0, lastPlayed: null },
-                      brickles: { gamesPlayed: 0, highScore: 0, maxLevel: 0, maxCombo: 0, lastPlayed: null }
+                      brickles: { gamesPlayed: 0, highScore: 0, maxLevel: 0, maxCombo: 0, lastPlayed: null },
+                      'sector-zero': { gamesPlayed: 0, highScore: 0, lastPlayed: null }
                     }
                   };
                 }
@@ -738,8 +762,9 @@ jobs:
                 function renderStats() {
                   var section = document.getElementById('stats-section');
                   var g = profile.games;
+                  var sz = g['sector-zero'] || { gamesPlayed: 0, highScore: 0, lastPlayed: null };
                   var totalPlayed = (g.wordle.gamesPlayed || 0) + (g['2048'].gamesPlayed || 0) +
-                    (g.asteroids.gamesPlayed || 0) + (g.brickles.gamesPlayed || 0);
+                    (g.asteroids.gamesPlayed || 0) + (g.brickles.gamesPlayed || 0) + (sz.gamesPlayed || 0);
 
                   if (totalPlayed === 0 && !profile.name) {
                     section.innerHTML = '<div class="stats-empty">Set your name above and start playing to track your stats!</div>';
@@ -793,6 +818,14 @@ jobs:
                     '<div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value highlight">' + (g.brickles.highScore || 0).toLocaleString() + '</span></div>' +
                     '<div class="stat-row"><span class="stat-label">Max Level</span><span class="stat-value">' + (g.brickles.maxLevel || 0) + '</span></div>' +
                     '<div class="stat-row"><span class="stat-label">Max Combo</span><span class="stat-value">' + (g.brickles.maxCombo || 0) + 'x</span></div>' +
+                    '</div>';
+
+                  // Sector Zero
+                  html += '<div class="stat-card">' +
+                    '<div class="stat-card-header"><span class="stat-card-name">Sector Zero</span>' +
+                    '<span class="stat-card-accent" style="color:var(--accent-4)">SPACE SHOOTER</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">Games Played</span><span class="stat-value">' + (sz.gamesPlayed || 0) + '</span></div>' +
+                    '<div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value highlight">' + (sz.highScore || 0).toLocaleString() + '</span></div>' +
                     '</div>';
 
                   html += '</div>';

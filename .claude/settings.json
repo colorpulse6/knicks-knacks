@@ -15,7 +15,8 @@
       "Bash(done)",
       "Bash(yarn build:*)",
       "Bash(python3:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "WebFetch(domain:colorpulse6.github.io)"
     ]
   }
 }

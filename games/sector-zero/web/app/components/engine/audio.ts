@@ -1,22 +1,54 @@
 import { AudioEvent } from "./types";
 
+const MUSIC_PATH = "/audio/main-theme.mp3";
+const MUSIC_VOLUME = 0.35;
+const SFX_VOLUME = 0.25;
+
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private muted = false;
+  private music: HTMLAudioElement | null = null;
+  private musicStarted = false;
 
   init(): void {
     if (this.ctx) return;
     this.ctx = new AudioContext();
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.value = 0.25;
+    this.masterGain.gain.value = SFX_VOLUME;
     this.masterGain.connect(this.ctx.destination);
+    this.startMusic();
+  }
+
+  private startMusic(): void {
+    if (this.musicStarted) return;
+    this.musicStarted = true;
+
+    const audio = new Audio(MUSIC_PATH);
+    audio.loop = true;
+    audio.volume = this.muted ? 0 : MUSIC_VOLUME;
+    audio.play().catch(() => {
+      // Autoplay blocked — retry on next user interaction
+      const retry = () => {
+        audio.play().catch(() => {});
+        document.removeEventListener("click", retry);
+        document.removeEventListener("keydown", retry);
+        document.removeEventListener("touchstart", retry);
+      };
+      document.addEventListener("click", retry, { once: true });
+      document.addEventListener("keydown", retry, { once: true });
+      document.addEventListener("touchstart", retry, { once: true });
+    });
+    this.music = audio;
   }
 
   toggleMute(): boolean {
     this.muted = !this.muted;
     if (this.masterGain) {
-      this.masterGain.gain.value = this.muted ? 0 : 0.25;
+      this.masterGain.gain.value = this.muted ? 0 : SFX_VOLUME;
+    }
+    if (this.music) {
+      this.music.volume = this.muted ? 0 : MUSIC_VOLUME;
     }
     return this.muted;
   }

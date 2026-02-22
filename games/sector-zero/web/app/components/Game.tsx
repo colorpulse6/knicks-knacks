@@ -39,7 +39,12 @@ import {
 } from "./engine/cockpit";
 import { checkQuestCompletion, type QuestCheckData } from "./engine/sideQuests";
 import { drawCockpit } from "./engine/cockpitRenderer";
-import { drawEnding, drawCredits, ENDING_TOTAL_FRAMES, CREDITS_TOTAL_FRAMES } from "./engine/ending";
+import {
+  drawPreChoice, drawChoiceScreen, drawEnding, drawCredits,
+  PRE_CHOICE_TOTAL_FRAMES, DESTROY_TOTAL_FRAMES, MERGE_TOTAL_FRAMES,
+  getCreditsFrameCount,
+  type EndingChoice,
+} from "./engine/ending";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -52,8 +57,9 @@ export default function Game() {
   const [showMap, setShowMap] = useState(false);
   const [starMapState, setStarMapState] = useState<StarMapState>(createStarMapState());
   const [saveData, setSaveData] = useState<SaveData>(loadSave());
-  const [showEnding, setShowEnding] = useState(false);
-  const [showCredits, setShowCredits] = useState(false);
+  const [endingPhase, setEndingPhase] = useState<"off" | "pre-choice" | "choice" | "ending" | "credits">("off");
+  const [endingChoice, setEndingChoice] = useState<EndingChoice>(null);
+  const [choiceHover, setChoiceHover] = useState(0);
   const [muted, setMuted] = useState(false);
   const [playerName, setPlayerName] = useState("Guest");
 
@@ -70,7 +76,6 @@ export default function Game() {
   const audioRef = useRef<AudioEngine | null>(null);
   const introFrameRef = useRef(0);
   const endingFrameRef = useRef(0);
-  const creditsFrameRef = useRef(0);
 
   const ensureAudio = useCallback(() => {
     if (!audioRef.current) {
@@ -115,8 +120,8 @@ export default function Game() {
 
   const returnToCockpit = useCallback(() => {
     setGameState(null);
-    setShowEnding(false);
-    setShowCredits(false);
+    setEndingPhase("off");
+    setEndingChoice(null);
     setShowCockpit(true);
     setSaveData(loadSave());
     resetCockpitKeys();
@@ -124,21 +129,28 @@ export default function Game() {
 
   const startEnding = useCallback(() => {
     setGameState(null);
-    setShowEnding(true);
+    setEndingPhase("pre-choice");
+    setEndingChoice(null);
+    setChoiceHover(0);
     endingFrameRef.current = 0;
   }, []);
 
-  const finishEnding = useCallback(() => {
-    setShowEnding(false);
-    setShowCredits(true);
-    creditsFrameRef.current = 0;
-  }, []);
+  const advanceEnding = useCallback(() => {
+    if (endingPhase === "pre-choice") {
+      setEndingPhase("choice");
+      setChoiceHover(0);
+    } else if (endingPhase === "ending") {
+      setEndingPhase("credits");
+      endingFrameRef.current = 0;
+    } else if (endingPhase === "credits") {
+      returnToCockpit();
+    }
+  }, [endingPhase, returnToCockpit]);
 
-  const finishCredits = useCallback(() => {
-    setShowCredits(false);
-    setShowCockpit(true);
-    setSaveData(loadSave());
-    resetCockpitKeys();
+  const confirmChoice = useCallback((choice: EndingChoice) => {
+    setEndingChoice(choice);
+    setEndingPhase("ending");
+    endingFrameRef.current = 0;
   }, []);
 
   const restartGame = useCallback(() => {
@@ -290,10 +302,12 @@ export default function Game() {
         case "ArrowUp":
         case "w":
           keysRef.current.up = true;
+          if (endingPhase === "choice") setChoiceHover(0);
           break;
         case "ArrowDown":
         case "s":
           keysRef.current.down = true;
+          if (endingPhase === "choice") setChoiceHover(1);
           break;
         case " ":
           keysRef.current.shoot = true;
@@ -306,10 +320,10 @@ export default function Game() {
             openMap();
           } else if (showIntro) {
             finishIntro();
-          } else if (showEnding) {
-            finishEnding();
-          } else if (showCredits) {
-            finishCredits();
+          } else if (endingPhase === "pre-choice" || endingPhase === "ending" || endingPhase === "credits") {
+            advanceEnding();
+          } else if (endingPhase === "choice") {
+            confirmChoice(choiceHover === 0 ? "destroy" : "merge");
           } else if (showCockpit) {
             keysRef.current.shoot = true;
           } else if (showMap) {
@@ -391,7 +405,7 @@ export default function Game() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [showStartScreen, showIntro, showEnding, showCredits, showCockpit, showMap, gameState, openMap, finishIntro, finishEnding, finishCredits, restartGame, nextLevel, returnToCockpit]);
+  }, [showStartScreen, showIntro, endingPhase, choiceHover, showCockpit, showMap, gameState, openMap, finishIntro, advanceEnding, confirmChoice, restartGame, nextLevel, returnToCockpit]);
 
   // Touch input
   useEffect(() => {
@@ -437,10 +451,19 @@ export default function Game() {
         openMap();
       } else if (showIntro) {
         finishIntro();
-      } else if (showEnding) {
-        finishEnding();
-      } else if (showCredits) {
-        finishCredits();
+      } else if (endingPhase === "choice") {
+        // Detect which choice was tapped
+        const touch = e.changedTouches[0];
+        if (touch) {
+          const pos = getCanvasPos(touch.clientX, touch.clientY);
+          if (pos.y >= 320 && pos.y < 420) {
+            confirmChoice("destroy");
+          } else if (pos.y >= 460 && pos.y < 560) {
+            confirmChoice("merge");
+          }
+        }
+      } else if (endingPhase === "pre-choice" || endingPhase === "ending" || endingPhase === "credits") {
+        advanceEnding();
       } else if (showCockpit) {
         const touch = e.changedTouches[0];
         if (touch) {
@@ -480,7 +503,7 @@ export default function Game() {
       canvas.removeEventListener("touchmove", handleTouchMove);
       canvas.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [showStartScreen, showIntro, showEnding, showCredits, showCockpit, cockpitState.screen, showMap, gameState, openMap, finishIntro, finishEnding, finishCredits, restartGame, nextLevel, returnToCockpit]);
+  }, [showStartScreen, showIntro, endingPhase, showCockpit, cockpitState.screen, showMap, gameState, openMap, finishIntro, advanceEnding, confirmChoice, restartGame, nextLevel, returnToCockpit]);
 
   // Intro crawl loop
   useEffect(() => {
@@ -512,9 +535,9 @@ export default function Game() {
     };
   }, [showIntro, finishIntro]);
 
-  // Ending scene loop
+  // Ending sequence loop (pre-choice, choice, ending, credits)
   useEffect(() => {
-    if (!showEnding) return;
+    if (endingPhase === "off") return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -523,11 +546,31 @@ export default function Game() {
 
     const endingLoop = () => {
       endingFrameRef.current += 1;
-      drawEnding(ctx, endingFrameRef.current);
+      const frame = endingFrameRef.current;
 
-      if (endingFrameRef.current >= ENDING_TOTAL_FRAMES) {
-        finishEnding();
-        return;
+      if (endingPhase === "pre-choice") {
+        drawPreChoice(ctx, frame);
+        if (frame >= PRE_CHOICE_TOTAL_FRAMES) {
+          setEndingPhase("choice");
+          setChoiceHover(0);
+          return;
+        }
+      } else if (endingPhase === "choice") {
+        drawChoiceScreen(ctx, frame, choiceHover);
+      } else if (endingPhase === "ending") {
+        drawEnding(ctx, frame, endingChoice);
+        const totalFrames = endingChoice === "destroy" ? DESTROY_TOTAL_FRAMES : MERGE_TOTAL_FRAMES;
+        if (frame >= totalFrames) {
+          setEndingPhase("credits");
+          endingFrameRef.current = 0;
+          return;
+        }
+      } else if (endingPhase === "credits") {
+        drawCredits(ctx, frame, endingChoice);
+        if (frame >= getCreditsFrameCount(endingChoice)) {
+          returnToCockpit();
+          return;
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(endingLoop);
@@ -540,37 +583,7 @@ export default function Game() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [showEnding, finishEnding]);
-
-  // Credits scroll loop
-  useEffect(() => {
-    if (!showCredits) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const creditsLoop = () => {
-      creditsFrameRef.current += 1;
-      drawCredits(ctx, creditsFrameRef.current);
-
-      if (creditsFrameRef.current >= CREDITS_TOTAL_FRAMES) {
-        finishCredits();
-        return;
-      }
-
-      animationFrameRef.current = requestAnimationFrame(creditsLoop);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(creditsLoop);
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [showCredits, finishCredits]);
+  }, [endingPhase, endingChoice, choiceHover, advanceEnding, returnToCockpit]);
 
   // Star map loop
   useEffect(() => {
@@ -715,11 +728,41 @@ export default function Game() {
     };
   }, [gameState, showStartScreen, showCockpit, showMap, saveData]);
 
+  // Auto-trigger ending when game engine sets ENDING screen (final boss defeated)
+  useEffect(() => {
+    if (gameState?.screen === GameScreen.ENDING && endingPhase === "off") {
+      // Save the final level result before transitioning
+      const stars =
+        gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8
+          ? 3
+          : gameState.deaths === 0
+            ? 2
+            : 1;
+      let finalSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
+      const questData: QuestCheckData = {
+        world: gameState.currentWorld,
+        level: gameState.currentLevel,
+        kills: gameState.kills,
+        totalEnemies: gameState.totalEnemies,
+        deaths: gameState.deaths,
+        frameCount: gameState.frameCount,
+        playerHp: gameState.player.hp,
+        playerMaxHp: gameState.player.maxHp,
+      };
+      finalSave = checkQuestCompletion(finalSave, questData).newSave;
+      saveSave(finalSave);
+      setSaveData(finalSave);
+      startEnding();
+    }
+  }, [gameState?.screen, endingPhase, gameState, saveData, startEnding]);
+
   // Draw non-playing screens
   useEffect(() => {
     if (!gameState || showStartScreen || showCockpit || showMap) return;
     const loopScreens = [GameScreen.PLAYING, GameScreen.BOSS_FIGHT, GameScreen.BOSS_INTRO, GameScreen.BRIEFING];
     if (loopScreens.includes(gameState.screen)) return;
+    // ENDING screen is handled by the ending sequence, not drawGame
+    if (gameState.screen === GameScreen.ENDING) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -915,7 +958,7 @@ export default function Game() {
       )}
 
       {/* Mute button */}
-      {(gameState || showCockpit || showMap || showEnding || showCredits) && !showStartScreen && (
+      {(gameState || showCockpit || showMap || endingPhase !== "off") && !showStartScreen && (
         <button
           onClick={() => {
             if (audioRef.current) {

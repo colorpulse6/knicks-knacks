@@ -39,7 +39,7 @@ import {
 } from "./enemies";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap } from "./physics";
-import { getLevelData } from "./levels";
+import { getLevelData, getWorldLevelCount } from "./levels";
 import { clamp } from "./physics";
 import { createBossForWorld, updateBossForWorld, isBossDefeated, resetBossBulletIds } from "./bosses";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
@@ -499,7 +499,16 @@ function updateBossFight(
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      s.screen = GameScreen.LEVEL_COMPLETE;
+      // Check if this is the final level in the game
+      const maxLevels = getWorldLevelCount(s.currentWorld);
+      const isLastLevelInWorld = s.currentLevel >= maxLevels;
+      let isFinalLevel = false;
+      if (isLastLevelInWorld) {
+        let nw = s.currentWorld + 1;
+        while (nw <= 8 && getWorldLevelCount(nw) === 0) nw++;
+        isFinalLevel = nw > 8;
+      }
+      s.screen = isFinalLevel ? GameScreen.ENDING : GameScreen.LEVEL_COMPLETE;
     }
   }
 

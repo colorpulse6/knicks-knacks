@@ -2664,6 +2664,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@knicks-knacks/sector-zero@workspace:games/sector-zero/web":
+  version: 0.0.0-use.local
+  resolution: "@knicks-knacks/sector-zero@workspace:games/sector-zero/web"
+  dependencies:
+    "@tailwindcss/postcss": "npm:^4.0.5"
+    "@types/node": "npm:^20"
+    "@types/react": "npm:^19"
+    "@types/react-dom": "npm:^19"
+    autoprefixer: "npm:^10.4.21"
+    next: "npm:15.3.1"
+    postcss: "npm:^8.5.3"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    tailwindcss: "npm:^4.0.5"
+    typescript: "npm:^5"
+  languageName: unknown
+  linkType: soft
+
 "@knicks-knacks/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@knicks-knacks/shared@workspace:packages/shared"

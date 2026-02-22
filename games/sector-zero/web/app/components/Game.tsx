@@ -82,6 +82,7 @@ export default function Game() {
       audioRef.current = new AudioEngine();
     }
     audioRef.current.init();
+    return audioRef.current;
   }, []);
 
   const finishIntro = useCallback(() => {
@@ -97,7 +98,8 @@ export default function Game() {
   }, [saveData]);
 
   const openMap = useCallback(() => {
-    ensureAudio();
+    const audio = ensureAudio();
+    audio.switchMusic("menu");
     setShowStartScreen(false);
     if (!saveData.introSeen) {
       introFrameRef.current = 0;
@@ -111,7 +113,8 @@ export default function Game() {
 
   const startLevel = useCallback(
     (world: number, level: number) => {
-      ensureAudio();
+      const audio = ensureAudio();
+      audio.switchMusic("game");
       setShowMap(false);
       setGameState(createGameState(world, level, saveData.upgrades));
     },
@@ -125,6 +128,7 @@ export default function Game() {
     setShowCockpit(true);
     setSaveData(loadSave());
     resetCockpitKeys();
+    audioRef.current?.switchMusic("menu");
   }, []);
 
   const startEnding = useCallback(() => {
@@ -154,7 +158,8 @@ export default function Game() {
   }, []);
 
   const restartGame = useCallback(() => {
-    ensureAudio();
+    const audio = ensureAudio();
+    audio.switchMusic("game");
     if (gameState) {
       updateSectorZeroProfile(gameState.score);
     }

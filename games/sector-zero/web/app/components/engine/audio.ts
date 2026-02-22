@@ -1,15 +1,22 @@
 import { AudioEvent } from "./types";
 
-const MUSIC_PATH = "/audio/main-theme.mp3";
+export type MusicTrack = "menu" | "game";
+
+const MUSIC_PATHS: Record<MusicTrack, string> = {
+  menu: "/audio/menu-theme.mp3",
+  game: "/audio/main-theme.mp3",
+};
 const MUSIC_VOLUME = 0.35;
 const SFX_VOLUME = 0.25;
+const FADE_MS = 800;
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private muted = false;
   private music: HTMLAudioElement | null = null;
-  private musicStarted = false;
+  private currentTrack: MusicTrack | null = null;
+  private fadeInterval: ReturnType<typeof setInterval> | null = null;
 
   init(): void {
     if (this.ctx) return;
@@ -17,18 +24,43 @@ export class AudioEngine {
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = SFX_VOLUME;
     this.masterGain.connect(this.ctx.destination);
-    this.startMusic();
   }
 
-  private startMusic(): void {
-    if (this.musicStarted) return;
-    this.musicStarted = true;
+  switchMusic(track: MusicTrack): void {
+    if (track === this.currentTrack) return;
 
-    const audio = new Audio(MUSIC_PATH);
+    // Clear any in-progress fade
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+
+    const oldAudio = this.music;
+    this.currentTrack = track;
+
+    // Fade out old track
+    if (oldAudio) {
+      const startVol = oldAudio.volume;
+      const steps = 20;
+      const stepMs = FADE_MS / steps;
+      let step = 0;
+      this.fadeInterval = setInterval(() => {
+        step++;
+        oldAudio.volume = Math.max(0, startVol * (1 - step / steps));
+        if (step >= steps) {
+          clearInterval(this.fadeInterval!);
+          this.fadeInterval = null;
+          oldAudio.pause();
+          oldAudio.src = "";
+        }
+      }, stepMs);
+    }
+
+    // Start new track
+    const audio = new Audio(MUSIC_PATHS[track]);
     audio.loop = true;
     audio.volume = this.muted ? 0 : MUSIC_VOLUME;
     audio.play().catch(() => {
-      // Autoplay blocked — retry on next user interaction
       const retry = () => {
         audio.play().catch(() => {});
         document.removeEventListener("click", retry);

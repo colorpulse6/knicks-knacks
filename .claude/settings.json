@@ -1,7 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebFetch(domain:play.google.com)",
+      "WebFetch(domain:galaxy-attack-alien-shooter.fandom.com)",
+      "WebFetch(domain:www.levelwinner.com)",
+      "Bash(timeout 10 yarn dev:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(npx next build:*)",
+      "Bash(for dir in enemies bosses backgrounds)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(for f in $dir/*.png)",
+      "Bash(do sips -g pixelWidth -g pixelHeight \"$f\")",
+      "Bash(done)",
+      "Bash(yarn build:*)",
+      "Bash(python3:*)"
     ]
   }
 }

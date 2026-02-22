@@ -27,7 +27,8 @@
     "2048:dev": "cd games/2048/web && yarn dev",
     "asteroids:dev": "cd games/asteroids/web && yarn dev",
     "chimera:dev": "cd games/chimera/web && yarn dev",
-    "brickles:dev": "cd games/brickles/web && yarn dev"
+    "brickles:dev": "cd games/brickles/web && yarn dev",
+    "sector-zero:dev": "cd games/sector-zero/web && yarn dev"
   },
   "devDependencies": {
     "babel-plugin-module-resolver": "^5.0.2",

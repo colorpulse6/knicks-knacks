@@ -1,0 +1,1510 @@
+import { CANVAS_WIDTH, CANVAS_HEIGHT, type SaveData } from "./types";
+import { getSprite, SPRITES } from "./sprites";
+import { type CockpitHubState, COCKPIT_HOTSPOTS } from "./cockpit";
+import { UPGRADE_DEFS, getUpgradeCost, canPurchase, isUpgradeLevelUnlocked, getUnlockRequirement, getXpProgress, getNextEffect, getCurrentEffect } from "./upgrades";
+import { CREW, getAvailableConversations, isConversationViewed, countUnread, countTotalUnread } from "./crewDialog";
+import { CODEX_CATEGORIES, getEntriesForCategory, isCodexEntryNew, countNewCodexEntries, countNewInCategory } from "./codex";
+import { getAvailableQuests, isQuestActive, isQuestCompleted, countAvailableQuests, QUEST_TYPE_NAMES, QUEST_TYPE_ICONS, QUEST_TYPE_COLORS } from "./sideQuests";
+
+// ─── Main Cockpit Drawing ───────────────────────────────────────────
+
+export function drawCockpit(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  ctx.save();
+
+  if (state.screen === "hub") {
+    drawCockpitHub(ctx, state, save);
+  } else if (state.screen === "armory") {
+    drawArmoryScreen(ctx, state, save);
+  } else if (state.screen === "crew") {
+    drawCrewScreen(ctx, state, save);
+  } else if (state.screen === "missions") {
+    drawMissionsScreen(ctx, state, save);
+  } else if (state.screen === "codex") {
+    drawCodexScreen(ctx, state, save);
+  }
+
+  // Screen transition overlay (fade from black)
+  if (state.transitionTimer > 0) {
+    const alpha = state.transitionTimer / 12;
+    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  }
+
+  ctx.restore();
+}
+
+// ─── Hub Main Screen ────────────────────────────────────────────────
+
+function drawCockpitHub(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  // Background
+  const bg = getSprite(SPRITES.COCKPIT_BG);
+  if (bg) {
+    ctx.drawImage(bg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  } else {
+    // Fallback: dark bridge interior
+    ctx.fillStyle = "#080810";
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Viewport (top area showing stars)
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, "#0a0a20");
+    gradient.addColorStop(1, "#080810");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, 200);
+
+    // Viewport stars
+    for (let i = 0; i < 40; i++) {
+      const sx = (i * 137 + 23) % CANVAS_WIDTH;
+      const sy = (i * 89 + 11) % 180 + 10;
+      const alpha = 0.3 + 0.5 * Math.abs(Math.sin(state.animTimer * 0.015 + i * 1.7));
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 0.5 + (i % 3) * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Console lines (decorative)
+    ctx.strokeStyle = "#1a1a30";
+    ctx.lineWidth = 1;
+    for (let y = 200; y < CANVAS_HEIGHT; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(CANVAS_WIDTH, y);
+      ctx.stroke();
+    }
+
+    // Center console glow
+    ctx.fillStyle = "rgba(68, 204, 255, 0.03)";
+    ctx.beginPath();
+    ctx.ellipse(240, 500, 120, 80, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ── Ambient Effects ──
+
+  // Floating dust particles
+  for (let i = 0; i < 20; i++) {
+    const seed = i * 73 + 17;
+    const speed = 0.3 + (seed % 5) * 0.15;
+    const px = ((seed * 31 + state.animTimer * speed * 0.4) % (CANVAS_WIDTH + 40)) - 20;
+    const py = ((seed * 47 + state.animTimer * speed * 0.2) % (CANVAS_HEIGHT - 200)) + 200;
+    const alpha = 0.08 + 0.06 * Math.sin(state.animTimer * 0.02 + seed);
+    const size = 0.8 + (seed % 3) * 0.4;
+    ctx.fillStyle = `rgba(120, 180, 220, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Blinking console indicator lights
+  const indicators = [
+    { x: 20, y: 400, color: "68, 204, 255", rate: 0.04 },
+    { x: 460, y: 420, color: "68, 204, 255", rate: 0.05 },
+    { x: 35, y: 520, color: "68, 255, 136", rate: 0.03 },
+    { x: 445, y: 540, color: "68, 255, 136", rate: 0.06 },
+    { x: 15, y: 650, color: "255, 136, 68", rate: 0.02 },
+    { x: 465, y: 660, color: "255, 136, 68", rate: 0.04 },
+    { x: 50, y: 750, color: "68, 204, 255", rate: 0.035 },
+    { x: 430, y: 740, color: "68, 204, 255", rate: 0.055 },
+  ];
+  for (const ind of indicators) {
+    const alpha = 0.15 + 0.35 * Math.max(0, Math.sin(state.animTimer * ind.rate));
+    ctx.fillStyle = `rgba(${ind.color}, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(ind.x, ind.y, 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Glow halo
+    ctx.fillStyle = `rgba(${ind.color}, ${alpha * 0.2})`;
+    ctx.beginPath();
+    ctx.arc(ind.x, ind.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Subtle scanline effect
+  ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+  for (let y = 0; y < CANVAS_HEIGHT; y += 3) {
+    ctx.fillRect(0, y, CANVAS_WIDTH, 1);
+  }
+
+  // Title
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = "#44ccff";
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 18px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText("UEC VANGUARD — BRIDGE", CANVAS_WIDTH / 2, 220);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#556666";
+  ctx.font = "10px monospace";
+  ctx.fillText("SELECT STATION", CANVAS_WIDTH / 2, 244);
+
+  // Hotspots
+  for (let i = 0; i < COCKPIT_HOTSPOTS.length; i++) {
+    const hotspot = COCKPIT_HOTSPOTS[i];
+    const isSelected = state.selectedHotspot === i;
+    const cx = hotspot.x + hotspot.w / 2;
+    const cy = hotspot.y + hotspot.h / 2;
+
+    if (isSelected) {
+      // Pulsing glow
+      const pulse = 0.4 + 0.3 * Math.sin(state.animTimer * 0.06);
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "#44ccff";
+      ctx.strokeStyle = `rgba(68, 204, 255, ${pulse})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(hotspot.x - 4, hotspot.y - 4, hotspot.w + 8, hotspot.h + 8, 6);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Fill
+      ctx.fillStyle = "rgba(68, 204, 255, 0.08)";
+      ctx.beginPath();
+      ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 4);
+      ctx.fill();
+    }
+
+    // Border
+    ctx.strokeStyle = isSelected ? "#44ccff88" : "#22334488";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 4);
+    ctx.stroke();
+
+    // Icon placeholder (character based)
+    ctx.fillStyle = isSelected ? "#44ccff" : "#445566";
+    ctx.font = "bold 20px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const icons: Record<string, string> = {
+      starmap: "\u2726",   // star
+      armory: "\u2692",    // crossed hammers
+      crew: "\u263A",      // smiley
+      missions: "\u2694",  // crossed swords
+      codex: "\u2637",     // trigram
+    };
+    ctx.fillText(icons[hotspot.id] || "?", cx, cy - 6);
+
+    // Name
+    ctx.fillStyle = isSelected ? "#ffffff" : "#667788";
+    ctx.font = isSelected ? "bold 10px monospace" : "9px monospace";
+    ctx.fillText(hotspot.name, cx, cy + 14);
+
+    // Description (only when selected)
+    if (isSelected) {
+      ctx.fillStyle = "#88aabb";
+      ctx.font = "9px monospace";
+      ctx.fillText(hotspot.description, cx, cy + 28);
+
+      // Enter hint
+      ctx.fillStyle = "#44ccff66";
+      ctx.font = "8px monospace";
+      ctx.fillText("[ENTER]", cx, cy + 42);
+    }
+
+    // Notification badges
+    drawNotificationBadge(ctx, hotspot, i, save, state);
+  }
+
+  // Bottom bar: Credits + Stars
+  ctx.fillStyle = "rgba(0, 0, 10, 0.6)";
+  ctx.fillRect(0, CANVAS_HEIGHT - 50, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, CANVAS_HEIGHT - 50);
+  ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT - 50);
+  ctx.stroke();
+
+  // Credits
+  ctx.shadowBlur = 4;
+  ctx.shadowColor = "#44ff88";
+  ctx.fillStyle = "#44ff88";
+  ctx.font = "bold 13px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`\u25C6 ${save.credits}`, 16, CANVAS_HEIGHT - 25);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#556666";
+  ctx.font = "9px monospace";
+  ctx.fillText("CREDITS", 16, CANVAS_HEIGHT - 10);
+
+  // Stars
+  ctx.shadowBlur = 4;
+  ctx.shadowColor = "#FFD700";
+  ctx.fillStyle = "#FFD700";
+  ctx.font = "bold 13px monospace";
+  ctx.textAlign = "right";
+  ctx.fillText(`\u2605 ${save.totalStars}`, CANVAS_WIDTH - 16, CANVAS_HEIGHT - 25);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#556666";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "right";
+  ctx.fillText("STARS", CANVAS_WIDTH - 16, CANVAS_HEIGHT - 10);
+
+  // Controls hint
+  ctx.fillStyle = "#445566";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("\u2190\u2191\u2192\u2193 NAVIGATE   ENTER SELECT   ESC MENU", CANVAS_WIDTH / 2, CANVAS_HEIGHT - 25);
+}
+
+// ─── Notification Badges ────────────────────────────────────────────
+
+function drawNotificationBadge(
+  ctx: CanvasRenderingContext2D,
+  hotspot: typeof COCKPIT_HOTSPOTS[0],
+  _index: number,
+  save: SaveData,
+  _state: CockpitHubState
+): void {
+  let hasNotification = false;
+
+  if (hotspot.id === "crew") {
+    hasNotification = countTotalUnread(save) > 0;
+  } else if (hotspot.id === "codex") {
+    hasNotification = countNewCodexEntries(save) > 0;
+  } else if (hotspot.id === "missions") {
+    hasNotification = countAvailableQuests(save) > 0;
+  }
+
+  if (hasNotification) {
+    const bx = hotspot.x + hotspot.w - 4;
+    const by = hotspot.y - 4;
+    ctx.fillStyle = "#ff4444";
+    ctx.beginPath();
+    ctx.arc(bx, by, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("!", bx, by);
+  }
+}
+
+// ─── Sub-Screen Placeholders ────────────────────────────────────────
+// These will be fleshed out in Phases 3-6
+
+function drawSubScreenFrame(
+  ctx: CanvasRenderingContext2D,
+  title: string,
+  bgSprite: string | null
+): void {
+  // Background
+  const bg = bgSprite ? getSprite(bgSprite) : null;
+  if (bg) {
+    ctx.drawImage(bg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  } else {
+    ctx.fillStyle = "#0a0a14";
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  }
+
+  // Header bar
+  ctx.fillStyle = "rgba(0, 0, 10, 0.8)";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 50);
+  ctx.lineTo(CANVAS_WIDTH, 50);
+  ctx.stroke();
+
+  // Back arrow
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 14px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2190 BACK", 12, 25);
+
+  // Title
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = "#44ccff";
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 16px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(title, CANVAS_WIDTH / 2, 25);
+  ctx.shadowBlur = 0;
+}
+
+function drawArmoryScreen(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  drawSubScreenFrame(ctx, "ARMORY", SPRITES.ARMORY_BG);
+
+  // Credits and XP display
+  ctx.fillStyle = "#667788";
+  ctx.font = "10px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(`\u25C6 ${save.credits.toLocaleString()} credits`, 20, 52);
+  ctx.fillStyle = "#7766aa";
+  ctx.textAlign = "right";
+  ctx.fillText(`XP ${save.xp.toLocaleString()}`, CANVAS_WIDTH - 20, 52);
+
+  const startY = 70;
+  const rowH = 56;
+  const listX = 16;
+  const listW = CANVAS_WIDTH - 32;
+
+  // ── Upgrade Rows ──
+  for (let i = 0; i < UPGRADE_DEFS.length; i++) {
+    const def = UPGRADE_DEFS[i];
+    const currentLevel = save.upgrades[def.id];
+    const isSelected = state.armorySelected === i;
+    const y = startY + i * rowH;
+
+    // Row background
+    if (isSelected) {
+      const pulse = 0.06 + 0.04 * Math.sin(state.animTimer * 0.06);
+      ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 4);
+      ctx.fill();
+
+      ctx.strokeStyle = "#44ccff66";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 4);
+      ctx.stroke();
+    }
+
+    // Icon
+    ctx.fillStyle = isSelected ? def.color : "#445566";
+    ctx.font = "bold 18px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(def.icon, listX + 20, y + (rowH - 4) / 2);
+
+    // Name
+    ctx.fillStyle = isSelected ? "#ffffff" : "#889999";
+    ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(def.name, listX + 40, y + 14);
+
+    // Level pips
+    const pipX = listX + 40;
+    const pipY = y + 30;
+    for (let lv = 0; lv < def.maxLevel; lv++) {
+      const filled = lv < currentLevel;
+      ctx.fillStyle = filled ? def.color : "#223344";
+      ctx.strokeStyle = filled ? def.color : "#445566";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(pipX + lv * 28, pipY, 22, 8, 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Max label
+    if (currentLevel >= def.maxLevel) {
+      ctx.fillStyle = "#44ff88";
+      ctx.font = "bold 8px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("MAX", pipX + def.maxLevel * 28 + 4, pipY + 4);
+    }
+
+    // Cost or lock status (right side)
+    const cost = getUpgradeCost(def, currentLevel);
+    const nextLevelUnlocked = isUpgradeLevelUnlocked(def, currentLevel + 1, save);
+    if (cost !== null) {
+      if (!nextLevelUnlocked) {
+        ctx.fillStyle = "#554422";
+        ctx.font = "bold 10px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText("\u{1F512} LOCKED", listX + listW - 8, y + 14);
+      } else {
+        const purchasable = canPurchase(save, def, currentLevel);
+        ctx.fillStyle = purchasable ? "#44ff88" : "#553333";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText(`\u25C6 ${cost}`, listX + listW - 8, y + 14);
+      }
+    }
+  }
+
+  // ── Detail Panel (below list) ──
+  const detailY = startY + UPGRADE_DEFS.length * rowH + 12;
+  const def = UPGRADE_DEFS[state.armorySelected];
+  const currentLevel = save.upgrades[def.id];
+
+  // Detail background
+  ctx.fillStyle = "rgba(0, 0, 10, 0.6)";
+  ctx.beginPath();
+  ctx.roundRect(listX, detailY, listW, 140, 6);
+  ctx.fill();
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(listX, detailY, listW, 140, 6);
+  ctx.stroke();
+
+  // Selected upgrade name
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = def.color;
+  ctx.fillStyle = def.color;
+  ctx.font = "bold 14px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(def.name, listX + 12, detailY + 10);
+  ctx.shadowBlur = 0;
+
+  // Level indicator
+  ctx.fillStyle = "#667788";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "right";
+  ctx.fillText(`Lv ${currentLevel}/${def.maxLevel}`, listX + listW - 12, detailY + 12);
+
+  // Description
+  ctx.fillStyle = "#88aabb";
+  ctx.font = "10px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText(def.description, listX + 12, detailY + 32);
+
+  // Current effect
+  const curEffect = getCurrentEffect(def, currentLevel);
+  if (curEffect) {
+    ctx.fillStyle = "#667788";
+    ctx.font = "9px monospace";
+    ctx.fillText(`Current: ${curEffect}`, listX + 12, detailY + 52);
+  }
+
+  // Next effect
+  const nextEffect = getNextEffect(def, currentLevel);
+  const nextUnlocked = isUpgradeLevelUnlocked(def, currentLevel + 1, save);
+  const unlockReq = getUnlockRequirement(def, currentLevel, save);
+  const xpProg = getXpProgress(def, currentLevel, save);
+
+  if (nextEffect) {
+    ctx.fillStyle = "#44ccff";
+    ctx.font = "9px monospace";
+    ctx.fillText(`Next: ${nextEffect}`, listX + 12, detailY + 68);
+
+    const btnY = detailY + 90;
+    const btnW = 180;
+    const btnX = CANVAS_WIDTH / 2 - btnW / 2;
+
+    if (!nextUnlocked) {
+      // Locked — show XP progress bar and requirement
+      ctx.strokeStyle = "#44336688";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(btnX, btnY, btnW, 30, 4);
+      ctx.stroke();
+
+      // XP progress bar inside button
+      const barX = btnX + 8;
+      const barW = btnW - 16;
+      const barY = btnY + 20;
+      const barH = 4;
+      ctx.fillStyle = "#1a1a2a";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = "#6644aa";
+      ctx.fillRect(barX, barY, barW * xpProg, barH);
+
+      ctx.fillStyle = "#886644";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`\u{1F512} ${unlockReq ?? "LOCKED"}`, CANVAS_WIDTH / 2, btnY + 10);
+    } else {
+      // Unlocked — show purchase button
+      const cost = getUpgradeCost(def, currentLevel)!;
+      const purchasable = canPurchase(save, def, currentLevel);
+
+      if (purchasable) {
+        const pulse = 0.7 + 0.3 * Math.sin(state.animTimer * 0.08);
+        ctx.fillStyle = `rgba(68, 255, 136, ${pulse * 0.15})`;
+        ctx.beginPath();
+        ctx.roundRect(btnX, btnY, btnW, 30, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = "#44ff88";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(btnX, btnY, btnW, 30, 4);
+        ctx.stroke();
+
+        ctx.fillStyle = "#44ff88";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`UPGRADE  \u25C6 ${cost}`, CANVAS_WIDTH / 2, btnY + 15);
+      } else {
+        ctx.strokeStyle = "#33333388";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(btnX, btnY, btnW, 30, 4);
+        ctx.stroke();
+
+        ctx.fillStyle = "#553333";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`\u25C6 ${cost}  NEEDED`, CANVAS_WIDTH / 2, btnY + 15);
+      }
+    }
+  } else {
+    // Maxed out
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = "#44ff88";
+    ctx.fillStyle = "#44ff88";
+    ctx.font = "bold 12px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("FULLY UPGRADED", CANVAS_WIDTH / 2, detailY + 85);
+    ctx.shadowBlur = 0;
+  }
+
+  // ── Bottom Bar: Credits ──
+  const barY = CANVAS_HEIGHT - 50;
+  ctx.fillStyle = "rgba(0, 0, 10, 0.7)";
+  ctx.fillRect(0, barY, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, barY);
+  ctx.lineTo(CANVAS_WIDTH, barY);
+  ctx.stroke();
+
+  ctx.shadowBlur = 4;
+  ctx.shadowColor = "#44ff88";
+  ctx.fillStyle = "#44ff88";
+  ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`\u25C6 ${save.credits}  CREDITS`, CANVAS_WIDTH / 2, barY + 18);
+  ctx.shadowBlur = 0;
+
+  // Controls hint
+  ctx.fillStyle = "#445566";
+  ctx.font = "9px monospace";
+  ctx.fillText("\u2191\u2193 SELECT   ENTER UPGRADE   \u2190 BACK", CANVAS_WIDTH / 2, barY + 38);
+}
+
+function drawCrewScreen(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  const crew = CREW[state.crewSelected];
+  const convos = crew ? getAvailableConversations(crew.id, save) : [];
+
+  // ── Dialog reading view ──
+  if (state.crewDialogActive && convos[state.crewConvoIndex]) {
+    drawCrewDialog(ctx, state, save, convos[state.crewConvoIndex]);
+    return;
+  }
+
+  // ── Main crew screen ──
+  drawSubScreenFrame(ctx, "CREW QUARTERS", SPRITES.CREW_BG);
+
+  // ── Character Cards (top section) ──
+  const cardW = 130;
+  const cardH = 160;
+  const cardSpacing = 14;
+  const totalW = CREW.length * cardW + (CREW.length - 1) * cardSpacing;
+  const startX = (CANVAS_WIDTH - totalW) / 2;
+  const cardY = 62;
+
+  for (let i = 0; i < CREW.length; i++) {
+    const c = CREW[i];
+    const cx = startX + i * (cardW + cardSpacing);
+    const isSelected = state.crewSelected === i;
+    const unread = countUnread(c.id, save);
+
+    // Card background
+    if (isSelected) {
+      const pulse = 0.08 + 0.04 * Math.sin(state.animTimer * 0.06);
+      ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+      ctx.beginPath();
+      ctx.roundRect(cx, cardY, cardW, cardH, 6);
+      ctx.fill();
+
+      ctx.strokeStyle = c.color + "88";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(cx, cardY, cardW, cardH, 6);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(10, 10, 20, 0.5)";
+      ctx.beginPath();
+      ctx.roundRect(cx, cardY, cardW, cardH, 6);
+      ctx.fill();
+
+      ctx.strokeStyle = "#22334466";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(cx, cardY, cardW, cardH, 6);
+      ctx.stroke();
+    }
+
+    // Portrait
+    const portraitKey = c.portraitKey as keyof typeof SPRITES;
+    const portrait = getSprite(SPRITES[portraitKey]);
+    const portraitSize = 64;
+    const px = cx + (cardW - portraitSize) / 2;
+    const py = cardY + 10;
+
+    if (portrait) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(px, py, portraitSize, portraitSize, 4);
+      ctx.clip();
+      ctx.drawImage(portrait, px, py, portraitSize, portraitSize);
+      ctx.restore();
+    } else {
+      // Fallback portrait circle
+      ctx.fillStyle = c.color + "33";
+      ctx.beginPath();
+      ctx.arc(px + portraitSize / 2, py + portraitSize / 2, portraitSize / 2 - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = c.color + "66";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = c.color;
+      ctx.font = "bold 22px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(c.name[0], px + portraitSize / 2, py + portraitSize / 2);
+    }
+
+    // Name
+    ctx.fillStyle = isSelected ? "#ffffff" : "#778899";
+    ctx.font = isSelected ? "bold 9px monospace" : "9px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(c.name, cx + cardW / 2, py + portraitSize + 6);
+
+    // Role
+    ctx.fillStyle = isSelected ? c.color : "#556677";
+    ctx.font = "8px monospace";
+    ctx.fillText(c.role, cx + cardW / 2, py + portraitSize + 20);
+
+    // Unread badge
+    if (unread > 0) {
+      const bx = cx + cardW - 10;
+      const by = cardY + 6;
+      ctx.fillStyle = "#ff4444";
+      ctx.beginPath();
+      ctx.arc(bx, by, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${unread}`, bx, by);
+    }
+
+    // Selection arrows
+    if (isSelected) {
+      ctx.fillStyle = c.color;
+      ctx.font = "bold 14px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      if (i > 0) {
+        ctx.fillText("\u25C0", cx - 6, cardY + cardH / 2);
+      }
+      if (i < CREW.length - 1) {
+        ctx.fillText("\u25B6", cx + cardW + 6, cardY + cardH / 2);
+      }
+    }
+  }
+
+  // ── Conversation List ──
+  const listY = cardY + cardH + 16;
+  const listX = 20;
+  const listW = CANVAS_WIDTH - 40;
+  const rowH = 48;
+  const maxVisible = 8;
+
+  if (convos.length === 0) {
+    ctx.fillStyle = "#556677";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("No conversations available yet.", CANVAS_WIDTH / 2, listY + 20);
+    ctx.fillStyle = "#445566";
+    ctx.font = "9px monospace";
+    ctx.fillText("Complete more missions to unlock.", CANVAS_WIDTH / 2, listY + 40);
+  } else {
+    // Section header
+    ctx.fillStyle = crew ? crew.color : "#44ccff";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("CONVERSATIONS", listX, listY);
+
+    const convoStartY = listY + 18;
+    const scrollOffset = Math.max(0, state.crewConvoIndex - maxVisible + 1);
+
+    for (let i = scrollOffset; i < Math.min(convos.length, scrollOffset + maxVisible); i++) {
+      const convo = convos[i];
+      const isSelected = state.crewConvoIndex === i;
+      const viewed = isConversationViewed(convo.id, save);
+      const y = convoStartY + (i - scrollOffset) * rowH;
+
+      // Row background
+      if (isSelected) {
+        const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+        ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = (crew?.color ?? "#44ccff") + "66";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 4);
+        ctx.stroke();
+      }
+
+      // Unread indicator
+      if (!viewed) {
+        ctx.fillStyle = "#ff4444";
+        ctx.font = "bold 10px monospace";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText("(!)", listX + 6, y + (rowH - 4) / 2);
+      }
+
+      // Title
+      const titleX = viewed ? listX + 10 : listX + 30;
+      ctx.fillStyle = isSelected ? "#ffffff" : (viewed ? "#778899" : "#ccddee");
+      ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(convo.title, titleX, y + 8);
+
+      // Preview (first line truncated)
+      const preview = convo.lines[0]?.text ?? "";
+      const maxChars = 38;
+      const truncated = preview.length > maxChars ? preview.substring(0, maxChars) + "..." : preview;
+      ctx.fillStyle = isSelected ? "#889999" : "#556677";
+      ctx.font = "9px monospace";
+      ctx.fillText(truncated, titleX, y + 24);
+    }
+
+    // Scroll indicators
+    if (scrollOffset > 0) {
+      ctx.fillStyle = "#44ccff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("\u25B2 more", CANVAS_WIDTH / 2, convoStartY - 6);
+    }
+    if (scrollOffset + maxVisible < convos.length) {
+      const bottomY = convoStartY + maxVisible * rowH;
+      ctx.fillStyle = "#44ccff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
+    }
+  }
+
+  // ── Bottom Bar ──
+  const barY = CANVAS_HEIGHT - 50;
+  ctx.fillStyle = "rgba(0, 0, 10, 0.7)";
+  ctx.fillRect(0, barY, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, barY);
+  ctx.lineTo(CANVAS_WIDTH, barY);
+  ctx.stroke();
+
+  ctx.fillStyle = "#445566";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2190\u2192 CHARACTER   \u2191\u2193 SELECT   ENTER READ   \u2190 BACK", CANVAS_WIDTH / 2, barY + 25);
+}
+
+// ─── Crew Dialog Reading View ──────────────────────────────────────
+
+function drawCrewDialog(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData,
+  convo: { id: string; title: string; lines: { speaker: string; text: string; color: string }[] }
+): void {
+  // Dark background
+  ctx.fillStyle = "#060610";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  // Starfield ambient
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 137 + 23) % CANVAS_WIDTH;
+    const sy = (i * 89 + 11) % CANVAS_HEIGHT;
+    const alpha = 0.15 + 0.1 * Math.abs(Math.sin(state.animTimer * 0.01 + i));
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Title bar
+  ctx.fillStyle = "rgba(0, 0, 10, 0.8)";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, 44);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 44);
+  ctx.lineTo(CANVAS_WIDTH, 44);
+  ctx.stroke();
+
+  // Back arrow
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 12px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2190 BACK", 12, 22);
+
+  // Conversation title
+  ctx.fillStyle = "#88aabb";
+  ctx.font = "bold 12px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(convo.title, CANVAS_WIDTH / 2, 22);
+
+  // Line counter
+  const viewed = isConversationViewed(convo.id, save);
+  ctx.fillStyle = viewed ? "#556677" : "#ff8844";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "right";
+  ctx.fillText(`${state.crewDialogLine + 1}/${convo.lines.length}`, CANVAS_WIDTH - 12, 22);
+
+  // ── Current line ──
+  const line = convo.lines[state.crewDialogLine];
+  if (!line) return;
+
+  // Find the crew member for the portrait
+  const crewMember = CREW.find(c => c.name.includes(line.speaker) || c.id.toUpperCase() === line.speaker);
+
+  // Portrait area
+  const portraitSize = 96;
+  const portraitX = (CANVAS_WIDTH - portraitSize) / 2;
+  const portraitY = 70;
+
+  // Portrait glow
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = line.color;
+  ctx.strokeStyle = line.color + "44";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(portraitX - 2, portraitY - 2, portraitSize + 4, portraitSize + 4, 8);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Portrait image
+  if (crewMember) {
+    const portraitKey = crewMember.portraitKey as keyof typeof SPRITES;
+    const portrait = getSprite(SPRITES[portraitKey]);
+    if (portrait) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(portraitX, portraitY, portraitSize, portraitSize, 6);
+      ctx.clip();
+      ctx.drawImage(portrait, portraitX, portraitY, portraitSize, portraitSize);
+      ctx.restore();
+    } else {
+      drawFallbackPortrait(ctx, line.speaker, line.color, portraitX, portraitY, portraitSize);
+    }
+  } else {
+    drawFallbackPortrait(ctx, line.speaker, line.color, portraitX, portraitY, portraitSize);
+  }
+
+  // Speaker name
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = line.color;
+  ctx.fillStyle = line.color;
+  ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(line.speaker, CANVAS_WIDTH / 2, portraitY + portraitSize + 14);
+  ctx.shadowBlur = 0;
+
+  // Dialog text (word-wrapped)
+  const textY = portraitY + portraitSize + 40;
+  const textX = 30;
+  const textW = CANVAS_WIDTH - 60;
+  const lineHeight = 20;
+
+  // Dialog box
+  ctx.fillStyle = "rgba(10, 10, 30, 0.7)";
+  ctx.beginPath();
+  ctx.roundRect(textX - 10, textY - 10, textW + 20, 140, 8);
+  ctx.fill();
+  ctx.strokeStyle = line.color + "33";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(textX - 10, textY - 10, textW + 20, 140, 8);
+  ctx.stroke();
+
+  // Wrap and draw text
+  ctx.fillStyle = "#ddeeff";
+  ctx.font = "12px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  const wrappedLines = wrapText(ctx, `"${line.text}"`, textW);
+  for (let i = 0; i < wrappedLines.length; i++) {
+    ctx.fillText(wrappedLines[i], textX, textY + i * lineHeight);
+  }
+
+  // ── Previous lines (faded, above) ──
+  // Show up to 2 previous lines as context
+  const prevStartY = textY + 140 + 10;
+  for (let p = Math.max(0, state.crewDialogLine - 2); p < state.crewDialogLine; p++) {
+    const prevLine = convo.lines[p];
+    if (!prevLine) continue;
+    const offset = state.crewDialogLine - p;
+    const alpha = 0.3 / offset;
+    const py = prevStartY + (p - Math.max(0, state.crewDialogLine - 2)) * 36;
+
+    ctx.fillStyle = prevLine.color + Math.floor(alpha * 255).toString(16).padStart(2, "0");
+    ctx.font = "bold 9px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(prevLine.speaker + ":", textX, py);
+
+    ctx.fillStyle = `rgba(200, 210, 220, ${alpha})`;
+    ctx.font = "9px monospace";
+    const truncatedPrev = prevLine.text.length > 50 ? prevLine.text.substring(0, 50) + "..." : prevLine.text;
+    ctx.fillText(`"${truncatedPrev}"`, textX, py + 14);
+  }
+
+  // ── Continue prompt ──
+  const promptY = CANVAS_HEIGHT - 80;
+  const isLastLine = state.crewDialogLine >= convo.lines.length - 1;
+  const pulse = 0.5 + 0.5 * Math.sin(state.animTimer * 0.08);
+
+  ctx.fillStyle = `rgba(68, 204, 255, ${pulse * 0.8})`;
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(isLastLine ? "[ENTER] CLOSE" : "[ENTER] CONTINUE \u25B6", CANVAS_WIDTH / 2, promptY);
+}
+
+// ─── Text Wrapping Helper ──────────────────────────────────────────
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine ? currentLine + " " + word : word;
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
+// ─── Fallback Portrait ─────────────────────────────────────────────
+
+function drawFallbackPortrait(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  color: string,
+  x: number,
+  y: number,
+  size: number
+): void {
+  ctx.fillStyle = color + "22";
+  ctx.beginPath();
+  ctx.roundRect(x, y, size, size, 6);
+  ctx.fill();
+  ctx.strokeStyle = color + "66";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y, size, size, 6);
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  ctx.font = "bold 32px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(name[0] ?? "?", x + size / 2, y + size / 2);
+}
+
+function drawMissionsScreen(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  drawSubScreenFrame(ctx, "MISSION BOARD", SPRITES.MISSIONS_BG);
+
+  const quests = getAvailableQuests(save);
+  const activeCount = save.activeQuests.length;
+
+  // Active quests counter
+  ctx.fillStyle = "#88aabb";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`ACTIVE: ${activeCount}/3`, CANVAS_WIDTH - 16, 25);
+
+  // ── Quest List ──
+  const listY = 60;
+  const listX = 12;
+  const listW = CANVAS_WIDTH - 24;
+  const rowH = 72;
+  const maxVisible = Math.floor((CANVAS_HEIGHT - listY - 60) / rowH);
+
+  if (quests.length === 0) {
+    ctx.fillStyle = "#556677";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("No quests available.", CANVAS_WIDTH / 2, listY + 30);
+    ctx.fillStyle = "#445566";
+    ctx.font = "9px monospace";
+    ctx.fillText("Complete more missions to unlock quests.", CANVAS_WIDTH / 2, listY + 50);
+  } else {
+    const scrollOffset = Math.max(0, state.missionSelected - maxVisible + 1);
+
+    for (let i = scrollOffset; i < Math.min(quests.length, scrollOffset + maxVisible); i++) {
+      const quest = quests[i];
+      const isSelected = state.missionSelected === i;
+      const active = isQuestActive(quest.id, save);
+      const completed = isQuestCompleted(quest.id, save);
+      const typeColor = QUEST_TYPE_COLORS[quest.type];
+      const y = listY + (i - scrollOffset) * rowH;
+
+      // Row background
+      if (isSelected) {
+        const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+        ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 6);
+        ctx.fill();
+
+        ctx.strokeStyle = typeColor + "66";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 6);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "rgba(10, 10, 20, 0.3)";
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 6);
+        ctx.fill();
+      }
+
+      // Type icon + badge
+      ctx.fillStyle = typeColor;
+      ctx.font = "bold 18px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(QUEST_TYPE_ICONS[quest.type], listX + 22, y + (rowH - 4) / 2 - 6);
+
+      ctx.fillStyle = typeColor;
+      ctx.font = "bold 7px monospace";
+      ctx.fillText(QUEST_TYPE_NAMES[quest.type], listX + 22, y + (rowH - 4) / 2 + 12);
+
+      // Quest name
+      ctx.fillStyle = isSelected ? "#ffffff" : "#aabbcc";
+      ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(quest.name, listX + 48, y + 6);
+
+      // Description
+      ctx.fillStyle = isSelected ? "#889999" : "#556677";
+      ctx.font = "9px monospace";
+      ctx.fillText(quest.description, listX + 48, y + 22);
+
+      // Offered by + target level
+      ctx.fillStyle = quest.offeredByColor + "88";
+      ctx.font = "8px monospace";
+      ctx.fillText(`${quest.offeredBy.toUpperCase()} \u2022 Level ${quest.targetLevel}`, listX + 48, y + 38);
+
+      // Reward
+      ctx.fillStyle = "#44ff88";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      ctx.fillText(`\u25C6 ${quest.reward}`, listX + listW - 8, y + 6);
+
+      // Status badge
+      if (completed) {
+        ctx.fillStyle = "#44ff88";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText("\u2713 DONE", listX + listW - 8, y + 22);
+      } else if (active) {
+        ctx.fillStyle = "#ffaa44";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText("ACTIVE", listX + listW - 8, y + 22);
+      }
+
+      // Action hint (when selected)
+      if (isSelected) {
+        ctx.textAlign = "right";
+        ctx.font = "8px monospace";
+        if (active) {
+          ctx.fillStyle = "#ff6666";
+          ctx.fillText("[ENTER] ABANDON", listX + listW - 8, y + rowH - 18);
+        } else if (!completed && activeCount < 3) {
+          ctx.fillStyle = "#44ccff";
+          ctx.fillText("[ENTER] ACCEPT", listX + listW - 8, y + rowH - 18);
+        } else if (!completed) {
+          ctx.fillStyle = "#554444";
+          ctx.fillText("MAX 3 ACTIVE", listX + listW - 8, y + rowH - 18);
+        }
+      }
+    }
+
+    // Scroll indicators
+    if (scrollOffset > 0) {
+      ctx.fillStyle = "#44ccff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("\u25B2 more", CANVAS_WIDTH / 2, listY - 2);
+    }
+    if (scrollOffset + maxVisible < quests.length) {
+      const bottomY = listY + maxVisible * rowH;
+      ctx.fillStyle = "#44ccff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
+    }
+  }
+
+  // ── Bottom Bar ──
+  const barY = CANVAS_HEIGHT - 50;
+  ctx.fillStyle = "rgba(0, 0, 10, 0.7)";
+  ctx.fillRect(0, barY, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, barY);
+  ctx.lineTo(CANVAS_WIDTH, barY);
+  ctx.stroke();
+
+  ctx.fillStyle = "#445566";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2191\u2193 SELECT   ENTER ACCEPT/ABANDON   \u2190 BACK", CANVAS_WIDTH / 2, barY + 25);
+}
+
+function drawCodexScreen(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  const cat = CODEX_CATEGORIES[state.codexCategory];
+  const entries = cat ? getEntriesForCategory(cat.id, save) : [];
+
+  // ── Reading view ──
+  if (state.codexReading && entries[state.codexSelected]) {
+    drawCodexReading(ctx, state, save, entries[state.codexSelected]);
+    return;
+  }
+
+  // ── Main codex screen ──
+  drawSubScreenFrame(ctx, "SHIP'S LOG", SPRITES.CODEX_BG);
+
+  // ── Category Tabs ──
+  const tabY = 56;
+  const tabH = 28;
+  const tabSpacing = 4;
+  const totalTabW = CANVAS_WIDTH - 20;
+  const tabW = (totalTabW - (CODEX_CATEGORIES.length - 1) * tabSpacing) / CODEX_CATEGORIES.length;
+
+  for (let i = 0; i < CODEX_CATEGORIES.length; i++) {
+    const c = CODEX_CATEGORIES[i];
+    const tx = 10 + i * (tabW + tabSpacing);
+    const isActive = state.codexCategory === i;
+    const newCount = countNewInCategory(c.id, save);
+
+    // Tab background
+    if (isActive) {
+      ctx.fillStyle = c.color + "22";
+      ctx.beginPath();
+      ctx.roundRect(tx, tabY, tabW, tabH, [4, 4, 0, 0]);
+      ctx.fill();
+
+      ctx.strokeStyle = c.color + "88";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(tx, tabY, tabW, tabH, [4, 4, 0, 0]);
+      ctx.stroke();
+
+      // Active indicator line
+      ctx.fillStyle = c.color;
+      ctx.fillRect(tx, tabY + tabH - 2, tabW, 2);
+    } else {
+      ctx.fillStyle = "rgba(10, 10, 20, 0.4)";
+      ctx.beginPath();
+      ctx.roundRect(tx, tabY, tabW, tabH, [4, 4, 0, 0]);
+      ctx.fill();
+    }
+
+    // Tab label
+    ctx.fillStyle = isActive ? c.color : "#556677";
+    ctx.font = isActive ? "bold 8px monospace" : "8px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(c.name, tx + tabW / 2, tabY + tabH / 2);
+
+    // New badge
+    if (newCount > 0) {
+      const bx = tx + tabW - 6;
+      const by = tabY + 4;
+      ctx.fillStyle = "#ff4444";
+      ctx.beginPath();
+      ctx.arc(bx, by, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 7px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${newCount}`, bx, by);
+    }
+  }
+
+  // ── Entry List ──
+  const listY = tabY + tabH + 8;
+  const listX = 12;
+  const listW = CANVAS_WIDTH - 24;
+  const rowH = 44;
+  const maxVisible = Math.floor((CANVAS_HEIGHT - listY - 60) / rowH);
+
+  if (entries.length === 0) {
+    ctx.fillStyle = "#556677";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("No entries unlocked yet.", CANVAS_WIDTH / 2, listY + 30);
+    ctx.fillStyle = "#445566";
+    ctx.font = "9px monospace";
+    ctx.fillText("Complete missions to discover intel.", CANVAS_WIDTH / 2, listY + 50);
+  } else {
+    const scrollOffset = Math.max(0, state.codexSelected - maxVisible + 1);
+
+    for (let i = scrollOffset; i < Math.min(entries.length, scrollOffset + maxVisible); i++) {
+      const entry = entries[i];
+      const isSelected = state.codexSelected === i;
+      const isNew = isCodexEntryNew(entry.id, save);
+      const y = listY + (i - scrollOffset) * rowH;
+
+      // Row background
+      if (isSelected) {
+        const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+        ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = (cat?.color ?? "#44ccff") + "66";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(listX, y, listW, rowH - 4, 4);
+        ctx.stroke();
+      }
+
+      // New indicator
+      if (isNew) {
+        ctx.fillStyle = "#ffaa44";
+        ctx.font = "bold 8px monospace";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText("NEW", listX + 6, y + (rowH - 4) / 2 - 6);
+      }
+
+      // Title
+      const titleX = isNew ? listX + 34 : listX + 10;
+      ctx.fillStyle = isSelected ? "#ffffff" : (isNew ? "#ccddee" : "#778899");
+      ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(entry.title, titleX, y + 6);
+
+      // Speaker tag (if present)
+      if (entry.speaker) {
+        ctx.fillStyle = entry.speakerColor ?? "#667788";
+        ctx.font = "8px monospace";
+        ctx.fillText(entry.speaker, titleX, y + 22);
+      } else {
+        // Category label as fallback
+        ctx.fillStyle = (cat?.color ?? "#667788") + "88";
+        ctx.font = "8px monospace";
+        ctx.fillText(cat?.name ?? "", titleX, y + 22);
+      }
+
+      // Read indicator (right side)
+      if (!isNew) {
+        ctx.fillStyle = "#334455";
+        ctx.font = "8px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText("\u2713 READ", listX + listW - 8, y + 14);
+      }
+    }
+
+    // Scroll indicators
+    if (scrollOffset > 0) {
+      ctx.fillStyle = "#44ccff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("\u25B2 more", CANVAS_WIDTH / 2, listY - 2);
+    }
+    if (scrollOffset + maxVisible < entries.length) {
+      const bottomY = listY + maxVisible * rowH;
+      ctx.fillStyle = "#44ccff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
+    }
+  }
+
+  // ── Bottom Bar ──
+  const barY = CANVAS_HEIGHT - 50;
+  ctx.fillStyle = "rgba(0, 0, 10, 0.7)";
+  ctx.fillRect(0, barY, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, barY);
+  ctx.lineTo(CANVAS_WIDTH, barY);
+  ctx.stroke();
+
+  ctx.fillStyle = "#445566";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2190\u2192 CATEGORY   \u2191\u2193 SELECT   ENTER READ   \u2190 BACK", CANVAS_WIDTH / 2, barY + 25);
+}
+
+// ─── Codex Reading View ─────────────────────────────────────────────
+
+function drawCodexReading(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  _save: SaveData,
+  entry: { title: string; speaker?: string; speakerColor?: string; text: string }
+): void {
+  // Dark background
+  ctx.fillStyle = "#060610";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  // Subtle grid pattern
+  ctx.strokeStyle = "#0a0a1a";
+  ctx.lineWidth = 0.5;
+  for (let y = 0; y < CANVAS_HEIGHT; y += 20) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(CANVAS_WIDTH, y);
+    ctx.stroke();
+  }
+
+  // Title bar
+  ctx.fillStyle = "rgba(0, 0, 10, 0.8)";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, 44);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 44);
+  ctx.lineTo(CANVAS_WIDTH, 44);
+  ctx.stroke();
+
+  // Back arrow
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 12px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2190 BACK", 12, 22);
+
+  // Entry title
+  const cat = CODEX_CATEGORIES[state.codexCategory];
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = cat?.color ?? "#44ccff";
+  ctx.fillStyle = cat?.color ?? "#44ccff";
+  ctx.font = "bold 13px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(entry.title, CANVAS_WIDTH / 2, 22);
+  ctx.shadowBlur = 0;
+
+  // Speaker attribution (if present)
+  let contentY = 60;
+  if (entry.speaker) {
+    ctx.fillStyle = entry.speakerColor ?? "#667788";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(entry.speaker, 24, contentY);
+    contentY += 20;
+  }
+
+  // Content area background
+  const contentX = 16;
+  const contentW = CANVAS_WIDTH - 32;
+  const contentH = CANVAS_HEIGHT - contentY - 60;
+
+  ctx.fillStyle = "rgba(10, 10, 30, 0.5)";
+  ctx.beginPath();
+  ctx.roundRect(contentX, contentY, contentW, contentH, 6);
+  ctx.fill();
+  ctx.strokeStyle = (cat?.color ?? "#44ccff") + "22";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(contentX, contentY, contentW, contentH, 6);
+  ctx.stroke();
+
+  // Text content (word-wrapped with newline support)
+  ctx.fillStyle = "#bbccdd";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  const textX = contentX + 12;
+  const textW = contentW - 24;
+  const lineHeight = 16;
+  let drawY = contentY + 12;
+
+  // Split by explicit newlines first, then word-wrap each paragraph
+  const paragraphs = entry.text.split("\n");
+  for (const para of paragraphs) {
+    if (para.trim() === "") {
+      drawY += lineHeight * 0.6;
+      continue;
+    }
+    const wrapped = wrapText(ctx, para, textW);
+    for (const wline of wrapped) {
+      if (drawY > contentY + contentH - 20) break;
+      ctx.fillText(wline, textX, drawY);
+      drawY += lineHeight;
+    }
+  }
+
+  // Close prompt
+  const promptY = CANVAS_HEIGHT - 40;
+  const pulse = 0.5 + 0.5 * Math.sin(state.animTimer * 0.08);
+  ctx.fillStyle = `rgba(68, 204, 255, ${pulse * 0.8})`;
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("[ENTER] or [\u2190] CLOSE", CANVAS_WIDTH / 2, promptY);
+}

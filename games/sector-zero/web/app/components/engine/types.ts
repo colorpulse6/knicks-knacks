@@ -179,7 +179,6 @@ export interface Enemy {
   behavior: EnemyBehavior;
   behaviorTimer: number;
   cloaked: boolean;
-  dropsPowerUp: boolean;
 }
 
 export type EnemyBehavior =

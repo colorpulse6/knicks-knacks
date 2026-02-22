@@ -25,7 +25,6 @@ export function createEnemy(
   x: number,
   y: number,
   behavior?: EnemyBehavior,
-  dropsPowerUp?: boolean
 ): Enemy {
   const def = ENEMY_DEFS[type];
   const defaultBehavior = getDefaultBehavior(type);
@@ -49,7 +48,6 @@ export function createEnemy(
     behavior: behavior ?? defaultBehavior,
     behaviorTimer: 0,
     cloaked: type === EnemyType.CLOAKER || type === EnemyType.ECHO,
-    dropsPowerUp: dropsPowerUp ?? false,
   };
 }
 

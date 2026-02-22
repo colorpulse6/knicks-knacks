@@ -1,4 +1,4 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, type Keys, type SaveData } from "./types";
+import { CANVAS_WIDTH, type Keys, type SaveData } from "./types";
 import { ALL_LEVELS, WORLD_NAMES, getWorldLevelCount } from "./levels";
 
 // ─── Star Map State ─────────────────────────────────────────────────

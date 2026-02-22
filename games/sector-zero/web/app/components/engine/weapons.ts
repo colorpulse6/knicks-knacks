@@ -3,8 +3,6 @@ import {
   BULLET_SPEED,
   type Bullet,
   type Player,
-  type ActivePowerUp,
-  PowerUpType,
 } from "./types";
 
 let bulletIdCounter = 0;
@@ -38,14 +36,12 @@ function createBullet(
 
 export function firePlayerWeapon(
   player: Player,
-  weaponLevel: number,
-  activePowerUps: ActivePowerUp[]
+  weaponLevel: number
 ): Bullet[] {
   const cx = player.x + player.width / 2;
   const top = player.y;
   const bullets: Bullet[] = [];
-  const hasRapidFire = activePowerUps.some((p) => p.type === PowerUpType.RAPID_FIRE);
-  const damage = hasRapidFire ? 1 : 1;
+  const damage = 1;
 
   switch (weaponLevel) {
     case 1:

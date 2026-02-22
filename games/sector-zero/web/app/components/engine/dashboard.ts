@@ -6,7 +6,6 @@ import {
   PowerUpType,
   POWER_UP_COLORS,
   POWER_UP_SYMBOLS,
-  POWER_UP_DURATION,
   type GameState,
 } from "./types";
 import { getSprite, SPRITES } from "./sprites";
@@ -94,7 +93,7 @@ export function drawDashboard(
   // ── Dialog Zone ──
   drawDialogZone(ctx, state);
 
-  // ── XP Bar (placeholder until Phase 3 adds xp to GameState) ──
+  // ── XP Bar ──
   drawXpBar(ctx, state);
 
   ctx.restore();
@@ -207,8 +206,7 @@ function drawEquipmentRow(
   let puX = 90;
 
   for (const ap of state.activePowerUps) {
-    const duration = POWER_UP_DURATION[ap.type] || 600;
-    const pct = ap.remainingFrames / duration;
+    const pct = ap.remainingFrames / ap.totalFrames;
 
     if (puSheet) {
       const frameIdx = POWERUP_FRAME_MAP[ap.type] ?? 0;

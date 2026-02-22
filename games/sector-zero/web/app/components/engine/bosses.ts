@@ -35,8 +35,8 @@ export function createRockjaw(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 150,
-    maxHp: 150,
+    hp: 250,
+    maxHp: 250,
     phase: 1,
     maxPhases: 2,
     parts: [
@@ -46,8 +46,8 @@ export function createRockjaw(): Boss {
         y: 0,
         width: 256,
         height: 256,
-        hp: 150,
-        maxHp: 150,
+        hp: 250,
+        maxHp: 250,
         isWeakPoint: false,
         vulnerable: false,
       },
@@ -57,8 +57,8 @@ export function createRockjaw(): Boss {
         y: 100,
         width: 96,
         height: 80,
-        hp: 150,
-        maxHp: 150,
+        hp: 250,
+        maxHp: 250,
         isWeakPoint: true,
         vulnerable: false,
       },
@@ -305,18 +305,18 @@ export function createGlacius(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 100,
-    maxHp: 100,
+    hp: 200,
+    maxHp: 200,
     phase: 1,
     maxPhases: 2,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 256, height: 256,
-        hp: 100, maxHp: 100, isWeakPoint: false, vulnerable: false,
+        hp: 200, maxHp: 200, isWeakPoint: false, vulnerable: false,
       },
       {
         id: 2, x: 80, y: 80, width: 96, height: 96,
-        hp: 100, maxHp: 100, isWeakPoint: true, vulnerable: true,
+        hp: 200, maxHp: 200, isWeakPoint: true, vulnerable: true,
       },
     ],
     fireTimer: 80,
@@ -349,7 +349,7 @@ export function updateGlacius(
   }
 
   // Phase check
-  if (b.hp <= 50 && b.phase === 1) {
+  if (b.hp <= 100 && b.phase === 1) {
     b.phase = 2;
     b.velocityX = b.velocityX > 0 ? 1.5 : -1.5;
     audioEvents.push(AudioEvent.BOSS_PHASE);
@@ -433,18 +433,18 @@ export function createCindermaw(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 120,
-    maxHp: 120,
+    hp: 250,
+    maxHp: 250,
     phase: 1,
     maxPhases: 2,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 256, height: 256,
-        hp: 120, maxHp: 120, isWeakPoint: false, vulnerable: false,
+        hp: 250, maxHp: 250, isWeakPoint: false, vulnerable: false,
       },
       {
         id: 2, x: 80, y: 100, width: 96, height: 80,
-        hp: 120, maxHp: 120, isWeakPoint: true, vulnerable: false,
+        hp: 250, maxHp: 250, isWeakPoint: true, vulnerable: false,
       },
     ],
     fireTimer: 70,
@@ -477,7 +477,7 @@ export function updateCindermaw(
   }
 
   // Phase check
-  if (b.hp <= 60 && b.phase === 1) {
+  if (b.hp <= 125 && b.phase === 1) {
     b.phase = 2;
     b.mouthOpen = true;
     b.velocityX = b.velocityX > 0 ? 2 : -2;
@@ -625,19 +625,19 @@ export function createRevenant(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 130,
-    maxHp: 130,
+    hp: 275,
+    maxHp: 275,
     phase: 1,
     maxPhases: 2,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 256, height: 256,
-        hp: 130, maxHp: 130, isWeakPoint: false, vulnerable: false,
+        hp: 275, maxHp: 275, isWeakPoint: false, vulnerable: false,
       },
       {
         // The bridge — exposed only in Phase 2
         id: 2, x: 80, y: 60, width: 96, height: 70,
-        hp: 130, maxHp: 130, isWeakPoint: true, vulnerable: false,
+        hp: 275, maxHp: 275, isWeakPoint: true, vulnerable: false,
       },
     ],
     fireTimer: 80,
@@ -670,7 +670,7 @@ export function updateRevenant(
   }
 
   // Phase check — bridge exposed when Hollow growth consumes hull
-  if (b.hp <= 65 && b.phase === 1) {
+  if (b.hp <= 137 && b.phase === 1) {
     b.phase = 2;
     b.mouthOpen = true; // bridge exposed
     b.velocityX = b.velocityX > 0 ? 1.8 : -1.8;
@@ -775,18 +775,18 @@ export function createNyxar(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 140,
-    maxHp: 140,
+    hp: 300,
+    maxHp: 300,
     phase: 1,
     maxPhases: 3,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 256, height: 256,
-        hp: 140, maxHp: 140, isWeakPoint: false, vulnerable: false,
+        hp: 300, maxHp: 300, isWeakPoint: false, vulnerable: false,
       },
       {
         id: 2, x: 80, y: 80, width: 96, height: 96,
-        hp: 140, maxHp: 140, isWeakPoint: true, vulnerable: true,
+        hp: 300, maxHp: 300, isWeakPoint: true, vulnerable: true,
       },
     ],
     fireTimer: 60,
@@ -819,11 +819,11 @@ export function updateNyxar(
   }
 
   // Phase checks
-  if (b.hp <= 93 && b.phase === 1) {
+  if (b.hp <= 200 && b.phase === 1) {
     b.phase = 2;
     audioEvents.push(AudioEvent.BOSS_PHASE);
   }
-  if (b.hp <= 46 && b.phase === 2) {
+  if (b.hp <= 100 && b.phase === 2) {
     b.phase = 3;
     b.mouthOpen = true;
     audioEvents.push(AudioEvent.BOSS_PHASE);
@@ -982,19 +982,19 @@ export function createBeacon(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 150,
-    maxHp: 150,
+    hp: 325,
+    maxHp: 325,
     phase: 1,
     maxPhases: 2,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 256, height: 256,
-        hp: 150, maxHp: 150, isWeakPoint: false, vulnerable: false,
+        hp: 325, maxHp: 325, isWeakPoint: false, vulnerable: false,
       },
       {
         // Signal core — exposed during emission pauses
         id: 2, x: 80, y: 80, width: 96, height: 96,
-        hp: 150, maxHp: 150, isWeakPoint: true, vulnerable: false,
+        hp: 325, maxHp: 325, isWeakPoint: true, vulnerable: false,
       },
     ],
     fireTimer: 90,
@@ -1027,7 +1027,7 @@ export function updateBeacon(
   }
 
   // Phase check
-  if (b.hp <= 75 && b.phase === 1) {
+  if (b.hp <= 162 && b.phase === 1) {
     b.phase = 2;
     b.velocityX = b.velocityX > 0 ? 1 : -1;
     audioEvents.push(AudioEvent.BOSS_PHASE);
@@ -1128,19 +1128,19 @@ export function createReflection(): Boss {
     y: -260,
     width: 256,
     height: 256,
-    hp: 160,
-    maxHp: 160,
+    hp: 350,
+    maxHp: 350,
     phase: 1,
     maxPhases: 3,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 256, height: 256,
-        hp: 160, maxHp: 160, isWeakPoint: false, vulnerable: false,
+        hp: 350, maxHp: 350, isWeakPoint: false, vulnerable: false,
       },
       {
         // Glowing seam where mirror image fractures
         id: 2, x: 80, y: 80, width: 96, height: 96,
-        hp: 160, maxHp: 160, isWeakPoint: true, vulnerable: true,
+        hp: 350, maxHp: 350, isWeakPoint: true, vulnerable: true,
       },
     ],
     fireTimer: 70,
@@ -1173,12 +1173,12 @@ export function updateReflection(
   }
 
   // Phase checks
-  if (b.hp <= 106 && b.phase === 1) {
+  if (b.hp <= 233 && b.phase === 1) {
     b.phase = 2;
     b.velocityX = b.velocityX > 0 ? 2 : -2;
     audioEvents.push(AudioEvent.BOSS_PHASE);
   }
-  if (b.hp <= 53 && b.phase === 2) {
+  if (b.hp <= 116 && b.phase === 2) {
     b.phase = 3;
     b.velocityX = b.velocityX > 0 ? 2.5 : -2.5;
     audioEvents.push(AudioEvent.BOSS_PHASE);
@@ -1312,18 +1312,18 @@ export function createHollowMind(): Boss {
     y: -330,
     width: 320,
     height: 320,
-    hp: 200,
-    maxHp: 200,
+    hp: 500,
+    maxHp: 500,
     phase: 1,
     maxPhases: 3,
     parts: [
       {
         id: 1, x: 0, y: 0, width: 320, height: 320,
-        hp: 200, maxHp: 200, isWeakPoint: false, vulnerable: false,
+        hp: 500, maxHp: 500, isWeakPoint: false, vulnerable: false,
       },
       {
         id: 2, x: 112, y: 112, width: 96, height: 96,
-        hp: 200, maxHp: 200, isWeakPoint: true, vulnerable: true,
+        hp: 500, maxHp: 500, isWeakPoint: true, vulnerable: true,
       },
     ],
     fireTimer: 50,
@@ -1356,11 +1356,11 @@ export function updateHollowMind(
   }
 
   // Phase checks
-  if (b.hp <= 133 && b.phase === 1) {
+  if (b.hp <= 333 && b.phase === 1) {
     b.phase = 2;
     audioEvents.push(AudioEvent.BOSS_PHASE);
   }
-  if (b.hp <= 66 && b.phase === 2) {
+  if (b.hp <= 166 && b.phase === 2) {
     b.phase = 3;
     b.velocityX = b.velocityX > 0 ? 1.2 : -1.2;
     audioEvents.push(AudioEvent.BOSS_PHASE);

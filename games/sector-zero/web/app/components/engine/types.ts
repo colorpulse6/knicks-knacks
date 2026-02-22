@@ -105,12 +105,12 @@ export const ENEMY_DEFS: Record<EnemyType, EnemyDefinition> = {
   },
   [EnemyType.GUNNER]: {
     type: EnemyType.GUNNER,
-    hp: 2, speed: 1.5, width: 48, height: 48, score: 250,
+    hp: 3, speed: 1.5, width: 48, height: 48, score: 250,
     shoots: true, fireRate: 60,
   },
   [EnemyType.SHIELDER]: {
     type: EnemyType.SHIELDER,
-    hp: 3, speed: 1.5, width: 56, height: 48, score: 350,
+    hp: 5, speed: 1.5, width: 56, height: 48, score: 350,
     shoots: true, fireRate: 90,
   },
   [EnemyType.BOMBER]: {
@@ -125,17 +125,17 @@ export const ENEMY_DEFS: Record<EnemyType, EnemyDefinition> = {
   },
   [EnemyType.TURRET]: {
     type: EnemyType.TURRET,
-    hp: 4, speed: 0, width: 48, height: 48, score: 400,
+    hp: 6, speed: 0, width: 48, height: 48, score: 400,
     shoots: true, fireRate: 45,
   },
   [EnemyType.CLOAKER]: {
     type: EnemyType.CLOAKER,
-    hp: 2, speed: 3, width: 44, height: 44, score: 300,
+    hp: 3, speed: 3, width: 44, height: 44, score: 300,
     shoots: true, fireRate: 90,
   },
   [EnemyType.ELITE]: {
     type: EnemyType.ELITE,
-    hp: 5, speed: 3, width: 48, height: 48, score: 1000,
+    hp: 8, speed: 3, width: 48, height: 48, score: 1000,
     shoots: true, fireRate: 40,
   },
   [EnemyType.MINE]: {
@@ -145,17 +145,17 @@ export const ENEMY_DEFS: Record<EnemyType, EnemyDefinition> = {
   },
   [EnemyType.WRAITH]: {
     type: EnemyType.WRAITH,
-    hp: 3, speed: 2.5, width: 48, height: 44, score: 400,
+    hp: 4, speed: 2.5, width: 48, height: 44, score: 400,
     shoots: true, fireRate: 80,
   },
   [EnemyType.ECHO]: {
     type: EnemyType.ECHO,
-    hp: 2, speed: 3, width: 36, height: 36, score: 300,
+    hp: 3, speed: 3, width: 36, height: 36, score: 300,
     shoots: true, fireRate: 90,
   },
   [EnemyType.MIRROR]: {
     type: EnemyType.MIRROR,
-    hp: 2, speed: 4, width: 48, height: 48, score: 350,
+    hp: 3, speed: 4, width: 48, height: 48, score: 350,
     shoots: true, fireRate: 60,
   },
 };
@@ -241,6 +241,7 @@ export interface PowerUp {
 export interface ActivePowerUp {
   type: PowerUpType;
   remainingFrames: number;
+  totalFrames: number;
 }
 
 export const POWER_UP_COLORS: Record<PowerUpType, string> = {

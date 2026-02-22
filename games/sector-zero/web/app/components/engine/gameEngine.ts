@@ -38,9 +38,11 @@ import {
   resetEnemyIds,
 } from "./enemies";
 import { resetBulletIds } from "./weapons";
-import { aabbOverlap } from "./physics";
+import { aabbOverlap, SpatialHash } from "./physics";
 import { getLevelData, getWorldLevelCount } from "./levels";
 import { clamp } from "./physics";
+
+const spatialHash = new SpatialHash();
 import { createBossForWorld, updateBossForWorld, isBossDefeated, resetBossBulletIds } from "./bosses";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
 
@@ -678,8 +680,7 @@ function handlePlayerShooting(state: GameState, keys: Keys): GameState {
 
   const newBullets = firePlayerWeapon(
     state.player,
-    state.player.weaponLevel,
-    state.activePowerUps
+    state.player.weaponLevel
   );
 
   // Side gunners
@@ -774,13 +775,24 @@ function handleCollisions(state: GameState): GameState {
   const destroyedBullets = new Set<number>();
   const destroyedEnemies = new Set<number>();
 
-  // Player bullets → Enemies
+  // Build spatial hash of enemies for broad-phase collision
+  spatialHash.clear();
+  const enemyById = new Map<number, (typeof s.enemies)[0]>();
+  for (const enemy of s.enemies) {
+    if (!enemy.cloaked) {
+      spatialHash.insert(enemy.id, enemy.x, enemy.y, enemy.width, enemy.height);
+      enemyById.set(enemy.id, enemy);
+    }
+  }
+
+  // Player bullets → Enemies (spatial hash narrows candidates)
   for (const bullet of s.playerBullets) {
     if (destroyedBullets.has(bullet.id)) continue;
 
-    for (const enemy of s.enemies) {
-      if (destroyedEnemies.has(enemy.id)) continue;
-      if (enemy.cloaked) continue;
+    const candidates = spatialHash.query(bullet.x, bullet.y, bullet.width, bullet.height);
+    for (const enemyId of candidates) {
+      if (destroyedEnemies.has(enemyId)) continue;
+      const enemy = enemyById.get(enemyId)!;
 
       if (aabbOverlap(bullet, enemy)) {
         if (!bullet.piercing) {
@@ -942,7 +954,7 @@ function playerHit(
 
     if (newLives > 0) {
       // Respawn
-      const newPlayer = createPlayer();
+      const newPlayer = createPlayer(currentUpgrades);
       newPlayer.invincibleTimer = PLAYER_INVINCIBLE_FRAMES * 2;
       newPlayer.weaponLevel = Math.max(1, player.weaponLevel - 1);
 
@@ -1166,9 +1178,10 @@ function updatePowerUps(state: GameState): GameState {
           activePowerUps[existing] = {
             ...activePowerUps[existing],
             remainingFrames: dur,
+            totalFrames: dur,
           };
         } else {
-          activePowerUps.push({ type: pu.type, remainingFrames: dur });
+          activePowerUps.push({ type: pu.type, remainingFrames: dur, totalFrames: dur });
         }
       }
     }

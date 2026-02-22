@@ -2,9 +2,10 @@ import { AudioEvent } from "./types";
 
 export type MusicTrack = "menu" | "game";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const MUSIC_PATHS: Record<MusicTrack, string> = {
-  menu: "/audio/menu-theme.mp3",
-  game: "/audio/main-theme.mp3",
+  menu: `${basePath}/audio/menu-theme.mp3`,
+  game: `${basePath}/audio/main-theme.mp3`,
 };
 const MUSIC_VOLUME = 0.35;
 const SFX_VOLUME = 0.25;

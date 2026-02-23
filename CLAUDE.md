@@ -65,13 +65,15 @@ knicks-knacks/
 
 ## Games (`games/`)
 
-Web-based games deployed to GitHub Pages at https://colorpulse6.github.io/
+Web-based games deployed to GitHub Pages at https://colorpulse6.github.io/knicks-knacks/
 
 | Game | Description |
 |------|-------------|
 | Wordle | Daily word guessing game |
 | 2048 | Number sliding puzzle |
 | Asteroids | Space shooter with collision detection |
+| Brickles | Neon brick-breaker with power-ups and combos |
+| Sector Zero | Vertical space shooter with 8 worlds and boss battles |
 | Chimera | FF6-style JRPG with ATB combat (in development) |
 
 Games use Next.js with static export (`output: 'export'`) for GitHub Pages compatibility.
@@ -208,7 +210,7 @@ yarn clean                   # Remove node_modules, dist, .next, .turbo
 ### GitHub Pages (Games)
 - Automated deployment via GitHub Actions
 - Push to `main` triggers build and deploy to `gh-pages` branch
-- Games available at: `https://colorpulse6.github.io/[game-name]/`
+- Games available at: `https://colorpulse6.github.io/knicks-knacks/[game-name]/`
 
 ## Coding Standards
 

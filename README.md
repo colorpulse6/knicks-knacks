@@ -60,25 +60,37 @@ This monorepo contains multiple full-stack apps, each with their own mobile, bac
 
 ## Games
 
-Web-based games built with Next.js and deployed to GitHub Pages at https://colorpulse6.github.io/
+Web-based games built with Next.js and deployed to GitHub Pages at https://colorpulse6.github.io/knicks-knacks/
 
 ### Wordle
 
 - **Description:** A daily word guessing game where players have six attempts to guess a five-letter word.
 - **Location:** `games/wordle/web`
-- **Live URL:** https://colorpulse6.github.io/wordle/
+- **Live URL:** https://colorpulse6.github.io/knicks-knacks/wordle/
 
 ### 2048
 
 - **Description:** A number sliding puzzle game where players combine tiles to reach the 2048 tile.
 - **Location:** `games/2048/web`
-- **Live URL:** https://colorpulse6.github.io/2048/
+- **Live URL:** https://colorpulse6.github.io/knicks-knacks/2048/
 
 ### Asteroids
 
 - **Description:** A space shooter game with collision detection where players destroy asteroids while avoiding collisions.
 - **Location:** `games/asteroids/web`
-- **Live URL:** https://colorpulse6.github.io/asteroids/
+- **Live URL:** https://colorpulse6.github.io/knicks-knacks/asteroids/
+
+### Brickles
+
+- **Description:** Neon brick-breaker with power-ups, combos, and procedural audio. Ten levels of arcade destruction.
+- **Location:** `games/brickles/web`
+- **Live URL:** https://colorpulse6.github.io/knicks-knacks/brickles/
+
+### Sector Zero
+
+- **Description:** Vertical scrolling space shooter with 8 worlds, boss battles, ship upgrades, and a branching story.
+- **Location:** `games/sector-zero/web`
+- **Live URL:** https://colorpulse6.github.io/knicks-knacks/sector-zero/
 
 See each app's own README for setup and usage details.
 

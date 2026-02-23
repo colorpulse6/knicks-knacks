@@ -18,7 +18,8 @@
       "Bash(node -e:*)",
       "WebFetch(domain:colorpulse6.github.io)",
       "Bash(ls:*)",
-      "Bash(yarn sector-zero:build:*)"
+      "Bash(yarn sector-zero:build:*)",
+      "Bash(sips:*)"
     ]
   }
 }

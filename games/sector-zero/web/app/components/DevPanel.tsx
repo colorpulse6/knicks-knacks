@@ -113,6 +113,7 @@ export default function DevPanel({ gameState, onAction }: DevPanelProps) {
             )}
             <div>
               Invincible: <span className={gameState.devInvincible ? "text-yellow-400" : ""}>{gameState.devInvincible ? "ON" : "off"}</span>
+              {" | Bank: "}<span className={gameState.player.bankDir !== 0 ? "text-cyan-400" : ""}>{gameState.player.bankDir}</span>
             </div>
           </>
         )}

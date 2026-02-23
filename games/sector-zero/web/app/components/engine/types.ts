@@ -45,6 +45,8 @@ export interface Player {
   fireTimer: number;
   energy: number;
   maxEnergy: number;
+  /** -1 = banking left, 0 = center, 1 = banking right */
+  bankDir: number;
 }
 
 // ─── Bullets ─────────────────────────────────────────────────────────

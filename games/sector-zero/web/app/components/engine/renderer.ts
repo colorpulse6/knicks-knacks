@@ -165,15 +165,19 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState): void {
     // Player sheet: 3 ships side-by-side (bank-left, center, bank-right)
     const frameW = sprite.width / 3;
     const frameH = sprite.height;
-    // Default to center (frame 1)
-    const frameIdx = 1;
+    // 0 = bank-left, 1 = center, 2 = bank-right
+    const frameIdx = player.bankDir === -1 ? 0 : player.bankDir === 1 ? 2 : 1;
 
+    // Crop to ship content area — the ships sit in the center ~50% of each frame
+    // with large transparent padding above and below
+    const cropTop = Math.floor(frameH * 0.25);
+    const cropH = Math.floor(frameH * 0.50);
     const sx = frameIdx * frameW;
     const drawSize = player.width + 12;
     const drawX = player.x - 6;
     const drawY = player.y - 6;
 
-    ctx.drawImage(sprite, sx, 0, frameW, frameH, drawX, drawY, drawSize, drawSize);
+    ctx.drawImage(sprite, sx, cropTop, frameW, cropH, drawX, drawY, drawSize, drawSize);
   } else {
     // Fallback: placeholder ship
     ctx.save();

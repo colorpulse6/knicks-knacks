@@ -129,6 +129,7 @@ export function createPlayer(upgrades: ShipUpgrades = DEFAULT_UPGRADES): Player 
     fireTimer: 0,
     energy: 100,
     maxEnergy: 100,
+    bankDir: 0,
   };
 }
 
@@ -792,6 +793,8 @@ function updatePlayer(
   const hasSpeedBoost = state.activePowerUps.some((p) => p.type === PowerUpType.SPEED);
   const speed = player.speed * (hasSpeedBoost ? 1.5 : 1);
 
+  const prevX = player.x;
+
   if (touchX !== null && touchY !== null) {
     // Touch controls: move towards finger (with offset so ship visible above thumb)
     const targetX = touchX - player.width / 2;
@@ -815,6 +818,12 @@ function updatePlayer(
   // Clamp to canvas
   player.x = clamp(player.x, 0, CANVAS_WIDTH - player.width);
   player.y = clamp(player.y, 0, GAME_AREA_HEIGHT - player.height);
+
+  // Bank direction based on horizontal movement
+  const moveX = player.x - prevX;
+  if (moveX < -0.1) player.bankDir = -1;
+  else if (moveX > 0.1) player.bankDir = 1;
+  else player.bankDir = 0;
 
   // Invincibility timer
   if (state.devInvincible) {

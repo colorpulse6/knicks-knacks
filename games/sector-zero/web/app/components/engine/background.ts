@@ -102,14 +102,30 @@ function drawTiledImage(
 ): void {
   const scale = CANVAS_WIDTH / img.width;
   const drawH = img.height * scale;
-  const offset = scrollY % drawH;
+
+  // Mirror-tile: every other copy is vertically flipped so edges always match
+  const firstTile = Math.floor(scrollY / drawH);
+  const yOffset = scrollY - firstTile * drawH;
 
   ctx.globalAlpha = alpha;
-  ctx.drawImage(img, 0, offset - drawH, CANVAS_WIDTH, drawH);
-  ctx.drawImage(img, 0, offset, CANVAS_WIDTH, drawH);
-  if (offset + drawH < CANVAS_HEIGHT) {
-    ctx.drawImage(img, 0, offset + drawH, CANVAS_WIDTH, drawH);
+
+  const tilesNeeded = Math.ceil(CANVAS_HEIGHT / drawH) + 2;
+  for (let i = -1; i < tilesNeeded; i++) {
+    const tileNum = firstTile + i;
+    const screenY = i * drawH - yOffset;
+    const isFlipped = ((tileNum % 2) + 2) % 2 === 1;
+
+    if (isFlipped) {
+      ctx.save();
+      ctx.translate(0, screenY + drawH);
+      ctx.scale(1, -1);
+      ctx.drawImage(img, 0, 0, CANVAS_WIDTH, drawH);
+      ctx.restore();
+    } else {
+      ctx.drawImage(img, 0, screenY, CANVAS_WIDTH, drawH);
+    }
   }
+
   ctx.globalAlpha = 1;
 }
 

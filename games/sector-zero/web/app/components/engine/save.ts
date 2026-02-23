@@ -1,4 +1,12 @@
-import { DEFAULT_UPGRADES, type SaveData, type ShipUpgrades } from "./types";
+import {
+  DEFAULT_UPGRADES,
+  type ConsumableId,
+  type EnhancementId,
+  type MaterialId,
+  type PlanetId,
+  type SaveData,
+  type ShipUpgrades,
+} from "./types";
 import { unlockCodexEntries } from "./codex";
 export type { SaveData };
 
@@ -17,6 +25,11 @@ const defaultSave: SaveData = {
   viewedConversations: [],
   completedQuests: [],
   activeQuests: [],
+  completedPlanets: [],
+  materials: [],
+  consumableInventory: {},
+  equippedConsumables: [],
+  unlockedEnhancements: [],
 };
 
 /** Migrate old saves that lack new fields */
@@ -35,6 +48,11 @@ function migrateSave(raw: Record<string, unknown>): SaveData {
     viewedConversations: (raw.viewedConversations as string[]) ?? [],
     completedQuests: (raw.completedQuests as string[]) ?? [],
     activeQuests: (raw.activeQuests as string[]) ?? [],
+    completedPlanets: (raw.completedPlanets as PlanetId[]) ?? [],
+    materials: (raw.materials as MaterialId[]) ?? [],
+    consumableInventory: (raw.consumableInventory as Partial<Record<ConsumableId, number>>) ?? {},
+    equippedConsumables: (raw.equippedConsumables as ConsumableId[]) ?? [],
+    unlockedEnhancements: (raw.unlockedEnhancements as EnhancementId[]) ?? [],
   };
 }
 

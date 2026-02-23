@@ -1,5 +1,6 @@
-import { CANVAS_WIDTH, type Keys, type SaveData } from "./types";
+import { CANVAS_WIDTH, type Keys, type PlanetId, type SaveData } from "./types";
 import { ALL_LEVELS, WORLD_NAMES, getWorldLevelCount } from "./levels";
+import { PLANET_DEFS, isPlanetUnlocked, isPlanetCompleted, getPlanetsForWorld } from "./planets";
 
 // ─── Star Map State ─────────────────────────────────────────────────
 export interface StarMapState {
@@ -127,6 +128,40 @@ export function isLevelUnlocked(world: number, level: number, save: SaveData): b
   return save.levels[prevKey]?.completed ?? false;
 }
 
+// ─── Planet Node Layout (visual only — launching is from cockpit) ───
+
+export interface PlanetNodeLayout {
+  planetId: PlanetId;
+  name: string;
+  x: number;
+  y: number;
+  color: string;
+  unlocked: boolean;
+  completed: boolean;
+  pairedWorld: number;
+  objective: string;
+}
+
+export function getPlanetNodes(save: SaveData): PlanetNodeLayout[] {
+  const worldNodes = getWorldNodes(save);
+
+  return PLANET_DEFS.map((planet) => {
+    const worldNode = worldNodes[planet.pairedWorld - 1];
+    return {
+      planetId: planet.id,
+      name: planet.name,
+      // Offset to the left/below the paired world node
+      x: worldNode.x - 40,
+      y: worldNode.y + 35,
+      color: planet.color,
+      unlocked: isPlanetUnlocked(planet, save),
+      completed: isPlanetCompleted(planet.id, save),
+      pairedWorld: planet.pairedWorld,
+      objective: planet.objectiveLabel,
+    };
+  });
+}
+
 // ─── Input Handling ─────────────────────────────────────────────────
 export interface StarMapAction {
   type: "select-level" | "back" | "none";
@@ -185,8 +220,9 @@ export function updateStarMap(
       s.selectedLevel = 1;
     }
   } else {
-    // Level selection mode
+    // Level selection mode (planets are visual-only, launched from cockpit)
     const count = getWorldLevelCount(s.selectedWorld);
+
     if (justPressed.up && s.selectedLevel > 1) {
       s.selectedLevel -= 1;
     }

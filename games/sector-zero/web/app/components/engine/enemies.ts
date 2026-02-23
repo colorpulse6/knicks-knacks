@@ -15,6 +15,24 @@ import { getSprite, SPRITES } from "./sprites";
 let enemyIdCounter = 0;
 let bulletIdCounter = 10000; // offset from player bullets
 
+/** World-based difficulty scaling for planet expansion */
+let currentDifficultyScale = { hp: 1, speed: 1, fireRate: 1 };
+
+const WORLD_DIFFICULTY: Record<number, { hp: number; speed: number; fireRate: number }> = {
+  1: { hp: 1, speed: 1, fireRate: 1 },
+  2: { hp: 1, speed: 1, fireRate: 1 },
+  3: { hp: 1, speed: 1, fireRate: 1 },
+  4: { hp: 1.15, speed: 1, fireRate: 0.9 },
+  5: { hp: 1.15, speed: 1, fireRate: 0.9 },
+  6: { hp: 1.25, speed: 1.1, fireRate: 0.85 },
+  7: { hp: 1.25, speed: 1.1, fireRate: 0.85 },
+  8: { hp: 1.35, speed: 1.15, fireRate: 0.8 },
+};
+
+export function setDifficultyForWorld(world: number): void {
+  currentDifficultyScale = WORLD_DIFFICULTY[world] ?? { hp: 1, speed: 1, fireRate: 1 };
+}
+
 export function resetEnemyIds(): void {
   enemyIdCounter = 0;
   bulletIdCounter = 10000;
@@ -28,6 +46,9 @@ export function createEnemy(
 ): Enemy {
   const def = ENEMY_DEFS[type];
   const defaultBehavior = getDefaultBehavior(type);
+  const scaledHp = Math.ceil(def.hp * currentDifficultyScale.hp);
+  const scaledSpeed = def.speed * currentDifficultyScale.speed;
+  const scaledFireRate = Math.max(10, Math.floor(def.fireRate * currentDifficultyScale.fireRate));
 
   return {
     id: ++enemyIdCounter,
@@ -36,14 +57,14 @@ export function createEnemy(
     y,
     width: def.width,
     height: def.height,
-    hp: def.hp,
-    maxHp: def.hp,
-    speed: def.speed,
+    hp: scaledHp,
+    maxHp: scaledHp,
+    speed: scaledSpeed,
     vx: 0,
-    vy: def.speed,
+    vy: scaledSpeed,
     score: def.score,
-    fireTimer: Math.floor(Math.random() * def.fireRate),
-    fireRate: def.fireRate,
+    fireTimer: Math.floor(Math.random() * scaledFireRate),
+    fireRate: scaledFireRate,
     shoots: def.shoots,
     behavior: behavior ?? defaultBehavior,
     behaviorTimer: 0,

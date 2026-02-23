@@ -9,7 +9,9 @@ import {
   type GameState,
   type Keys,
 } from "./engine/types";
-import { createGameState, updateGame, togglePause } from "./engine/gameEngine";
+import { createGameState, createPlanetGameState, updateGame, togglePause } from "./engine/gameEngine";
+import { completePlanet, getPlanetDef } from "./engine/planets";
+import type { PlanetId } from "./engine/types";
 import { drawGame, drawStarMap, drawIntroCrawl, INTRO_TOTAL_FRAMES } from "./engine/renderer";
 import { AudioEngine } from "./engine/audio";
 import {
@@ -62,6 +64,7 @@ export default function Game() {
   const [choiceHover, setChoiceHover] = useState(0);
   const [muted, setMuted] = useState(false);
   const [playerName, setPlayerName] = useState("Guest");
+  const [activePlanetId, setActivePlanetId] = useState<PlanetId | null>(null);
 
   const keysRef = useRef<Keys>({
     left: false,
@@ -116,13 +119,25 @@ export default function Game() {
       const audio = ensureAudio();
       audio.switchMusic("game");
       setShowMap(false);
-      setGameState(createGameState(world, level, saveData.upgrades));
+      setActivePlanetId(null);
+      setGameState(createGameState(world, level, saveData.upgrades, saveData.unlockedEnhancements));
     },
-    [ensureAudio, saveData.upgrades]
+    [ensureAudio, saveData.upgrades, saveData.unlockedEnhancements]
+  );
+
+  const startPlanetMission = useCallback(
+    (planetId: PlanetId) => {
+      const audio = ensureAudio();
+      audio.switchMusic("game");
+      setActivePlanetId(planetId);
+      setGameState(createPlanetGameState(planetId, saveData.upgrades, saveData.unlockedEnhancements));
+    },
+    [ensureAudio, saveData.upgrades, saveData.unlockedEnhancements]
   );
 
   const returnToCockpit = useCallback(() => {
     setGameState(null);
+    setActivePlanetId(null);
     setEndingPhase("off");
     setEndingChoice(null);
     setShowCockpit(true);
@@ -163,11 +178,24 @@ export default function Game() {
     if (gameState) {
       updateSectorZeroProfile(gameState.score);
     }
-    setGameState(createGameState(gameState?.currentWorld ?? 1, gameState?.currentLevel ?? 1, saveData.upgrades));
-  }, [gameState, ensureAudio, saveData.upgrades]);
+    if (activePlanetId) {
+      setGameState(createPlanetGameState(activePlanetId, saveData.upgrades, saveData.unlockedEnhancements));
+    } else {
+      setGameState(createGameState(gameState?.currentWorld ?? 1, gameState?.currentLevel ?? 1, saveData.upgrades, saveData.unlockedEnhancements));
+    }
+  }, [gameState, activePlanetId, ensureAudio, saveData.upgrades, saveData.unlockedEnhancements]);
 
   const nextLevel = useCallback(() => {
     if (!gameState) return;
+
+    // Planet mission completion — award rewards and return to cockpit
+    if (activePlanetId) {
+      let newSave = completePlanet(saveData, activePlanetId);
+      saveSave(newSave);
+      setSaveData(newSave);
+      returnToCockpit();
+      return;
+    }
 
     // Save level result
     const stars =
@@ -200,7 +228,7 @@ export default function Game() {
 
     if (nextLv <= maxLevels) {
       // Next level in same world
-      setGameState(createGameState(gameState.currentWorld, nextLv, saveData.upgrades));
+      setGameState(createGameState(gameState.currentWorld, nextLv, saveData.upgrades, saveData.unlockedEnhancements));
     } else {
       // World complete — try advancing to next world
       let nextWorld = gameState.currentWorld + 1;
@@ -209,13 +237,13 @@ export default function Game() {
         nextWorld++;
       }
       if (nextWorld <= 8 && getWorldLevelCount(nextWorld) > 0) {
-        setGameState(createGameState(nextWorld, 1, saveData.upgrades));
+        setGameState(createGameState(nextWorld, 1, saveData.upgrades, saveData.unlockedEnhancements));
       } else {
         // All worlds complete — play ending sequence
         startEnding();
       }
     }
-  }, [gameState, saveData, returnToCockpit, startEnding]);
+  }, [gameState, activePlanetId, saveData, returnToCockpit, startEnding]);
 
   const handleDevAction = useCallback(
     (action: string) => {
@@ -224,9 +252,20 @@ export default function Game() {
         ensureAudio();
         setShowStartScreen(false);
         setShowMap(false);
-        const newState = createGameState(Number(w), Number(l), saveData.upgrades);
+        setShowCockpit(false);
+        const newState = createGameState(Number(w), Number(l), saveData.upgrades, saveData.unlockedEnhancements);
         const wasInvincible = gameState?.devInvincible ?? false;
         setGameState({ ...newState, devInvincible: wasInvincible });
+        return;
+      }
+
+      if (action.startsWith("goto-planet:")) {
+        const planetId = action.split(":")[1] as PlanetId;
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        startPlanetMission(planetId);
         return;
       }
 
@@ -285,7 +324,7 @@ export default function Game() {
         }
       });
     },
-    [gameState?.devInvincible, ensureAudio]
+    [gameState?.devInvincible, ensureAudio, startPlanetMission]
   );
 
   // Keyboard input
@@ -652,6 +691,12 @@ export default function Game() {
         return;
       }
 
+      if (action.type === "launch-planet" && action.planetId) {
+        setShowCockpit(false);
+        startPlanetMission(action.planetId);
+        return;
+      }
+
       if (action.type === "save-updated" && action.save) {
         saveSave(action.save);
         setSaveData(action.save);
@@ -865,20 +910,27 @@ export default function Game() {
         </div>
       )}
 
-      {/* Level Complete Overlay (boss levels only) */}
+      {/* Level Complete Overlay (boss levels + planet missions) */}
       {gameState?.screen === GameScreen.LEVEL_COMPLETE && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
           <h2
             className="text-4xl font-bold mb-4 tracking-wider"
             style={{
-              background: "linear-gradient(135deg, #FFD700, #FF6600)",
+              background: activePlanetId
+                ? "linear-gradient(135deg, #44ffaa, #44ccff)"
+                : "linear-gradient(135deg, #FFD700, #FF6600)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
           >
-            LEVEL COMPLETE
+            {activePlanetId ? "MISSION COMPLETE" : "LEVEL COMPLETE"}
           </h2>
           <div className="text-center mb-6 space-y-2">
+            {activePlanetId && (
+              <p className="text-cyan-300 text-lg mb-2">
+                {getPlanetDef(activePlanetId).name}
+              </p>
+            )}
             <p className="text-2xl">
               Score: <span className="text-yellow-400 font-bold">{gameState.score}</span>
             </p>
@@ -888,22 +940,32 @@ export default function Game() {
             {gameState.maxCombo >= 3 && (
               <p className="text-yellow-500">Max Combo: {gameState.maxCombo}x</p>
             )}
-            <div className="flex justify-center gap-2 mt-2">
-              {[1, 2, 3].map((star) => {
-                const earned =
-                  star === 1 ? true :
-                  star === 2 ? gameState.deaths === 0 :
-                  gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8;
-                return (
-                  <span
-                    key={star}
-                    className={`text-3xl ${earned ? "text-yellow-400" : "text-gray-700"}`}
-                  >
-                    &#9733;
-                  </span>
-                );
-              })}
-            </div>
+            {!activePlanetId && (
+              <div className="flex justify-center gap-2 mt-2">
+                {[1, 2, 3].map((star) => {
+                  const earned =
+                    star === 1 ? true :
+                    star === 2 ? gameState.deaths === 0 :
+                    gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8;
+                  return (
+                    <span
+                      key={star}
+                      className={`text-3xl ${earned ? "text-yellow-400" : "text-gray-700"}`}
+                    >
+                      &#9733;
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            {activePlanetId && !saveData.completedPlanets.includes(activePlanetId) && (
+              <div className="mt-3 space-y-1">
+                <p className="text-sm text-green-400">+ {getPlanetDef(activePlanetId).material.replace(/-/g, " ").toUpperCase()}</p>
+                {getPlanetDef(activePlanetId).enhancementUnlock && (
+                  <p className="text-sm text-purple-400">+ {getPlanetDef(activePlanetId).enhancementUnlock!.replace(/-/g, " ").toUpperCase()}</p>
+                )}
+              </div>
+            )}
             <p className="text-lg mt-3" style={{ color: "#44ff88" }}>
               +{calculateCreditsEarned(
                 gameState.score,
@@ -918,7 +980,7 @@ export default function Game() {
               onClick={nextLevel}
               className="px-8 py-4 border-2 border-cyan-400 text-cyan-400 text-lg hover:bg-cyan-400 hover:text-black transition-colors tracking-wider"
             >
-              NEXT LEVEL
+              {activePlanetId ? "COMPLETE" : "NEXT LEVEL"}
             </button>
             <button
               onClick={returnToCockpit}

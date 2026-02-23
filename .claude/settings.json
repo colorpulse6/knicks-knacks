@@ -16,7 +16,9 @@
       "Bash(yarn build:*)",
       "Bash(python3:*)",
       "Bash(node -e:*)",
-      "WebFetch(domain:colorpulse6.github.io)"
+      "WebFetch(domain:colorpulse6.github.io)",
+      "Bash(ls:*)",
+      "Bash(yarn sector-zero:build:*)"
     ]
   }
 }

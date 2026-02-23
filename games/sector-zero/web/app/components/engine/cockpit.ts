@@ -1,9 +1,10 @@
-import { type Keys, type SaveData, AudioEvent } from "./types";
+import { type Keys, type SaveData, type PlanetId, AudioEvent } from "./types";
 import { UPGRADE_DEFS, getUpgradeCost, canPurchase } from "./upgrades";
 import { purchaseUpgrade } from "./save";
 import { CREW, getAvailableConversations, markConversationViewed } from "./crewDialog";
 import { CODEX_CATEGORIES, getEntriesForCategory, markCodexRead } from "./codex";
 import { getAvailableQuests, isQuestActive, isQuestCompleted, acceptQuest, abandonQuest } from "./sideQuests";
+import { PLANET_DEFS, isPlanetUnlocked, isPlanetCompleted } from "./planets";
 
 // ─── Cockpit Screen Types ───────────────────────────────────────────
 
@@ -22,6 +23,8 @@ export interface CockpitHubState {
   crewDialogLine: number;
   crewDialogActive: boolean;
   missionSelected: number;
+  /** 0 = Side Quests tab, 1 = Planet Missions tab */
+  missionTab: number;
   codexCategory: number;
   codexSelected: number;
   codexReading: boolean;
@@ -75,6 +78,7 @@ export function createCockpitState(): CockpitHubState {
     crewDialogLine: 0,
     crewDialogActive: false,
     missionSelected: 0,
+    missionTab: 0,
     codexCategory: 0,
     codexSelected: 0,
     codexReading: false,
@@ -84,8 +88,9 @@ export function createCockpitState(): CockpitHubState {
 // ─── Actions ────────────────────────────────────────────────────────
 
 export interface CockpitAction {
-  type: "none" | "open-starmap" | "back" | "save-updated";
+  type: "none" | "open-starmap" | "back" | "save-updated" | "launch-planet";
   save?: SaveData;
+  planetId?: PlanetId;
 }
 
 // ─── Input Handling ─────────────────────────────────────────────────
@@ -331,6 +336,44 @@ function updateMissions(
   justPressed: Record<string, boolean>,
   save: SaveData
 ): { newState: CockpitHubState; action: CockpitAction } {
+  // Tab switching: left/right at top level switches tabs
+  if (justPressed.right && s.missionTab < 1) {
+    s.missionTab = 1;
+    s.missionSelected = 0;
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+    return { newState: s, action: { type: "none" } };
+  }
+  if (justPressed.left && s.missionTab > 0) {
+    s.missionTab = 0;
+    s.missionSelected = 0;
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+    return { newState: s, action: { type: "none" } };
+  }
+
+  // Back to hub (left on first tab)
+  if (justPressed.left && s.missionTab === 0) {
+    s.screen = "hub";
+    s.missionTab = 0;
+    s.missionSelected = 0;
+    s.transitionTimer = TRANSITION_FRAMES;
+    s.audioEvents.push(AudioEvent.COCKPIT_BACK);
+    return { newState: s, action: { type: "none" } };
+  }
+
+  if (s.missionTab === 0) {
+    // ── Side Quests tab ──
+    return updateMissionsQuests(s, justPressed, save);
+  } else {
+    // ── Planet Missions tab ──
+    return updateMissionsPlanets(s, justPressed, save);
+  }
+}
+
+function updateMissionsQuests(
+  s: CockpitHubState,
+  justPressed: Record<string, boolean>,
+  save: SaveData
+): { newState: CockpitHubState; action: CockpitAction } {
   const quests = getAvailableQuests(save);
 
   // Navigate quest list
@@ -343,14 +386,6 @@ function updateMissions(
   }
   if (s.missionSelected !== prevMission) {
     s.audioEvents.push(AudioEvent.COCKPIT_NAV);
-  }
-
-  // Back to hub
-  if (justPressed.left) {
-    s.screen = "hub";
-    s.transitionTimer = TRANSITION_FRAMES;
-    s.audioEvents.push(AudioEvent.COCKPIT_BACK);
-    return { newState: s, action: { type: "none" } };
   }
 
   // Accept / Abandon quest
@@ -373,6 +408,39 @@ function updateMissions(
         s.audioEvents.push(AudioEvent.UPGRADE_DENIED);
       }
     }
+  }
+
+  return { newState: s, action: { type: "none" } };
+}
+
+function updateMissionsPlanets(
+  s: CockpitHubState,
+  justPressed: Record<string, boolean>,
+  save: SaveData
+): { newState: CockpitHubState; action: CockpitAction } {
+  const planets = PLANET_DEFS;
+
+  // Navigate planet list
+  const prevMission = s.missionSelected;
+  if (justPressed.up && s.missionSelected > 0) {
+    s.missionSelected -= 1;
+  }
+  if (justPressed.down && planets.length > 0) {
+    s.missionSelected = Math.min(planets.length - 1, s.missionSelected + 1);
+  }
+  if (s.missionSelected !== prevMission) {
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+  }
+
+  // Launch planet mission
+  if (justPressed.shoot && planets.length > 0) {
+    const planet = planets[s.missionSelected];
+    if (planet && isPlanetUnlocked(planet, save) && !isPlanetCompleted(planet.id, save)) {
+      s.audioEvents.push(AudioEvent.COCKPIT_OPEN);
+      return { newState: s, action: { type: "launch-planet", planetId: planet.id } };
+    }
+    // Can't launch — locked or already completed
+    s.audioEvents.push(AudioEvent.UPGRADE_DENIED);
   }
 
   return { newState: s, action: { type: "none" } };

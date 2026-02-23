@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type GameState, GameScreen } from "./engine/types";
 import { ALL_LEVELS, WORLD_NAMES } from "./engine/levels";
+import { PLANET_DEFS } from "./engine/planets";
 
 interface DevPanelProps {
   gameState: GameState | null;
@@ -140,6 +141,24 @@ export default function DevPanel({ gameState, onAction }: DevPanelProps) {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* Planet Missions */}
+      <div className="space-y-1">
+        <div className="text-green-600 border-b border-green-900 pb-1">PLANET MISSIONS</div>
+        <div className="grid grid-cols-2 gap-1">
+          {PLANET_DEFS.map((planet) => (
+            <button
+              key={planet.id}
+              onClick={() => onAction(`goto-planet:${planet.id}`)}
+              className="px-1 py-1.5 border border-green-900 hover:border-green-600 text-green-600 hover:text-green-400 transition-colors text-center truncate"
+              title={`${planet.name} — ${planet.subtitle} (${planet.objective})`}
+              style={{ borderColor: `${planet.color}44` }}
+            >
+              <span style={{ color: planet.color }}>{planet.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 

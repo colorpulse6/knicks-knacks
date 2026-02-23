@@ -5,6 +5,8 @@ import { UPGRADE_DEFS, getUpgradeCost, canPurchase, isUpgradeLevelUnlocked, getU
 import { CREW, getAvailableConversations, isConversationViewed, countUnread, countTotalUnread } from "./crewDialog";
 import { CODEX_CATEGORIES, getEntriesForCategory, isCodexEntryNew, countNewCodexEntries, countNewInCategory } from "./codex";
 import { getAvailableQuests, isQuestActive, isQuestCompleted, countAvailableQuests, QUEST_TYPE_NAMES, QUEST_TYPE_ICONS, QUEST_TYPE_COLORS } from "./sideQuests";
+import { PLANET_DEFS, isPlanetUnlocked, isPlanetCompleted } from "./planets";
+import { WORLD_NAMES } from "./levels";
 
 // ─── Main Cockpit Drawing ───────────────────────────────────────────
 
@@ -155,34 +157,40 @@ function drawCockpitHub(
     const cx = hotspot.x + hotspot.w / 2;
     const cy = hotspot.y + hotspot.h / 2;
 
+    // Dark backdrop so text is readable over the cockpit art
+    ctx.fillStyle = isSelected ? "rgba(0, 8, 20, 0.85)" : "rgba(0, 4, 12, 0.7)";
+    ctx.beginPath();
+    ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 6);
+    ctx.fill();
+
     if (isSelected) {
-      // Pulsing glow
-      const pulse = 0.4 + 0.3 * Math.sin(state.animTimer * 0.06);
-      ctx.shadowBlur = 15;
+      // Pulsing glow border
+      const pulse = 0.5 + 0.4 * Math.sin(state.animTimer * 0.06);
+      ctx.shadowBlur = 18;
       ctx.shadowColor = "#44ccff";
       ctx.strokeStyle = `rgba(68, 204, 255, ${pulse})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(hotspot.x - 4, hotspot.y - 4, hotspot.w + 8, hotspot.h + 8, 6);
+      ctx.roundRect(hotspot.x - 2, hotspot.y - 2, hotspot.w + 4, hotspot.h + 4, 8);
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Fill
-      ctx.fillStyle = "rgba(68, 204, 255, 0.08)";
+      // Inner highlight fill
+      ctx.fillStyle = "rgba(68, 204, 255, 0.1)";
       ctx.beginPath();
-      ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 4);
+      ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 6);
       ctx.fill();
+    } else {
+      // Visible border for unselected
+      ctx.strokeStyle = "rgba(68, 204, 255, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 6);
+      ctx.stroke();
     }
 
-    // Border
-    ctx.strokeStyle = isSelected ? "#44ccff88" : "#22334488";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 4);
-    ctx.stroke();
-
-    // Icon placeholder (character based)
-    ctx.fillStyle = isSelected ? "#44ccff" : "#445566";
+    // Icon
+    ctx.fillStyle = isSelected ? "#44ccff" : "#88aabb";
     ctx.font = "bold 20px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -196,19 +204,20 @@ function drawCockpitHub(
     ctx.fillText(icons[hotspot.id] || "?", cx, cy - 6);
 
     // Name
-    ctx.fillStyle = isSelected ? "#ffffff" : "#667788";
-    ctx.font = isSelected ? "bold 10px monospace" : "9px monospace";
+    ctx.fillStyle = isSelected ? "#ffffff" : "#bbccdd";
+    ctx.font = isSelected ? "bold 11px monospace" : "bold 10px monospace";
     ctx.fillText(hotspot.name, cx, cy + 14);
 
-    // Description (only when selected)
-    if (isSelected) {
-      ctx.fillStyle = "#88aabb";
-      ctx.font = "9px monospace";
-      ctx.fillText(hotspot.description, cx, cy + 28);
+    // Description
+    ctx.fillStyle = isSelected ? "#88ccdd" : "#667788";
+    ctx.font = "9px monospace";
+    ctx.fillText(hotspot.description, cx, cy + 28);
 
-      // Enter hint
-      ctx.fillStyle = "#44ccff66";
-      ctx.font = "8px monospace";
+    // Enter hint (only when selected)
+    if (isSelected) {
+      const enterPulse = 0.4 + 0.4 * Math.sin(state.animTimer * 0.08);
+      ctx.fillStyle = `rgba(68, 204, 255, ${enterPulse})`;
+      ctx.font = "bold 9px monospace";
       ctx.fillText("[ENTER]", cx, cy + 42);
     }
 
@@ -275,7 +284,11 @@ function drawNotificationBadge(
   } else if (hotspot.id === "codex") {
     hasNotification = countNewCodexEntries(save) > 0;
   } else if (hotspot.id === "missions") {
-    hasNotification = countAvailableQuests(save) > 0;
+    const hasQuests = countAvailableQuests(save) > 0;
+    const hasUnlockedPlanets = PLANET_DEFS.some(p =>
+      isPlanetUnlocked(p, save) && !isPlanetCompleted(p.id, save)
+    );
+    hasNotification = hasQuests || hasUnlockedPlanets;
   }
 
   if (hasNotification) {
@@ -1050,144 +1063,63 @@ function drawMissionsScreen(
 ): void {
   drawSubScreenFrame(ctx, "MISSION BOARD", SPRITES.MISSIONS_BG);
 
-  const quests = getAvailableQuests(save);
-  const activeCount = save.activeQuests.length;
+  // ── Tabs ──
+  const tabNames = ["SIDE QUESTS", "PLANET MISSIONS"];
+  const tabColors = ["#44ccff", "#ff8844"];
+  const tabY = 52;
+  const tabH = 26;
+  const tabSpacing = 6;
+  const tabW = (CANVAS_WIDTH - 24 - tabSpacing) / 2;
 
-  // Active quests counter
-  ctx.fillStyle = "#88aabb";
-  ctx.font = "9px monospace";
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  ctx.fillText(`ACTIVE: ${activeCount}/3`, CANVAS_WIDTH - 16, 25);
+  for (let t = 0; t < 2; t++) {
+    const tx = 12 + t * (tabW + tabSpacing);
+    const isActive = state.missionTab === t;
 
-  // ── Quest List ──
-  const listY = 60;
-  const listX = 12;
-  const listW = CANVAS_WIDTH - 24;
-  const rowH = 72;
-  const maxVisible = Math.floor((CANVAS_HEIGHT - listY - 60) / rowH);
+    if (isActive) {
+      ctx.fillStyle = tabColors[t] + "22";
+      ctx.beginPath();
+      ctx.roundRect(tx, tabY, tabW, tabH, [4, 4, 0, 0]);
+      ctx.fill();
+      ctx.fillStyle = tabColors[t];
+      ctx.fillRect(tx, tabY + tabH - 2, tabW, 2);
+    } else {
+      ctx.fillStyle = "rgba(10, 10, 20, 0.4)";
+      ctx.beginPath();
+      ctx.roundRect(tx, tabY, tabW, tabH, [4, 4, 0, 0]);
+      ctx.fill();
+    }
 
-  if (quests.length === 0) {
-    ctx.fillStyle = "#556677";
-    ctx.font = "11px monospace";
+    ctx.fillStyle = isActive ? tabColors[t] : "#556677";
+    ctx.font = isActive ? "bold 9px monospace" : "9px monospace";
     ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText("No quests available.", CANVAS_WIDTH / 2, listY + 30);
-    ctx.fillStyle = "#445566";
-    ctx.font = "9px monospace";
-    ctx.fillText("Complete more missions to unlock quests.", CANVAS_WIDTH / 2, listY + 50);
+    ctx.textBaseline = "middle";
+    ctx.fillText(tabNames[t], tx + tabW / 2, tabY + tabH / 2);
+
+    // Planet notification badge
+    if (t === 1) {
+      const unlockedNotDone = PLANET_DEFS.filter(p =>
+        isPlanetUnlocked(p, save) && !isPlanetCompleted(p.id, save)
+      ).length;
+      if (unlockedNotDone > 0) {
+        const bx = tx + tabW - 6;
+        const by = tabY + 4;
+        ctx.fillStyle = "#ff4444";
+        ctx.beginPath();
+        ctx.arc(bx, by, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 8px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`${unlockedNotDone}`, bx, by);
+      }
+    }
+  }
+
+  if (state.missionTab === 0) {
+    drawMissionsQuestsTab(ctx, state, save, tabY + tabH + 6);
   } else {
-    const scrollOffset = Math.max(0, state.missionSelected - maxVisible + 1);
-
-    for (let i = scrollOffset; i < Math.min(quests.length, scrollOffset + maxVisible); i++) {
-      const quest = quests[i];
-      const isSelected = state.missionSelected === i;
-      const active = isQuestActive(quest.id, save);
-      const completed = isQuestCompleted(quest.id, save);
-      const typeColor = QUEST_TYPE_COLORS[quest.type];
-      const y = listY + (i - scrollOffset) * rowH;
-
-      // Row background
-      if (isSelected) {
-        const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
-        ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
-        ctx.beginPath();
-        ctx.roundRect(listX, y, listW, rowH - 4, 6);
-        ctx.fill();
-
-        ctx.strokeStyle = typeColor + "66";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.roundRect(listX, y, listW, rowH - 4, 6);
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = "rgba(10, 10, 20, 0.3)";
-        ctx.beginPath();
-        ctx.roundRect(listX, y, listW, rowH - 4, 6);
-        ctx.fill();
-      }
-
-      // Type icon + badge
-      ctx.fillStyle = typeColor;
-      ctx.font = "bold 18px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(QUEST_TYPE_ICONS[quest.type], listX + 22, y + (rowH - 4) / 2 - 6);
-
-      ctx.fillStyle = typeColor;
-      ctx.font = "bold 7px monospace";
-      ctx.fillText(QUEST_TYPE_NAMES[quest.type], listX + 22, y + (rowH - 4) / 2 + 12);
-
-      // Quest name
-      ctx.fillStyle = isSelected ? "#ffffff" : "#aabbcc";
-      ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      ctx.fillText(quest.name, listX + 48, y + 6);
-
-      // Description
-      ctx.fillStyle = isSelected ? "#889999" : "#556677";
-      ctx.font = "9px monospace";
-      ctx.fillText(quest.description, listX + 48, y + 22);
-
-      // Offered by + target level
-      ctx.fillStyle = quest.offeredByColor + "88";
-      ctx.font = "8px monospace";
-      ctx.fillText(`${quest.offeredBy.toUpperCase()} \u2022 Level ${quest.targetLevel}`, listX + 48, y + 38);
-
-      // Reward
-      ctx.fillStyle = "#44ff88";
-      ctx.font = "bold 10px monospace";
-      ctx.textAlign = "right";
-      ctx.textBaseline = "top";
-      ctx.fillText(`\u25C6 ${quest.reward}`, listX + listW - 8, y + 6);
-
-      // Status badge
-      if (completed) {
-        ctx.fillStyle = "#44ff88";
-        ctx.font = "bold 9px monospace";
-        ctx.textAlign = "right";
-        ctx.fillText("\u2713 DONE", listX + listW - 8, y + 22);
-      } else if (active) {
-        ctx.fillStyle = "#ffaa44";
-        ctx.font = "bold 9px monospace";
-        ctx.textAlign = "right";
-        ctx.fillText("ACTIVE", listX + listW - 8, y + 22);
-      }
-
-      // Action hint (when selected)
-      if (isSelected) {
-        ctx.textAlign = "right";
-        ctx.font = "8px monospace";
-        if (active) {
-          ctx.fillStyle = "#ff6666";
-          ctx.fillText("[ENTER] ABANDON", listX + listW - 8, y + rowH - 18);
-        } else if (!completed && activeCount < 3) {
-          ctx.fillStyle = "#44ccff";
-          ctx.fillText("[ENTER] ACCEPT", listX + listW - 8, y + rowH - 18);
-        } else if (!completed) {
-          ctx.fillStyle = "#554444";
-          ctx.fillText("MAX 3 ACTIVE", listX + listW - 8, y + rowH - 18);
-        }
-      }
-    }
-
-    // Scroll indicators
-    if (scrollOffset > 0) {
-      ctx.fillStyle = "#44ccff";
-      ctx.font = "bold 10px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.fillText("\u25B2 more", CANVAS_WIDTH / 2, listY - 2);
-    }
-    if (scrollOffset + maxVisible < quests.length) {
-      const bottomY = listY + maxVisible * rowH;
-      ctx.fillStyle = "#44ccff";
-      ctx.font = "bold 10px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
-    }
+    drawMissionsPlanetsTab(ctx, state, save, tabY + tabH + 6);
   }
 
   // ── Bottom Bar ──
@@ -1205,7 +1137,352 @@ function drawMissionsScreen(
   ctx.font = "9px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("\u2191\u2193 SELECT   ENTER ACCEPT/ABANDON   \u2190 BACK", CANVAS_WIDTH / 2, barY + 25);
+  const hint = state.missionTab === 0
+    ? "\u2190\u2192 TAB   \u2191\u2193 SELECT   ENTER ACCEPT   \u2190 BACK"
+    : "\u2190\u2192 TAB   \u2191\u2193 SELECT   ENTER LAUNCH   \u2190 BACK";
+  ctx.fillText(hint, CANVAS_WIDTH / 2, barY + 25);
+}
+
+// ─── Side Quests Tab ────────────────────────────────────────────────
+
+function drawMissionsQuestsTab(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData,
+  startY: number
+): void {
+  const quests = getAvailableQuests(save);
+  const activeCount = save.activeQuests.length;
+
+  // Active quests counter
+  ctx.fillStyle = "#88aabb";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(`ACTIVE: ${activeCount}/3`, CANVAS_WIDTH - 16, startY);
+
+  const listY = startY + 14;
+  const listX = 12;
+  const listW = CANVAS_WIDTH - 24;
+  const rowH = 68;
+  const maxVisible = Math.floor((CANVAS_HEIGHT - listY - 60) / rowH);
+
+  if (quests.length === 0) {
+    ctx.fillStyle = "#556677";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("No quests available.", CANVAS_WIDTH / 2, listY + 30);
+    ctx.fillStyle = "#445566";
+    ctx.font = "9px monospace";
+    ctx.fillText("Complete more missions to unlock quests.", CANVAS_WIDTH / 2, listY + 50);
+    return;
+  }
+
+  const scrollOffset = Math.max(0, state.missionSelected - maxVisible + 1);
+
+  for (let i = scrollOffset; i < Math.min(quests.length, scrollOffset + maxVisible); i++) {
+    const quest = quests[i];
+    const isSelected = state.missionSelected === i;
+    const active = isQuestActive(quest.id, save);
+    const completed = isQuestCompleted(quest.id, save);
+    const typeColor = QUEST_TYPE_COLORS[quest.type];
+    const y = listY + (i - scrollOffset) * rowH;
+
+    // Row background
+    if (isSelected) {
+      const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+      ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.fill();
+      ctx.strokeStyle = typeColor + "66";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(10, 10, 20, 0.3)";
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.fill();
+    }
+
+    // Type icon
+    ctx.fillStyle = typeColor;
+    ctx.font = "bold 18px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(QUEST_TYPE_ICONS[quest.type], listX + 22, y + (rowH - 4) / 2 - 6);
+    ctx.font = "bold 7px monospace";
+    ctx.fillText(QUEST_TYPE_NAMES[quest.type], listX + 22, y + (rowH - 4) / 2 + 12);
+
+    // Quest name
+    ctx.fillStyle = isSelected ? "#ffffff" : "#aabbcc";
+    ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(quest.name, listX + 48, y + 6);
+
+    // Description
+    ctx.fillStyle = isSelected ? "#889999" : "#556677";
+    ctx.font = "9px monospace";
+    ctx.fillText(quest.description, listX + 48, y + 22);
+
+    // Offered by
+    ctx.fillStyle = quest.offeredByColor + "88";
+    ctx.font = "8px monospace";
+    ctx.fillText(`${quest.offeredBy.toUpperCase()} \u2022 Level ${quest.targetLevel}`, listX + 48, y + 38);
+
+    // Reward
+    ctx.fillStyle = "#44ff88";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    ctx.fillText(`\u25C6 ${quest.reward}`, listX + listW - 8, y + 6);
+
+    // Status badge
+    if (completed) {
+      ctx.fillStyle = "#44ff88";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("\u2713 DONE", listX + listW - 8, y + 22);
+    } else if (active) {
+      ctx.fillStyle = "#ffaa44";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("ACTIVE", listX + listW - 8, y + 22);
+    }
+
+    // Action hint
+    if (isSelected) {
+      ctx.textAlign = "right";
+      ctx.font = "8px monospace";
+      if (active) {
+        ctx.fillStyle = "#ff6666";
+        ctx.fillText("[ENTER] ABANDON", listX + listW - 8, y + rowH - 18);
+      } else if (!completed && activeCount < 3) {
+        ctx.fillStyle = "#44ccff";
+        ctx.fillText("[ENTER] ACCEPT", listX + listW - 8, y + rowH - 18);
+      } else if (!completed) {
+        ctx.fillStyle = "#554444";
+        ctx.fillText("MAX 3 ACTIVE", listX + listW - 8, y + rowH - 18);
+      }
+    }
+  }
+
+  // Scroll indicators
+  if (scrollOffset > 0) {
+    ctx.fillStyle = "#44ccff";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("\u25B2 more", CANVAS_WIDTH / 2, listY - 2);
+  }
+  if (scrollOffset + maxVisible < quests.length) {
+    const bottomY = listY + maxVisible * rowH;
+    ctx.fillStyle = "#44ccff";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
+  }
+}
+
+// ─── Planet Missions Tab ────────────────────────────────────────────
+
+const OBJECTIVE_ICONS: Record<string, string> = {
+  collect: "\u2B22",  // hexagon
+  survive: "\u23F1",  // stopwatch
+  escort: "\u2708",   // airplane
+  defend: "\u2694",   // crossed swords
+};
+
+const OBJECTIVE_LABELS: Record<string, string> = {
+  collect: "COLLECT",
+  survive: "SURVIVE",
+  escort: "ESCORT",
+  defend: "DEFEND",
+};
+
+function drawMissionsPlanetsTab(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData,
+  startY: number
+): void {
+  const planets = PLANET_DEFS;
+  const listY = startY;
+  const listX = 12;
+  const listW = CANVAS_WIDTH - 24;
+  const rowH = 62;
+  const maxVisible = Math.floor((CANVAS_HEIGHT - listY - 60) / rowH);
+  const scrollOffset = Math.max(0, state.missionSelected - maxVisible + 1);
+
+  for (let i = scrollOffset; i < Math.min(planets.length, scrollOffset + maxVisible); i++) {
+    const planet = planets[i];
+    const isSelected = state.missionSelected === i;
+    const unlocked = isPlanetUnlocked(planet, save);
+    const completed = isPlanetCompleted(planet.id, save);
+    const y = listY + (i - scrollOffset) * rowH;
+
+    // Row background
+    if (isSelected) {
+      const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+      ctx.fillStyle = `rgba(${unlocked ? "255, 136, 68" : "50, 50, 70"}, ${pulse})`;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.fill();
+      ctx.strokeStyle = (unlocked ? planet.color : "#333344") + "66";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(10, 10, 20, 0.3)";
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.fill();
+    }
+
+    // Planet icon (sprite or fallback dot)
+    const iconKey = planet.mapIcon as keyof typeof SPRITES;
+    const iconSprite = getSprite(SPRITES[iconKey]);
+    const iconCx = listX + 22;
+    const iconCy = y + (rowH - 4) / 2 - 2;
+    const iconR = 14;
+
+    if (iconSprite && unlocked) {
+      // Draw planet sprite clipped to a circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(iconCx, iconCy, iconR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(iconSprite, iconCx - iconR, iconCy - iconR, iconR * 2, iconR * 2);
+      ctx.restore();
+      // Border ring
+      ctx.strokeStyle = planet.color + "88";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(iconCx, iconCy, iconR, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // Locked or no sprite — dark circle with lock
+      ctx.fillStyle = "#1a1a2a";
+      ctx.beginPath();
+      ctx.arc(iconCx, iconCy, iconR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#333344";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(iconCx, iconCy, iconR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#444455";
+      ctx.font = "bold 12px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", iconCx, iconCy);
+    }
+
+    // Objective type below icon
+    ctx.fillStyle = unlocked ? planet.color : "#444455";
+    ctx.font = "bold 6px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(OBJECTIVE_LABELS[planet.objective] ?? "?", iconCx, iconCy + iconR + 7);
+
+    const textX = listX + 46;
+
+    if (!unlocked) {
+      // Locked planet
+      ctx.fillStyle = "#556666";
+      ctx.font = "11px monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(planet.name, textX, y + 6);
+
+      ctx.fillStyle = "#443333";
+      ctx.font = "9px monospace";
+      const reqLevel = planet.unlockAfterLevel;
+      ctx.fillText(`\u{1F512} Requires: Level ${reqLevel} + ${planet.unlockStars}\u2605`, textX, y + 22);
+
+      // World pairing
+      ctx.fillStyle = "#334455";
+      ctx.font = "8px monospace";
+      ctx.fillText(`${WORLD_NAMES[planet.pairedWorld - 1] ?? "???"} sector`, textX, y + 38);
+    } else {
+      // Unlocked planet
+      ctx.fillStyle = isSelected ? "#ffffff" : "#ccddee";
+      ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(planet.name, textX, y + 4);
+
+      // Subtitle
+      ctx.fillStyle = isSelected ? planet.color : "#778899";
+      ctx.font = "9px monospace";
+      ctx.fillText(planet.subtitle, textX, y + 18);
+
+      // Description
+      ctx.fillStyle = isSelected ? "#889999" : "#556677";
+      ctx.font = "8px monospace";
+      const desc = planet.description.length > 44
+        ? planet.description.substring(0, 44) + "..."
+        : planet.description;
+      ctx.fillText(desc, textX, y + 32);
+
+      // World pairing
+      ctx.fillStyle = "#445566";
+      ctx.font = "8px monospace";
+      ctx.fillText(`${WORLD_NAMES[planet.pairedWorld - 1] ?? "???"} sector`, textX, y + 44);
+
+      // Status badge (right side)
+      if (completed) {
+        ctx.fillStyle = "#44ff88";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "top";
+        ctx.fillText("\u2713 DONE", listX + listW - 8, y + 6);
+      } else if (isSelected) {
+        const launchPulse = 0.5 + 0.5 * Math.sin(state.animTimer * 0.08);
+        ctx.fillStyle = `rgba(255, 136, 68, ${launchPulse})`;
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "top";
+        ctx.fillText("[ENTER] LAUNCH", listX + listW - 8, y + 6);
+      }
+
+      // Reward preview (right side, below status)
+      ctx.fillStyle = "#667788";
+      ctx.font = "8px monospace";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      if (!completed) {
+        ctx.fillText(`\u25C8 ${planet.material.replace(/-/g, " ")}`, listX + listW - 8, y + 22);
+        if (planet.enhancementUnlock) {
+          ctx.fillStyle = "#aa44ff88";
+          ctx.fillText(`+ ${planet.enhancementUnlock.replace(/-/g, " ")}`, listX + listW - 8, y + 34);
+        }
+      }
+    }
+  }
+
+  // Scroll indicators
+  if (scrollOffset > 0) {
+    ctx.fillStyle = "#ff8844";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("\u25B2 more", CANVAS_WIDTH / 2, listY - 2);
+  }
+  if (scrollOffset + maxVisible < planets.length) {
+    const bottomY = listY + maxVisible * rowH;
+    ctx.fillStyle = "#ff8844";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
+  }
 }
 
 function drawCodexScreen(

@@ -10,7 +10,7 @@ const spaceMono = Space_Mono({
 
 export const metadata: Metadata = {
   title: "Sector Zero",
-  description: "Space shooter — fight through 5 sectors to destroy The Hollow",
+  description: "Space shooter — fight through 8 sectors to destroy The Hollow",
 };
 
 export default function RootLayout({

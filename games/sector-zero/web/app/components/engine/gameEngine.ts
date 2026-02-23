@@ -10,6 +10,7 @@ import {
   PLAYER_FIRE_RATE,
   COMBO_WINDOW,
   COMBO_MAX,
+  ENEMY_BULLET_SPEED,
   GameScreen,
   PowerUpType,
   AudioEvent,
@@ -24,6 +25,9 @@ import {
   type PowerUp,
   type Bullet,
   type ShipUpgrades,
+  type EnhancementId,
+  type PlanetId,
+  type ObjectiveState,
   DEFAULT_UPGRADES,
 } from "./types";
 import { createBackground, updateBackground } from "./background";
@@ -36,6 +40,7 @@ import {
   isEnemyOffscreen,
   spawnFormation,
   resetEnemyIds,
+  setDifficultyForWorld,
 } from "./enemies";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap, SpatialHash } from "./physics";
@@ -45,6 +50,11 @@ import { clamp } from "./physics";
 const spatialHash = new SpatialHash();
 import { createBossForWorld, updateBossForWorld, isBossDefeated, resetBossBulletIds } from "./bosses";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
+import { createObjectiveState, createEscortEntity, createDefendStructure, updateObjective } from "./objectives";
+import { getPlanetDef } from "./planets";
+import { getPlanetLevelData } from "./planetLevels";
+import { getPlanetDialogTriggers } from "./planetDialog";
+import { createHazardState, updateHazards, type HazardState } from "./hazards";
 
 // ─── Power-Up Spawning ──────────────────────────────────────────────
 
@@ -124,9 +134,23 @@ export function createPlayer(upgrades: ShipUpgrades = DEFAULT_UPGRADES): Player 
 
 // Store current upgrades so handlePlayerShooting and updatePowerUps can reference them
 let currentUpgrades: ShipUpgrades = { ...DEFAULT_UPGRADES };
+let currentEnhancements: EnhancementId[] = [];
+let currentHazardState: HazardState | null = null;
+let reflectedBulletId = 200000;
 
-export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES): GameState {
+function hasEnhancement(id: EnhancementId): boolean {
+  return currentEnhancements.includes(id);
+}
+
+export function getHazardState(): HazardState | null {
+  return currentHazardState;
+}
+
+export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES, enhancements: EnhancementId[] = []): GameState {
   currentUpgrades = { ...upgrades };
+  currentEnhancements = [...enhancements];
+  currentHazardState = null;
+  setDifficultyForWorld(world);
   resetEnemyIds();
   resetBulletIds();
   resetBossBulletIds();
@@ -184,6 +208,79 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
   };
 }
 
+export function createPlanetGameState(
+  planetId: PlanetId,
+  upgrades: ShipUpgrades = DEFAULT_UPGRADES,
+  enhancements: EnhancementId[] = []
+): GameState {
+  currentUpgrades = { ...upgrades };
+  currentEnhancements = [...enhancements];
+
+  const planet = getPlanetDef(planetId);
+  setDifficultyForWorld(planet.pairedWorld);
+  resetEnemyIds();
+  resetBulletIds();
+  resetBossBulletIds();
+  resetPowerUpIds();
+
+  const levelData = getPlanetLevelData(planetId);
+  const waves: Wave[] = levelData.waves.map((def) => ({
+    definition: def,
+    spawned: false,
+    enemiesRemaining: def.enemies.reduce((sum, e) => sum + e.count, 0),
+  }));
+
+  const objective = createObjectiveState(planet.objective, planet.objectiveValue);
+  const escort = planet.objective === "escort" ? createEscortEntity(planet.objectiveValue) : undefined;
+  const defendStructure = planet.objective === "defend" ? createDefendStructure(planet.objectiveValue) : undefined;
+  currentHazardState = createHazardState(planetId);
+
+  return {
+    screen: GameScreen.BRIEFING,
+    player: createPlayer(upgrades),
+    playerBullets: [],
+    enemyBullets: [],
+    enemies: [],
+    boss: null,
+    powerUps: [],
+    activePowerUps: [],
+    particles: [],
+    background: createBackground(),
+    score: 0,
+    combo: 0,
+    comboTimer: 0,
+    maxCombo: 0,
+    lives: 3,
+    bombs: 2 + upgrades.munitionsBay,
+    bombCooldown: 0,
+    currentWorld: planet.pairedWorld,
+    currentLevel: 1,
+    currentWave: 0,
+    totalWaves: waves.length,
+    waves,
+    waveDelay: 120,
+    kills: 0,
+    totalEnemies: waves.reduce((sum, w) => sum + w.enemiesRemaining, 0),
+    deaths: 0,
+    frameCount: 0,
+    screenShake: 0,
+    audioEvents: [],
+    bossIntroTimer: 0,
+    briefingTimer: 480,
+    levelCompleteTimer: 0,
+    devInvincible: false,
+    dialog: createDialogState(),
+    dialogTriggers: getPlanetDialogTriggers(planetId),
+    xp: 0,
+    hpWarningTriggered: false,
+    planetId,
+    objective,
+    escort,
+    defendStructure,
+    loopFromWave: levelData.loopFromWave,
+  };
+}
+
 // ─── Update ──────────────────────────────────────────────────────────
 
 export function updateGame(
@@ -237,6 +334,55 @@ export function updateGame(
   // Collisions
   s = handleCollisions(s);
 
+  // Planet objective update
+  if (s.objective && !s.objective.completed && !s.objective.failed) {
+    const objResult = updateObjective(
+      s.objective, s.frameCount, s.player, s.enemyBullets, s.enemies,
+      s.escort, s.defendStructure
+    );
+    s.objective = objResult.objective;
+    if (objResult.escort) s.escort = objResult.escort;
+    if (objResult.structure) s.defendStructure = objResult.structure;
+    const hitBullets = (s.objective as ObjectiveState & { _hitBulletIds?: number[] })._hitBulletIds;
+    const hitEnemies = (s.objective as ObjectiveState & { _hitEnemyIds?: number[] })._hitEnemyIds;
+    if (hitBullets?.length) {
+      const hitSet = new Set(hitBullets);
+      s.enemyBullets = s.enemyBullets.filter(b => !hitSet.has(b.id));
+    }
+    if (hitEnemies?.length) {
+      const hitSet = new Set(hitEnemies);
+      s.enemies = s.enemies.filter(e => !hitSet.has(e.id));
+    }
+  }
+
+  // Planet hazard update
+  if (currentHazardState && s.planetId) {
+    const { damage: hazardDmg } = updateHazards(currentHazardState, s.player, s.objective?.intensityTier ?? 0);
+    if (hazardDmg > 0 && s.player.invincibleTimer <= 0 && !s.devInvincible) {
+      s.player = { ...s.player, hp: s.player.hp - hazardDmg, invincibleTimer: 30 };
+      s.screenShake = Math.max(s.screenShake, 3);
+    }
+  }
+
+  // Incendiary bomb damage zone (enhancement)
+  if ((s.incendiaryTimer ?? 0) > 0) {
+    s.incendiaryTimer = (s.incendiaryTimer ?? 0) - 1;
+    if (s.frameCount % 15 === 0) {
+      const survived: typeof s.enemies = [];
+      for (const e of s.enemies) {
+        const damaged = { ...e, hp: e.hp - 1 };
+        if (damaged.hp <= 0) {
+          s.score += e.score;
+          s.xp += e.score;
+          s.kills++;
+        } else {
+          survived.push(damaged);
+        }
+      }
+      s.enemies = survived;
+    }
+  }
+
   // Update power-ups
   s = updatePowerUps(s);
 
@@ -277,8 +423,23 @@ export function updateGame(
   // Tick dialog
   s.dialog = updateDialog(s.dialog);
 
-  // Check level complete or boss trigger
-  if (s.currentWave >= s.totalWaves && s.enemies.length === 0 && !s.boss) {
+  // Planet mission completion
+  if (s.planetId && s.objective) {
+    if (s.objective.completed && s.levelCompleteTimer === 0) {
+      s.levelCompleteTimer = 360;
+      s.xp += 1000;
+      s.audioEvents.push(AudioEvent.LEVEL_COMPLETE);
+      const dr = checkDialogTriggers(s.dialogTriggers, { type: "level_complete" }, s.dialog);
+      s.dialog = dr.dialog;
+      s.dialogTriggers = dr.triggers;
+    } else if (s.objective.failed) {
+      s.screen = GameScreen.GAME_OVER;
+      s.audioEvents.push(AudioEvent.GAME_OVER);
+    }
+  }
+
+  // Check level complete or boss trigger (standard missions)
+  if (!s.planetId && s.currentWave >= s.totalWaves && s.enemies.length === 0 && !s.boss) {
     if (s.waveDelay <= 0) {
       const levelData = getLevelData(s.currentWorld, s.currentLevel);
       if (levelData?.isBoss) {
@@ -302,36 +463,41 @@ export function updateGame(
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      // Auto-advance to next level
-      const nextLv = s.currentLevel + 1;
-      const nextWorld = s.currentWorld;
-      const nextLevelData = getLevelData(nextWorld, nextLv);
-      if (nextLevelData) {
-        // Carry over score, kills, etc. into the new level state
-        const carryScore = s.score;
-        const carryLives = s.lives;
-        const carryWeapon = s.player.weaponLevel;
-        const carryKills = s.kills;
-        const carryDeaths = s.deaths;
-        const carryMaxCombo = s.maxCombo;
-        const carryInvincible = s.devInvincible;
-        const carryPowerUps = s.activePowerUps;
-
-        const newState = createGameState(nextWorld, nextLv, currentUpgrades);
-        return {
-          ...newState,
-          score: carryScore,
-          lives: carryLives,
-          kills: carryKills,
-          deaths: carryDeaths,
-          maxCombo: carryMaxCombo,
-          devInvincible: carryInvincible,
-          activePowerUps: carryPowerUps,
-          player: { ...newState.player, weaponLevel: carryWeapon },
-        };
-      } else {
-        // No more levels — show the full LEVEL_COMPLETE screen
+      if (s.planetId) {
+        // Planet mission — show LEVEL_COMPLETE screen (Game.tsx handles rewards)
         s.screen = GameScreen.LEVEL_COMPLETE;
+      } else {
+        // Auto-advance to next level
+        const nextLv = s.currentLevel + 1;
+        const nextWorld = s.currentWorld;
+        const nextLevelData = getLevelData(nextWorld, nextLv);
+        if (nextLevelData) {
+          // Carry over score, kills, etc. into the new level state
+          const carryScore = s.score;
+          const carryLives = s.lives;
+          const carryWeapon = s.player.weaponLevel;
+          const carryKills = s.kills;
+          const carryDeaths = s.deaths;
+          const carryMaxCombo = s.maxCombo;
+          const carryInvincible = s.devInvincible;
+          const carryPowerUps = s.activePowerUps;
+
+          const newState = createGameState(nextWorld, nextLv, currentUpgrades, currentEnhancements);
+          return {
+            ...newState,
+            score: carryScore,
+            lives: carryLives,
+            kills: carryKills,
+            deaths: carryDeaths,
+            maxCombo: carryMaxCombo,
+            devInvincible: carryInvincible,
+            activePowerUps: carryPowerUps,
+            player: { ...newState.player, weaponLevel: carryWeapon },
+          };
+        } else {
+          // No more levels — show the full LEVEL_COMPLETE screen
+          s.screen = GameScreen.LEVEL_COMPLETE;
+        }
       }
     }
   }
@@ -686,7 +852,27 @@ function handlePlayerShooting(state: GameState, keys: Keys): GameState {
   // Side gunners
   const hasSideGunners = state.activePowerUps.some((p) => p.type === PowerUpType.SIDE_GUNNERS);
   if (hasSideGunners && state.frameCount % 3 === 0) {
-    newBullets.push(...fireSideGunners(state.player));
+    const gunnerBullets = fireSideGunners(state.player);
+
+    // Homing gunners enhancement: slightly track nearest enemy
+    if (hasEnhancement("homing-gunners") && state.enemies.length > 0) {
+      for (const gb of gunnerBullets) {
+        const bCx = gb.x + gb.width / 2;
+        const bCy = gb.y + gb.height / 2;
+        let nearest = state.enemies[0];
+        let nearDist = Infinity;
+        for (const e of state.enemies) {
+          const d = Math.abs(e.x + e.width / 2 - bCx) + Math.abs(e.y + e.height / 2 - bCy);
+          if (d < nearDist) { nearDist = d; nearest = e; }
+        }
+        const eCx = nearest.x + nearest.width / 2;
+        const dx = eCx - bCx;
+        // Nudge horizontal velocity toward enemy (subtle tracking)
+        gb.vx = (gb.vx ?? 0) + Math.sign(dx) * 0.8;
+      }
+    }
+
+    newBullets.push(...gunnerBullets);
   }
 
   return {
@@ -704,7 +890,17 @@ function spawnWaves(state: GameState): GameState {
     return { ...state, waveDelay: state.waveDelay - 1 };
   }
 
-  if (state.currentWave >= state.totalWaves) return state;
+  if (state.currentWave >= state.totalWaves) {
+    // Survive missions: loop waves back to keep enemies spawning
+    if (state.loopFromWave != null && state.loopFromWave < state.totalWaves) {
+      // Reset waves from loopFromWave onward so they can re-spawn
+      const newWaves = state.waves.map((w, i) =>
+        i >= state.loopFromWave! ? { ...w, spawned: false } : w
+      );
+      return { ...state, currentWave: state.loopFromWave, waves: newWaves };
+    }
+    return state;
+  }
 
   // Only spawn next wave when current enemies are mostly cleared
   if (state.enemies.length > 3) return state;
@@ -879,6 +1075,24 @@ function handleCollisions(state: GameState): GameState {
               ? { ...p, remainingFrames: p.remainingFrames - 200 }
               : p
           );
+          // Reinforced shield enhancement: reflect 1 bullet back at enemies
+          if (hasEnhancement("reinforced-shield")) {
+            s.playerBullets = [
+              ...s.playerBullets,
+              {
+                id: ++reflectedBulletId,
+                x: bullet.x,
+                y: bullet.y,
+                width: bullet.width,
+                height: bullet.height,
+                vx: 0,
+                vy: -ENEMY_BULLET_SPEED * 1.5,
+                damage: 2,
+                piercing: false,
+                isPlayer: true,
+              },
+            ];
+          }
         } else {
           s = playerHit(s, audioEvents, newParticles);
           newParticles = s.particles;
@@ -1092,6 +1306,8 @@ function activateBomb(state: GameState): GameState {
     bombCooldown: BOMB_COOLDOWN,
     screenShake: Math.max(state.screenShake, 10),
     audioEvents,
+    // Incendiary bombs enhancement: leave 3-second damage zone
+    incendiaryTimer: hasEnhancement("incendiary-bombs") ? 180 : (state.incendiaryTimer ?? 0),
   };
 }
 
@@ -1123,10 +1339,11 @@ function updatePowerUps(state: GameState): GameState {
       let { x, y, vy } = p;
 
       if (hasMagnet) {
+        const magnetRange = hasEnhancement("extended-magnet") ? 300 : 150;
         const dx = pcx - (x + p.width / 2);
         const dy = pcy - (y + p.height / 2);
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 150 && dist > 2) {
+        if (dist < magnetRange && dist > 2) {
           const pull = Math.min(4, 150 / dist);
           x += (dx / dist) * pull;
           y += (dy / dist) * pull;
@@ -1171,6 +1388,10 @@ function updatePowerUps(state: GameState): GameState {
         // Shield generator upgrade extends shield duration
         if (pu.type === PowerUpType.SHIELD) {
           dur += currentUpgrades.shieldGenerator * 200;
+        }
+        // Resonance field enhancement: +25% all power-up durations
+        if (hasEnhancement("resonance-field")) {
+          dur = Math.floor(dur * 1.25);
         }
         const existing = activePowerUps.findIndex((a) => a.type === pu.type);
 

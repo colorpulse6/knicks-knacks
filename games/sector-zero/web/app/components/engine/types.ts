@@ -476,6 +476,15 @@ export interface GameState {
   dialogTriggers: DialogTrigger[];
   xp: number;
   hpWarningTriggered: boolean;
+  // Planet mission state (optional — only set for planet side missions)
+  planetId?: PlanetId;
+  objective?: ObjectiveState;
+  escort?: EscortEntity;
+  defendStructure?: DefendStructure;
+  /** Incendiary bomb enhancement: frames remaining */
+  incendiaryTimer?: number;
+  /** Survive missions: loop back to this wave index when exhausted */
+  loopFromWave?: number;
 }
 
 // ─── Ship Upgrades ──────────────────────────────────────────────────
@@ -497,6 +506,99 @@ export const DEFAULT_UPGRADES: ShipUpgrades = {
   shieldGenerator: 0,
 };
 
+// ─── Planet Missions ─────────────────────────────────────────────────
+
+export type ObjectiveType = "collect" | "survive" | "escort" | "defend";
+
+export interface ObjectiveState {
+  type: ObjectiveType;
+  /** Collect: items gathered / Survive: frames elapsed / Escort & Defend: unused */
+  progress: number;
+  /** Collect: target count / Survive: target frames / Escort & Defend: unused */
+  target: number;
+  /** Escort / Defend: HP of the protected entity */
+  entityHp: number;
+  entityMaxHp: number;
+  /** Survive: current intensity tier (0-based) */
+  intensityTier: number;
+  /** Collect: collectible nodes on screen */
+  collectibles: Collectible[];
+  /** Whether objective has been completed */
+  completed: boolean;
+  /** Whether objective has been failed (escort/defend entity destroyed) */
+  failed: boolean;
+}
+
+export interface Collectible {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vy: number;
+  lifetime: number;    // frames remaining before despawn
+  maxLifetime: number;
+}
+
+export interface EscortEntity {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hp: number;
+  maxHp: number;
+  speed: number;
+  /** Waypoint index for pathing */
+  waypointIndex: number;
+}
+
+export interface DefendStructure {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hp: number;
+  maxHp: number;
+}
+
+export type MaterialId =
+  | "bio-fiber"
+  | "cryogenic-alloy"
+  | "molten-core"
+  | "ruin-shard"
+  | "abyssal-plating"
+  | "desert-glass"
+  | "phase-crystal"
+  | "genesis-seed"
+  | "neon-circuitry"
+  | "ferro-steel";
+
+export type ConsumableId =
+  | "hull-repair"
+  | "cryo-charge"
+  | "shield-charge"
+  | "weapon-overcharge"
+  | "scanner-pulse";
+
+export type EnhancementId =
+  | "reinforced-shield"
+  | "incendiary-bombs"
+  | "extended-magnet"
+  | "homing-gunners"
+  | "resonance-field";
+
+export type PlanetId =
+  | "verdania"
+  | "glaciem"
+  | "pyraxis"
+  | "ossuary"
+  | "abyssia"
+  | "ashfall"
+  | "prismara"
+  | "genesis"
+  | "luminos"
+  | "bastion";
+
 // ─── Save Data ───────────────────────────────────────────────────────
 export interface SaveData {
   currentWorld: number;
@@ -512,4 +614,10 @@ export interface SaveData {
   viewedConversations: string[];
   completedQuests: string[];
   activeQuests: string[];
+  // Planet mission data
+  completedPlanets: PlanetId[];
+  materials: MaterialId[];
+  consumableInventory: Partial<Record<ConsumableId, number>>;
+  equippedConsumables: ConsumableId[];
+  unlockedEnhancements: EnhancementId[];
 }

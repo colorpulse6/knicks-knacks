@@ -3,8 +3,10 @@ import {
   CANVAS_HEIGHT,
   type Star,
   type BackgroundLayer,
+  type PlanetId,
 } from "./types";
 import { getSprite, SPRITES } from "./sprites";
+import { getPlanetDef } from "./planets";
 
 // ─── World-themed background sprite keys ────────────────────────────
 const WORLD_BG_SPRITES: Record<number, { far: string; mid: string; near: string }> = {
@@ -114,9 +116,21 @@ function drawTiledImage(
 export function drawBackground(
   ctx: CanvasRenderingContext2D,
   layers: BackgroundLayer[],
-  currentWorld: number = 1
+  currentWorld: number = 1,
+  planetId?: PlanetId
 ): void {
-  const sprites = WORLD_BG_SPRITES[currentWorld] || WORLD_BG_SPRITES[1];
+  // Planet missions use their own background sprites
+  let sprites = WORLD_BG_SPRITES[currentWorld] || WORLD_BG_SPRITES[1];
+  if (planetId) {
+    const planet = getPlanetDef(planetId);
+    const [farKey, midKey, nearKey] = planet.bgKeys;
+    const farPath = SPRITES[farKey as keyof typeof SPRITES];
+    const midPath = SPRITES[midKey as keyof typeof SPRITES];
+    const nearPath = SPRITES[nearKey as keyof typeof SPRITES];
+    if (farPath) {
+      sprites = { far: farPath, mid: midPath, near: nearPath };
+    }
+  }
   const farImg = getSprite(sprites.far);
 
   if (farImg) {

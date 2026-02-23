@@ -19,8 +19,10 @@ import {
   type StarMapState,
   getWorldNodes,
   getLevelNodes,
+  getPlanetNodes,
   isLevelUnlocked,
 } from "./starMap";
+import { PLANET_DEFS } from "./planets";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -36,7 +38,7 @@ export function drawGame(
   }
 
   // Background
-  drawBackground(ctx, state.background, state.currentWorld);
+  drawBackground(ctx, state.background, state.currentWorld, state.planetId);
 
   // Briefing screen (overlay on background)
   if (state.screen === GameScreen.BRIEFING) {
@@ -1250,6 +1252,78 @@ export function drawStarMap(
         ctx.textBaseline = "middle";
         const nameX = lvl.x + nodeRadius + (lvl.completed && lvl.stars > 0 ? 36 : 6);
         ctx.fillText(lvl.name, nameX, lvl.y);
+      }
+
+      // ── Planet indicator dots below levels (visual only — launch from Mission Board) ──
+      const planetNodesForWorld = getPlanetNodes(save).filter(
+        (pn) => pn.pairedWorld === mapState.selectedWorld
+      );
+      const lastLvl = levelNodes[levelNodes.length - 1];
+      if (planetNodesForWorld.length > 0 && lastLvl) {
+        for (let pi = 0; pi < planetNodesForWorld.length; pi++) {
+          const pn = planetNodesForWorld[pi];
+          const planetY = lastLvl.y + 38 + pi * 28;
+          const planetX = lastLvl.x;
+
+          // Connector from last level (or previous planet)
+          const fromY = pi === 0 ? lastLvl.y : lastLvl.y + 38 + (pi - 1) * 28;
+          ctx.strokeStyle = (pn.unlocked ? pn.color : "#222233") + "44";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 4]);
+          ctx.beginPath();
+          ctx.moveTo(planetX, fromY);
+          ctx.lineTo(planetX, planetY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Planet icon (sprite or fallback dot)
+          const planetDef = PLANET_DEFS.find(pd => pd.id === pn.planetId);
+          const iconKey = planetDef?.mapIcon as keyof typeof SPRITES | undefined;
+          const iconImg = iconKey ? getSprite(SPRITES[iconKey]) : null;
+          const pRadius = 8;
+
+          if (iconImg && pn.unlocked) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(planetX, planetY, pRadius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.globalAlpha = pn.completed ? 1 : 0.7;
+            ctx.drawImage(iconImg, planetX - pRadius, planetY - pRadius, pRadius * 2, pRadius * 2);
+            ctx.globalAlpha = 1;
+            ctx.restore();
+            ctx.strokeStyle = pn.color + "88";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(planetX, planetY, pRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = "#1a1a2a";
+            ctx.beginPath();
+            ctx.arc(planetX, planetY, pRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#333344";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(planetX, planetY, pRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // Checkmark if completed
+          if (pn.completed) {
+            ctx.fillStyle = "#44ff88";
+            ctx.font = "bold 8px monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("\u2713", planetX, planetY);
+          }
+
+          // Planet name
+          ctx.fillStyle = pn.unlocked ? "#667788" : "#333344";
+          ctx.font = "8px monospace";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+          ctx.fillText(pn.unlocked ? pn.name : "???", planetX + 12, planetY);
+        }
       }
     }
   }

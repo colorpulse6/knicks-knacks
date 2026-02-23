@@ -166,6 +166,66 @@ export const SPRITES = {
   ENDING_2: "/sprites/ending/scene-2.png",
   ENDING_3: "/sprites/ending/scene-3.png",
   ENDING_4: "/sprites/ending/scene-4.png",
+
+  // Planet Mission Backgrounds (3 parallax layers each)
+  // Planet 1: Verdania (Jungle)
+  BG_VERDANIA_FAR: "/sprites/backgrounds/verdania-far.png",
+  BG_VERDANIA_MID: "/sprites/backgrounds/verdania-mid.png",
+  BG_VERDANIA_NEAR: "/sprites/backgrounds/verdania-near.png",
+  // Planet 2: Glaciem (Arctic)
+  BG_GLACIEM_FAR: "/sprites/backgrounds/glaciem-far.png",
+  BG_GLACIEM_MID: "/sprites/backgrounds/glaciem-mid.png",
+  BG_GLACIEM_NEAR: "/sprites/backgrounds/glaciem-near.png",
+  // Planet 3: Pyraxis (Volcanic)
+  BG_PYRAXIS_FAR: "/sprites/backgrounds/pyraxis-far.png",
+  BG_PYRAXIS_MID: "/sprites/backgrounds/pyraxis-mid.png",
+  BG_PYRAXIS_NEAR: "/sprites/backgrounds/pyraxis-near.png",
+  // Planet 4: Ossuary (Ancient Ruins)
+  BG_OSSUARY_FAR: "/sprites/backgrounds/ossuary-far.png",
+  BG_OSSUARY_MID: "/sprites/backgrounds/ossuary-mid.png",
+  BG_OSSUARY_NEAR: "/sprites/backgrounds/ossuary-near.png",
+  // Planet 5: Abyssia (Ocean/Deep Sea)
+  BG_ABYSSIA_FAR: "/sprites/backgrounds/abyssia-far.png",
+  BG_ABYSSIA_MID: "/sprites/backgrounds/abyssia-mid.png",
+  BG_ABYSSIA_NEAR: "/sprites/backgrounds/abyssia-near.png",
+  // Planet 6: Ashfall (Desert)
+  BG_ASHFALL_FAR: "/sprites/backgrounds/ashfall-far.png",
+  BG_ASHFALL_MID: "/sprites/backgrounds/ashfall-mid.png",
+  BG_ASHFALL_NEAR: "/sprites/backgrounds/ashfall-near.png",
+  // Planet 7: Prismara (Crystal Caves)
+  BG_PRISMARA_FAR: "/sprites/backgrounds/prismara-far.png",
+  BG_PRISMARA_MID: "/sprites/backgrounds/prismara-mid.png",
+  BG_PRISMARA_NEAR: "/sprites/backgrounds/prismara-near.png",
+  // Planet 8: Genesis (Overgrown Paradise)
+  BG_GENESIS_FAR: "/sprites/backgrounds/genesis-far.png",
+  BG_GENESIS_MID: "/sprites/backgrounds/genesis-mid.png",
+  BG_GENESIS_NEAR: "/sprites/backgrounds/genesis-near.png",
+
+  // Planet 9: Luminos (Neon City)
+  BG_LUMINOS_FAR: "/sprites/backgrounds/luminos-far.png",
+  BG_LUMINOS_MID: "/sprites/backgrounds/luminos-mid.png",
+  BG_LUMINOS_NEAR: "/sprites/backgrounds/luminos-near.png",
+  // Planet 10: Bastion (Fortress City)
+  BG_BASTION_FAR: "/sprites/backgrounds/bastion-far.png",
+  BG_BASTION_MID: "/sprites/backgrounds/bastion-mid.png",
+  BG_BASTION_NEAR: "/sprites/backgrounds/bastion-near.png",
+
+  // Planet Map Icons (thumbnail for star map)
+  MAP_PLANET_1: "/sprites/map/planet-verdania.png",
+  MAP_PLANET_2: "/sprites/map/planet-glaciem.png",
+  MAP_PLANET_3: "/sprites/map/planet-pyraxis.png",
+  MAP_PLANET_4: "/sprites/map/planet-ossuary.png",
+  MAP_PLANET_5: "/sprites/map/planet-abyssia.png",
+  MAP_PLANET_6: "/sprites/map/planet-ashfall.png",
+  MAP_PLANET_7: "/sprites/map/planet-prismara.png",
+  MAP_PLANET_8: "/sprites/map/planet-genesis.png",
+  MAP_PLANET_9: "/sprites/map/planet-luminos.png",
+  MAP_PLANET_10: "/sprites/map/planet-bastion.png",
+
+  // Planet Mission Entities
+  ESCORT_SHIP: "/sprites/ships/escort-ship.png",
+  DEFEND_STRUCTURE: "/sprites/effects/defend-structure.png",
+  COLLECTIBLE_ORB: "/sprites/effects/collectible-orb.png",
 };
 
 export async function preloadAll(): Promise<void> {

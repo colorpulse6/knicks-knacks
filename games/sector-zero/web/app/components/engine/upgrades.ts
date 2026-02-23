@@ -1,4 +1,5 @@
-import type { SaveData, ShipUpgrades } from "./types";
+import type { MaterialId, SaveData, ShipUpgrades } from "./types";
+import { hasMaterial } from "./planets";
 
 // ─── Upgrade Definitions ────────────────────────────────────────────
 
@@ -13,6 +14,8 @@ export interface UpgradeDef {
   color: string;
   // XP required to unlock each upgrade tier (index 0 = XP for lv1, etc.)
   xpRequired: number[];
+  // Material required per tier (undefined = no material needed for that tier)
+  materialRequired: (MaterialId | undefined)[];
 }
 
 export const UPGRADE_DEFS: UpgradeDef[] = [
@@ -26,6 +29,7 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
     icon: "\u2666",  // diamond
     color: "#44aaff",
     xpRequired: [0, 8000, 25000],
+    materialRequired: [undefined, "bio-fiber", "abyssal-plating"],
   },
   {
     id: "engineBoost",
@@ -37,6 +41,7 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
     icon: "\u25B2",  // triangle up
     color: "#ffaa44",
     xpRequired: [0, 8000, 20000],
+    materialRequired: [undefined, "cryogenic-alloy", undefined],
   },
   {
     id: "weaponCore",
@@ -48,6 +53,7 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
     icon: "\u2726",  // star
     color: "#ff4444",
     xpRequired: [5000, 25000],
+    materialRequired: [undefined, "molten-core"],
   },
   {
     id: "munitionsBay",
@@ -59,6 +65,7 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
     icon: "\u25CF",  // filled circle
     color: "#ff3333",
     xpRequired: [0, 8000, 20000],
+    materialRequired: [undefined, "ruin-shard", undefined],
   },
   {
     id: "fireControl",
@@ -70,6 +77,7 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
     icon: "\u2694",  // crossed swords
     color: "#44ff88",
     xpRequired: [15000, 40000],
+    materialRequired: [undefined, "desert-glass"],
   },
   {
     id: "shieldGenerator",
@@ -81,12 +89,13 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
     icon: "\u2B21",  // hexagon
     color: "#4488ff",
     xpRequired: [5000, 25000],
+    materialRequired: [undefined, "phase-crystal"],
   },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-/** Check if a specific upgrade level is unlocked based on XP */
+/** Check if a specific upgrade level is unlocked based on XP and materials */
 export function isUpgradeLevelUnlocked(
   def: UpgradeDef,
   targetLevel: number,
@@ -95,16 +104,35 @@ export function isUpgradeLevelUnlocked(
   if (targetLevel <= 0 || targetLevel > def.maxLevel) return false;
   const req = def.xpRequired[targetLevel - 1];
   if (req === undefined) return false;
-  return save.xp >= req;
+  if (save.xp < req) return false;
+  // Check material requirement
+  const mat = def.materialRequired[targetLevel - 1];
+  if (mat && !hasMaterial(mat, save)) return false;
+  return true;
 }
 
 /** Get the unlock requirement text for the next level */
 export function getUnlockRequirement(def: UpgradeDef, currentLevel: number, save: SaveData): string | null {
   if (currentLevel >= def.maxLevel) return null;
+
+  const parts: string[] = [];
+
+  // Check XP requirement
   const req = def.xpRequired[currentLevel];
-  if (req === undefined) return null;
-  if (save.xp >= req) return null; // Already unlocked
-  return `${req.toLocaleString()} XP required`;
+  if (req !== undefined && save.xp < req) {
+    parts.push(`${req.toLocaleString()} XP`);
+  }
+
+  // Check material requirement
+  const mat = def.materialRequired[currentLevel];
+  if (mat && !hasMaterial(mat, save)) {
+    // Import-safe: format material name from id
+    const matName = mat.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    parts.push(matName);
+  }
+
+  if (parts.length === 0) return null;
+  return `Requires ${parts.join(" + ")}`;
 }
 
 /** Get the XP progress for the next tier (0-1) */

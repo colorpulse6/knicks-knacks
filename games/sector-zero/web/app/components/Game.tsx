@@ -1024,6 +1024,17 @@ export default function Game() {
         </div>
       )}
 
+      {/* Pause button — visible during active gameplay for mobile access to hub */}
+      {gameState && (gameState.screen === GameScreen.PLAYING || gameState.screen === GameScreen.BOSS_FIGHT || gameState.screen === GameScreen.BOSS_INTRO) && (
+        <button
+          onClick={() => setGameState((prev) => (prev ? togglePause(prev) : null))}
+          className="absolute top-2 left-2 w-10 h-10 flex items-center justify-center bg-black/50 border border-white/20 text-white/60 hover:text-white hover:bg-black/70 transition-colors z-10 rounded"
+          title="Pause (ESC)"
+        >
+          <span className="text-lg font-bold">⏸</span>
+        </button>
+      )}
+
       {/* Mute button */}
       {(gameState || showCockpit || showMap || endingPhase !== "off") && !showStartScreen && (
         <button

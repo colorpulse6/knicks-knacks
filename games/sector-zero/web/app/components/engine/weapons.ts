@@ -149,8 +149,8 @@ export function drawPlayerBullets(
       ctx.shadowBlur = 6 + weaponLevel * 2;
       ctx.shadowColor = glowColor;
 
-      const drawW = b.width + 8;
-      const drawH = b.height + 8;
+      const drawW = b.width + 16;
+      const drawH = b.height + 16;
       const drawX = b.x + b.width / 2 - drawW / 2;
       const drawY = b.y + b.height / 2 - drawH / 2;
 
@@ -239,7 +239,7 @@ export function drawEnemyBullets(
       ctx.shadowBlur = 6;
       ctx.shadowColor = ENEMY_BULLET_GLOW[variant] ?? "#ff4444";
 
-      const drawSize = b.width + 6;
+      const drawSize = b.width + 12;
       const drawX = b.x + b.width / 2 - drawSize / 2;
       const drawY = b.y + b.height / 2 - drawSize / 2;
 

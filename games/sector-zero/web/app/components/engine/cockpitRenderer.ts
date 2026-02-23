@@ -394,12 +394,25 @@ function drawArmoryScreen(
       ctx.stroke();
     }
 
-    // Icon
-    ctx.fillStyle = isSelected ? def.color : "#445566";
-    ctx.font = "bold 18px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(def.icon, listX + 20, y + (rowH - 4) / 2);
+    // Icon (sprite sheet or fallback character)
+    const upgradeSheet = getSprite(SPRITES.UPGRADE_ICONS);
+    if (upgradeSheet) {
+      const iconFrames = 6;
+      const iconFW = upgradeSheet.width / iconFrames;
+      const iconFH = upgradeSheet.height;
+      const iconDrawSize = 32;
+      const iconDrawX = listX + 20 - iconDrawSize / 2;
+      const iconDrawY = y + (rowH - 4) / 2 - iconDrawSize / 2;
+      if (!isSelected) ctx.globalAlpha = 0.5;
+      ctx.drawImage(upgradeSheet, i * iconFW, 0, iconFW, iconFH, iconDrawX, iconDrawY, iconDrawSize, iconDrawSize);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = isSelected ? def.color : "#445566";
+      ctx.font = "bold 18px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(def.icon, listX + 20, y + (rowH - 4) / 2);
+    }
 
     // Name
     ctx.fillStyle = isSelected ? "#ffffff" : "#889999";

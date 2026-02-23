@@ -19,7 +19,9 @@
       "WebFetch(domain:colorpulse6.github.io)",
       "Bash(ls:*)",
       "Bash(yarn sector-zero:build:*)",
-      "Bash(sips:*)"
+      "Bash(sips:*)",
+      "Bash(grep:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

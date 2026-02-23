@@ -53,6 +53,8 @@ export interface Player {
 export const BULLET_SPEED = 10;
 export const ENEMY_BULLET_SPEED = 4;
 
+export type BulletVariant = "orb" | "bolt" | "fire" | "acid";
+
 export interface Bullet {
   id: number;
   x: number;
@@ -64,6 +66,7 @@ export interface Bullet {
   damage: number;
   isPlayer: boolean;
   piercing: boolean;
+  variant?: BulletVariant;
 }
 
 // ─── Enemy Types ─────────────────────────────────────────────────────
@@ -288,6 +291,17 @@ export interface Particle {
   type: "spark" | "smoke" | "trail" | "explosion";
 }
 
+// ─── Sprite Explosions ──────────────────────────────────────────────
+export interface SpriteExplosion {
+  x: number;
+  y: number;
+  size: number;
+  frame: number;
+  totalFrames: number;
+  frameTimer: number;
+  frameDelay: number; // ticks per frame
+}
+
 // ─── Bosses ──────────────────────────────────────────────────────────
 export interface BossPart {
   id: number;
@@ -450,6 +464,7 @@ export interface GameState {
   powerUps: PowerUp[];
   activePowerUps: ActivePowerUp[];
   particles: Particle[];
+  explosions: SpriteExplosion[];
   background: BackgroundLayer[];
   score: number;
   combo: number;

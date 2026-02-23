@@ -28,10 +28,11 @@ import {
   type EnhancementId,
   type PlanetId,
   type ObjectiveState,
+  type SpriteExplosion,
   DEFAULT_UPGRADES,
 } from "./types";
 import { createBackground, updateBackground } from "./background";
-import { updateParticles, createExplosion, createSparks, createEngineTrail } from "./particles";
+import { updateParticles, createExplosion, createSparks, createEngineTrail, createSpriteExplosion, updateSpriteExplosions } from "./particles";
 import { firePlayerWeapon, fireSideGunners, updateBullets } from "./weapons";
 import {
   updateEnemy,
@@ -178,6 +179,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     powerUps: [],
     activePowerUps: [],
     particles: [],
+    explosions: [],
     background: createBackground(),
     score: 0,
     combo: 0,
@@ -246,6 +248,7 @@ export function createPlanetGameState(
     powerUps: [],
     activePowerUps: [],
     particles: [],
+    explosions: [],
     background: createBackground(),
     score: 0,
     combo: 0,
@@ -387,8 +390,9 @@ export function updateGame(
   // Update power-ups
   s = updatePowerUps(s);
 
-  // Update particles
+  // Update particles & explosions
   s.particles = updateParticles(s.particles);
+  s.explosions = updateSpriteExplosions(s.explosions);
 
   // Engine trail
   if (s.frameCount % 2 === 0) {
@@ -651,6 +655,12 @@ function updateBossFight(
       ...createExplosion(bcx, bcy, 20, "#ffcc44"),
       ...createExplosion(bcx, bcy, 15, "#ffffff"),
     ];
+    s.explosions = [
+      ...s.explosions,
+      createSpriteExplosion(bcx, bcy, 120),
+      createSpriteExplosion(bcx - 40, bcy - 30, 80),
+      createSpriteExplosion(bcx + 40, bcy + 20, 80),
+    ];
 
     s.enemyBullets = [];
     s.enemies = [];
@@ -748,6 +758,7 @@ function handleBossCollisions(state: GameState): GameState {
         ...newParticles,
         ...createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2, 20, "#ffaa00"),
       ];
+      s.explosions = [...s.explosions, createSpriteExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2, 90)];
     }
   }
 
@@ -976,6 +987,7 @@ function updateEnemies(state: GameState): GameState {
 function handleCollisions(state: GameState): GameState {
   let s = { ...state };
   let newParticles = [...s.particles];
+  const newExplosions: SpriteExplosion[] = [];
   const audioEvents = [...s.audioEvents];
   const destroyedBullets = new Set<number>();
   const destroyedEnemies = new Set<number>();
@@ -1010,7 +1022,7 @@ function handleCollisions(state: GameState): GameState {
           destroyedEnemies.add(enemy.id);
           audioEvents.push(AudioEvent.ENEMY_DESTROY);
 
-          // Explosion particles
+          // Explosion particles + sprite explosion
           const ecx = enemy.x + enemy.width / 2;
           const ecy = enemy.y + enemy.height / 2;
           newParticles = [
@@ -1018,6 +1030,7 @@ function handleCollisions(state: GameState): GameState {
             ...createExplosion(ecx, ecy, 12, "#ff8844"),
             ...createSparks(ecx, ecy, 6, "#ffcc44"),
           ];
+          newExplosions.push(createSpriteExplosion(ecx, ecy, Math.max(enemy.width, enemy.height) + 16));
 
           // Score and XP with combo
           const comboMultiplier = Math.min(1 + s.combo * 0.5, COMBO_MAX);
@@ -1127,6 +1140,7 @@ function handleCollisions(state: GameState): GameState {
           ...newParticles,
           ...createExplosion(ecx, ecy, 10, "#ff4444"),
         ];
+        newExplosions.push(createSpriteExplosion(ecx, ecy, Math.max(enemy.width, enemy.height) + 16));
 
         if (hasShield) {
           audioEvents.push(AudioEvent.SHIELD_HIT);
@@ -1143,6 +1157,7 @@ function handleCollisions(state: GameState): GameState {
   s.enemyBullets = s.enemyBullets.filter((b) => !destroyedBullets.has(b.id));
   s.enemies = s.enemies.filter((e) => !destroyedEnemies.has(e.id));
   s.particles = newParticles;
+  s.explosions = [...s.explosions, ...newExplosions];
   s.audioEvents = audioEvents;
 
   return s;
@@ -1174,6 +1189,7 @@ function playerHit(
       ...createExplosion(pcx, pcy, 20, "#ff6644"),
       ...createExplosion(pcx, pcy, 10, "#ffcc44"),
     ];
+    const deathExplosions = [...state.explosions, createSpriteExplosion(pcx, pcy, 80)];
 
     if (newLives > 0) {
       // Respawn
@@ -1187,6 +1203,7 @@ function playerHit(
         lives: newLives,
         deaths: state.deaths + 1,
         particles,
+        explosions: deathExplosions,
         screenShake: 8,
       };
     } else {
@@ -1196,6 +1213,7 @@ function playerHit(
         lives: 0,
         deaths: state.deaths + 1,
         particles,
+        explosions: deathExplosions,
         screenShake: 10,
       };
     }
@@ -1257,6 +1275,7 @@ function activateBomb(state: GameState): GameState {
   let maxCombo = state.maxCombo;
 
   // Destroy all non-boss enemies on screen
+  const bombExplosions: SpriteExplosion[] = [];
   for (const enemy of enemies) {
     const ecx = enemy.x + enemy.width / 2;
     const ecy = enemy.y + enemy.height / 2;
@@ -1265,6 +1284,7 @@ function activateBomb(state: GameState): GameState {
       ...createExplosion(ecx, ecy, 12, "#ff4444"),
       ...createSparks(ecx, ecy, 6, "#ffcc44"),
     ];
+    bombExplosions.push(createSpriteExplosion(ecx, ecy, Math.max(enemy.width, enemy.height) + 16));
     const comboMult = Math.min(1 + combo * 0.5, COMBO_MAX);
     const earnedScore = Math.floor(enemy.score * comboMult);
     score += earnedScore;
@@ -1289,6 +1309,7 @@ function activateBomb(state: GameState): GameState {
       ...particles,
       ...createExplosion(bcx, bcy, 15, "#ff8844"),
     ];
+    bombExplosions.push(createSpriteExplosion(bcx, bcy, 90));
     audioEvents.push(AudioEvent.BOSS_HIT);
   }
 
@@ -1298,6 +1319,7 @@ function activateBomb(state: GameState): GameState {
     ...createExplosion(CANVAS_WIDTH / 2, GAME_AREA_HEIGHT / 2, 25, "#ff3333"),
     ...createExplosion(CANVAS_WIDTH / 2, GAME_AREA_HEIGHT / 2, 15, "#ffaa00"),
   ];
+  bombExplosions.push(createSpriteExplosion(CANVAS_WIDTH / 2, GAME_AREA_HEIGHT / 2, 100));
 
   return {
     ...state,
@@ -1305,6 +1327,7 @@ function activateBomb(state: GameState): GameState {
     enemyBullets,
     boss,
     particles,
+    explosions: [...state.explosions, ...bombExplosions],
     score,
     xp,
     kills,

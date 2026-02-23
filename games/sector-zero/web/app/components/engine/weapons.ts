@@ -4,6 +4,7 @@ import {
   type Bullet,
   type Player,
 } from "./types";
+import { getSprite, SPRITES } from "./sprites";
 
 let bulletIdCounter = 0;
 
@@ -114,65 +115,149 @@ export function updateBullets(
     );
 }
 
+// Player bullet sprite sheet: 4 frames (small crystal, medium crystal, large burst, missile)
+// Map weapon levels to frames: 1→0, 2→1, 3→2, 4-5→3
+function getPlayerBulletFrame(weaponLevel: number): number {
+  if (weaponLevel <= 1) return 0;
+  if (weaponLevel === 2) return 1;
+  if (weaponLevel === 3) return 2;
+  return 3;
+}
+
 export function drawPlayerBullets(
   ctx: CanvasRenderingContext2D,
   bullets: Bullet[],
   weaponLevel: number = 1,
   hasRapidFire: boolean = false
 ): void {
-  // Color scheme based on active effects
-  let glowColor: string;
-  let fillColor: string;
-  let coreColor: string;
-  let blurSize: number;
+  const sheet = getSprite(SPRITES.PLAYER_BULLETS);
 
-  if (hasRapidFire) {
-    glowColor = "#ff6600";
-    fillColor = "#ff9944";
-    coreColor = "#ffddaa";
-    blurSize = 10 + weaponLevel;
+  if (sheet) {
+    const frameCount = 4;
+    const frameW = sheet.width / frameCount;
+    const frameH = sheet.height;
+    const frameIdx = getPlayerBulletFrame(weaponLevel);
+    // Crop to content center (similar to player ship — content in center ~50%)
+    const cropTop = Math.floor(frameH * 0.2);
+    const cropH = Math.floor(frameH * 0.6);
+
+    const glowColor = hasRapidFire ? "#ff6600" : "#44ccff";
+
+    for (const b of bullets) {
+      ctx.save();
+      // Glow effect behind the sprite
+      ctx.shadowBlur = 6 + weaponLevel * 2;
+      ctx.shadowColor = glowColor;
+
+      const drawW = b.width + 8;
+      const drawH = b.height + 8;
+      const drawX = b.x + b.width / 2 - drawW / 2;
+      const drawY = b.y + b.height / 2 - drawH / 2;
+
+      // Tint orange during rapid fire
+      if (hasRapidFire) {
+        ctx.globalAlpha = 0.85;
+      }
+
+      ctx.drawImage(sheet, frameIdx * frameW, cropTop, frameW, cropH, drawX, drawY, drawW, drawH);
+      ctx.restore();
+    }
   } else {
-    glowColor = "#44ccff";
-    fillColor = "#88eeff";
-    coreColor = "#ffffff";
-    blurSize = 6 + weaponLevel * 2;
-  }
+    // Procedural fallback
+    let glowColor: string;
+    let fillColor: string;
+    let coreColor: string;
+    let blurSize: number;
 
-  for (const b of bullets) {
-    ctx.save();
-    ctx.shadowBlur = blurSize;
-    ctx.shadowColor = glowColor;
-    ctx.fillStyle = fillColor;
-    ctx.fillRect(b.x, b.y, b.width, b.height);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = coreColor;
-    ctx.fillRect(b.x + 1, b.y + 1, b.width - 2, b.height - 2);
-
-    // High weapon levels get a trailing glow
-    if (weaponLevel >= 3) {
-      ctx.globalAlpha = 0.2 + (weaponLevel - 3) * 0.1;
-      ctx.fillStyle = glowColor;
-      ctx.fillRect(b.x - 1, b.y + b.height, b.width + 2, 4 + weaponLevel);
-      ctx.globalAlpha = 1;
+    if (hasRapidFire) {
+      glowColor = "#ff6600";
+      fillColor = "#ff9944";
+      coreColor = "#ffddaa";
+      blurSize = 10 + weaponLevel;
+    } else {
+      glowColor = "#44ccff";
+      fillColor = "#88eeff";
+      coreColor = "#ffffff";
+      blurSize = 6 + weaponLevel * 2;
     }
 
-    ctx.restore();
+    for (const b of bullets) {
+      ctx.save();
+      ctx.shadowBlur = blurSize;
+      ctx.shadowColor = glowColor;
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(b.x, b.y, b.width, b.height);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = coreColor;
+      ctx.fillRect(b.x + 1, b.y + 1, b.width - 2, b.height - 2);
+
+      if (weaponLevel >= 3) {
+        ctx.globalAlpha = 0.2 + (weaponLevel - 3) * 0.1;
+        ctx.fillStyle = glowColor;
+        ctx.fillRect(b.x - 1, b.y + b.height, b.width + 2, 4 + weaponLevel);
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.restore();
+    }
   }
 }
+
+// Enemy bullet sprite sheet: 4 frames (red orb, purple bolt, fire comet, green acid)
+const ENEMY_BULLET_FRAME: Record<string, number> = {
+  orb: 0,
+  bolt: 1,
+  fire: 2,
+  acid: 3,
+};
+
+const ENEMY_BULLET_GLOW: Record<string, string> = {
+  orb: "#ff4444",
+  bolt: "#9944ff",
+  fire: "#ff6600",
+  acid: "#44cc44",
+};
 
 export function drawEnemyBullets(
   ctx: CanvasRenderingContext2D,
   bullets: Bullet[]
 ): void {
-  for (const b of bullets) {
-    ctx.save();
-    ctx.shadowBlur = 6;
-    ctx.shadowColor = "#ff4444";
-    ctx.fillStyle = "#ff6666";
-    ctx.beginPath();
-    ctx.arc(b.x + b.width / 2, b.y + b.height / 2, b.width / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.restore();
+  const sheet = getSprite(SPRITES.ENEMY_BULLETS);
+
+  if (sheet) {
+    const frameCount = 4;
+    const frameW = sheet.width / frameCount;
+    const frameH = sheet.height;
+    // Crop to content center
+    const cropTop = Math.floor(frameH * 0.2);
+    const cropH = Math.floor(frameH * 0.6);
+
+    for (const b of bullets) {
+      ctx.save();
+      const variant = b.variant ?? "orb";
+      const frameIdx = ENEMY_BULLET_FRAME[variant] ?? 0;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = ENEMY_BULLET_GLOW[variant] ?? "#ff4444";
+
+      const drawSize = b.width + 6;
+      const drawX = b.x + b.width / 2 - drawSize / 2;
+      const drawY = b.y + b.height / 2 - drawSize / 2;
+
+      ctx.drawImage(sheet, frameIdx * frameW, cropTop, frameW, cropH, drawX, drawY, drawSize, drawSize);
+      ctx.restore();
+    }
+  } else {
+    // Procedural fallback
+    for (const b of bullets) {
+      ctx.save();
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = "#ff4444";
+      ctx.fillStyle = "#ff6666";
+      ctx.beginPath();
+      ctx.arc(b.x + b.width / 2, b.y + b.height / 2, b.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
   }
 }

@@ -7,6 +7,7 @@ import {
   type Enemy,
   type EnemyBehavior,
   type Bullet,
+  type BulletVariant,
   type Player,
   type FormationType,
 } from "./types";
@@ -255,6 +256,17 @@ export function enemyShouldFire(enemy: Enemy): boolean {
   return enemy.fireTimer <= 0;
 }
 
+// Map enemy behavior to bullet visual variant
+const BEHAVIOR_BULLET_VARIANT: Partial<Record<EnemyBehavior, BulletVariant>> = {
+  cloak: "bolt",
+  phase: "bolt",
+  mirror: "bolt",
+  orbit: "fire",
+  static: "fire",
+  kamikaze: "acid",
+  drift: "acid",
+};
+
 export function fireEnemyBullet(enemy: Enemy, player: Player): Bullet[] {
   const cx = enemy.x + enemy.width / 2;
   const cy = enemy.y + enemy.height;
@@ -275,6 +287,7 @@ export function fireEnemyBullet(enemy: Enemy, player: Player): Bullet[] {
       damage: 1,
       isPlayer: false,
       piercing: false,
+      variant: BEHAVIOR_BULLET_VARIANT[enemy.behavior] ?? "orb",
     },
   ];
 }

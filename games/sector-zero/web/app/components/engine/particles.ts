@@ -1,4 +1,5 @@
-import type { Particle } from "./types";
+import type { Particle, SpriteExplosion } from "./types";
+import { getSprite, SPRITES } from "./sprites";
 
 export function createExplosion(
   x: number,
@@ -104,4 +105,60 @@ export function drawParticles(
     }
   }
   ctx.globalAlpha = 1;
+}
+
+// ─── Sprite Explosions ──────────────────────────────────────────────
+
+const EXPLOSION_FRAMES = 7;
+
+export function createSpriteExplosion(
+  x: number,
+  y: number,
+  size: number = 64
+): SpriteExplosion {
+  return {
+    x,
+    y,
+    size,
+    frame: 0,
+    totalFrames: EXPLOSION_FRAMES,
+    frameTimer: 0,
+    frameDelay: 4, // advance every 4 ticks (~15fps animation at 60fps game)
+  };
+}
+
+export function updateSpriteExplosions(
+  explosions: SpriteExplosion[]
+): SpriteExplosion[] {
+  return explosions
+    .map((e) => ({
+      ...e,
+      frameTimer: e.frameTimer + 1,
+      frame: e.frameTimer + 1 >= e.frameDelay
+        ? e.frame + 1
+        : e.frame,
+      ...(e.frameTimer + 1 >= e.frameDelay ? { frameTimer: 0 } : {}),
+    }))
+    .filter((e) => e.frame < e.totalFrames);
+}
+
+export function drawSpriteExplosions(
+  ctx: CanvasRenderingContext2D,
+  explosions: SpriteExplosion[]
+): void {
+  const sheet = getSprite(SPRITES.EXPLOSION);
+  if (!sheet) return;
+
+  const frameW = sheet.width / EXPLOSION_FRAMES;
+  const frameH = sheet.height;
+  // Crop vertically to content (similar to player ship — content is in center ~60%)
+  const cropTop = Math.floor(frameH * 0.2);
+  const cropH = Math.floor(frameH * 0.6);
+
+  for (const e of explosions) {
+    const sx = e.frame * frameW;
+    const drawX = e.x - e.size / 2;
+    const drawY = e.y - e.size / 2;
+    ctx.drawImage(sheet, sx, cropTop, frameW, cropH, drawX, drawY, e.size, e.size);
+  }
 }

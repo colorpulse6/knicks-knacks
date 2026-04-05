@@ -4,11 +4,18 @@
 
 **Goal:** Add a 4-type weapon affinity system (Kinetic / Energy / Incendiary / Cryogenic) with per-class enemy stat profiles, visible damage feedback, class tint overlays, and a Bestiary screen — all of this applied to the existing 40 levels and 10 planets without breaking current gameplay.
 
-**Architecture:** Introduce pure data modules (`weaponTypes.ts`, `enemyClasses.ts`) that tag the existing `EnemyType` enum values with an enemy class + affinity profile. Extend the damage-application code path in `gameEngine.ts` to apply the affinity multiplier using the player's equipped primary weapon type (default: Kinetic). Add floating damage labels to particles. Render class tint overlays in `drawEnemies`. Introduce a new Bestiary screen on the cockpit hub that reads kill counters from an extended `SaveData`.
+**Architecture:** Declare shared types (`WeaponType`, `EnemyClass`, `AffinityResult`, `FloatingLabel`, `BestiaryEntry`) in `types.ts`. Create pure-data modules (`weaponTypes.ts`, `enemyClasses.ts`) that provide lookup tables + multipliers. Extend the damage-application path in `gameEngine.ts` to apply the affinity multiplier using the player's equipped weapon type (default: Kinetic). Add a floating damage-label system. Render class tint overlays in `drawEnemies`. Add a new Bestiary screen on the cockpit hub that reads kill counters from an extended `SaveData`.
 
-**Tech Stack:** TypeScript, Next.js 15, React 19, HTML5 Canvas 2D. No test framework exists in the repo — verification is via `yarn build` (type check) + manual playtest checklists. Pure data/logic modules include simple assertion-based dev checks that run at module import time in development.
+**Tech Stack:** TypeScript, Next.js 15, React 19, HTML5 Canvas 2D. No test framework exists — verification is via `yarn build` (type check) + `yarn lint` + manual playtest. Pure data/logic modules include assertion-based dev checks that run on module import in development.
 
 **Spec reference:** [2026-04-05-sector-zero-expansion-design.md](/Users/nichalasbarnes/Desktop/projects/knicks-knacks/docs/superpowers/specs/2026-04-05-sector-zero-expansion-design.md)
+
+**Verified codebase facts (as of plan writing):**
+- `enemies.ts` uses `currentDifficultyScale` (line 20) for world difficulty multipliers
+- `gameEngine.ts` calls `firePlayerWeapon(state.player, state.player.weaponLevel)` — `weaponLevel` lives on `player`
+- `save.ts` has **no** schema version field — migration relies on field-by-field fallback
+- `cockpitRenderer.ts` already imports `CANVAS_WIDTH`/`CANVAS_HEIGHT`, uses `drawSubScreenFrame`, and uses `ctx.roundRect` extensively
+- `cockpitRenderer.ts` has a `wrapText(ctx, text, maxWidth): string[]` helper returning string array (does NOT draw)
 
 ---
 
@@ -18,66 +25,213 @@
 
 | Path | Responsibility |
 |------|----------------|
-| `games/sector-zero/web/app/components/engine/weaponTypes.ts` | Weapon type enum, player primary weapon type state, affinity multiplier lookup |
-| `games/sector-zero/web/app/components/engine/enemyClasses.ts` | Enemy class enum, class stat profiles, enemy-to-class mapping, planet-to-dominant-class mapping |
-| `games/sector-zero/web/app/components/engine/bestiary.ts` | Bestiary entry builder, encounter tracking helpers |
-| `games/sector-zero/web/app/components/engine/floatingLabels.ts` | Floating damage/tag labels (CRITICAL, RESISTED) — separate from particles for lifecycle clarity |
+| `games/sector-zero/web/app/components/engine/weaponTypes.ts` | Weapon-type metadata, affinity multiplier lookup |
+| `games/sector-zero/web/app/components/engine/enemyClasses.ts` | Class stat profiles, enemy-to-class default mapping, planet-to-dominant-class mapping, affinity resolver |
+| `games/sector-zero/web/app/components/engine/bestiary.ts` | Bestiary entry helpers, enemy lore strings |
+| `games/sector-zero/web/app/components/engine/floatingLabels.ts` | Floating damage/tag labels (CRITICAL, RESISTED) |
 
 ### Modified files
 
 | Path | Changes |
 |------|---------|
-| `games/sector-zero/web/app/components/engine/types.ts` | Add `WeaponType` enum, extend `Bullet` with `weaponType`, extend `Enemy` with `classId`, extend `GameState` with `floatingLabels`, extend `SaveData` with `bestiary` + `equippedWeaponType` |
-| `games/sector-zero/web/app/components/engine/enemies.ts` | Assign `classId` in `createEnemy`, apply class stat multipliers, tint overlay in `drawEnemies`, affinity icon above HP bar |
-| `games/sector-zero/web/app/components/engine/weapons.ts` | Tag player bullets with `weaponType` on creation, use player's equipped weapon type |
-| `games/sector-zero/web/app/components/engine/gameEngine.ts` | Compute affinity-adjusted damage in collision code, spawn floating labels, update labels each frame, record kills to bestiary |
-| `games/sector-zero/web/app/components/engine/renderer.ts` | Draw floating labels alongside particles |
-| `games/sector-zero/web/app/components/engine/save.ts` | Extend `defaultSave` and `migrateSave` with new fields |
-| `games/sector-zero/web/app/components/engine/cockpit.ts` | Add `bestiary` sub-screen to `CockpitHubState`, add hotspot for nav |
-| `games/sector-zero/web/app/components/engine/cockpitRenderer.ts` | Add `drawBestiaryScreen` function, wire into screen dispatch |
-| `games/sector-zero/web/app/components/Game.tsx` | Handle new cockpit sub-screen in input routing, test that save load/save includes new fields |
+| `games/sector-zero/web/app/components/engine/types.ts` | Declare `WeaponType`, `EnemyClass`, `AffinityResult`, `FloatingLabel`, `BestiaryEntry`; extend `Bullet`, `Enemy`, `GameState`, `SaveData` |
+| `games/sector-zero/web/app/components/engine/enemies.ts` | Set `classId` in `createEnemy`, apply class stat multipliers, draw tint overlay, affinity indicator above HP bar |
+| `games/sector-zero/web/app/components/engine/weapons.ts` | Tag player bullets with `weaponType` on creation |
+| `games/sector-zero/web/app/components/engine/gameEngine.ts` | Initialize new state fields, compute affinity damage in collisions, spawn floating labels, record kills to bestiary |
+| `games/sector-zero/web/app/components/engine/renderer.ts` | Draw floating labels |
+| `games/sector-zero/web/app/components/engine/save.ts` | Extend defaults + migrateSave with new fields |
+| `games/sector-zero/web/app/components/engine/cockpit.ts` | Add `bestiary` screen type + `bestiarySelected` state + hotspot |
+| `games/sector-zero/web/app/components/engine/cockpitRenderer.ts` | Add `drawBestiaryScreen`, wire into screen dispatch |
+| `games/sector-zero/web/app/components/Game.tsx` | Add bestiary sub-screen input routing; flush `pendingBestiaryKills` on mission complete |
 
-### Test/verification strategy
+### Verification strategy
 
-No test framework exists. Verification loop per task:
+No test framework. Per-task verification loop:
 
-1. **Type check:** `cd games/sector-zero/web && yarn build` — must exit 0
-2. **Assertion-based dev checks:** pure logic modules export a `__runSelfTests()` function. These are called at module import in development mode (`process.env.NODE_ENV === "development"`). They `console.assert()` on expected outputs. Failures print to browser console.
-3. **Manual playtest checklist:** each task has a checklist of observable in-game behaviors to verify in the dev server (`yarn sector-zero:dev`).
+1. **Type check:** `cd games/sector-zero/web && yarn build` → must exit 0
+2. **Lint:** `cd games/sector-zero/web && yarn lint` → no new warnings
+3. **Dev-mode self-tests:** pure-logic modules call `console.assert` on import. Failures log to browser console when running `yarn dev`.
+4. **Manual playtest checklist:** each task has observable in-game behaviors to verify.
+
+Most tasks will have intermediate build failures because types are added before their consumers are updated. This is acknowledged and expected — final clean build happens at Task 9.
 
 ---
 
 ## Commit strategy
 
-Commit after each task (numbered). Use conventional commits: `feat:`, `refactor:`, `fix:`. Message format: `feat(sector-zero): <task-summary>`.
+One commit per task. Conventional commits: `feat(sector-zero):` prefix. Commit even if the build is transitively broken mid-stream — each task should leave the plan in a forward-progressing state.
 
 ---
 
-## Task 1: Define WeaponType enum and affinity data
+## Task 1: Declare shared types in types.ts
+
+**Files:**
+- Modify: `games/sector-zero/web/app/components/engine/types.ts`
+
+- [ ] **Step 1: Read types.ts to locate insertion points**
+
+Run: `cd games/sector-zero/web && grep -n "export interface Bullet\|export interface Enemy\|export interface GameState\|export interface SaveData" app/components/engine/types.ts`
+
+Expected: line numbers for each interface. Note them for Step 2.
+
+- [ ] **Step 2: Add new type declarations before the `Bullet` interface**
+
+Find the comment line `// ─── Bullets ─────────────────────────────────────────────────────────` (around line 52). **Immediately before that comment**, insert:
+
+```typescript
+// ─── Weapon Affinity System ─────────────────────────────────────────
+export type WeaponType = "kinetic" | "energy" | "incendiary" | "cryogenic";
+
+export type AffinityResult = "effective" | "neutral" | "resisted";
+
+// ─── Enemy Classes ──────────────────────────────────────────────────
+export type EnemyClass =
+  | "armored"
+  | "swarm"
+  | "bio-organic"
+  | "tech-drone"
+  | "heavy-mech"
+  | "elemental-fire"
+  | "elemental-ice"
+  | "elemental-cinder";
+
+```
+
+- [ ] **Step 3: Extend `Bullet` interface**
+
+Find `export interface Bullet {` and add `weaponType?: WeaponType;` as the last field:
+
+```typescript
+export interface Bullet {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  width: number;
+  height: number;
+  damage: number;
+  isPlayer: boolean;
+  piercing: boolean;
+  variant?: BulletVariant;
+  weaponType?: WeaponType;  // NEW
+}
+```
+
+- [ ] **Step 4: Extend `Enemy` interface**
+
+Find `export interface Enemy {` and add 3 new fields at the end:
+
+```typescript
+export interface Enemy {
+  // ... existing fields kept as-is ...
+  cloaked: boolean;
+  classId: EnemyClass;              // NEW
+  lastHitAffinity?: AffinityResult;  // NEW
+  lastHitTimer: number;              // NEW
+}
+```
+
+- [ ] **Step 5: Add `FloatingLabel` interface**
+
+Find the `// ─── Bosses ─────────────────────` comment (just after the Particle interface). **Immediately before that comment**, insert:
+
+```typescript
+// ─── Floating Labels (damage/affinity indicators) ───────────────────
+export interface FloatingLabel {
+  id: number;
+  x: number;
+  y: number;
+  vy: number;
+  text: string;
+  color: string;
+  life: number;
+  maxLife: number;
+}
+
+```
+
+- [ ] **Step 6: Extend `GameState` interface**
+
+Find `export interface GameState {` and add three fields right after `explosions: SpriteExplosion[];`:
+
+```typescript
+export interface GameState {
+  // ... existing ...
+  particles: Particle[];
+  explosions: SpriteExplosion[];
+  floatingLabels: FloatingLabel[];                                       // NEW
+  equippedWeaponType: WeaponType;                                        // NEW — copied from SaveData at mission start; read-only during run in MVP
+  pendingBestiaryKills: Array<{ type: EnemyType; classId: EnemyClass }>; // NEW
+  // ... rest kept as-is ...
+}
+```
+
+- [ ] **Step 7: Add `BestiaryEntry` interface**
+
+Find `export interface SaveData {` — **immediately before it**, insert:
+
+```typescript
+// ─── Bestiary ───────────────────────────────────────────────────────
+export interface BestiaryEntry {
+  enemyType: EnemyType;
+  classId: EnemyClass;
+  killCount: number;
+  firstSeenPlanet?: PlanetId;
+  firstSeenWorld?: number;
+}
+
+```
+
+- [ ] **Step 8: Extend `SaveData` interface**
+
+In `SaveData`, add two new fields at the end (before closing brace):
+
+```typescript
+export interface SaveData {
+  // ... existing ...
+  unlockedEnhancements: EnhancementId[];
+  bestiary: Partial<Record<EnemyType, BestiaryEntry>>;  // NEW
+  equippedWeaponType: WeaponType;                        // NEW — default "kinetic"
+}
+```
+
+- [ ] **Step 9: Verify types.ts compiles in isolation**
+
+Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -30`
+
+Expected: Build FAILS with errors in consumer files (enemies.ts, gameEngine.ts, save.ts) that don't yet set the new fields. Acceptable errors: "Property 'classId' is missing", "Property 'bestiary' is missing", "Property 'floatingLabels' is missing", etc.
+
+**Unacceptable:** syntax errors inside types.ts itself. If any appear, fix them before proceeding.
+
+- [ ] **Step 10: Commit**
+
+```bash
+cd /Users/nichalasbarnes/Desktop/projects/knicks-knacks
+git add games/sector-zero/web/app/components/engine/types.ts
+git commit -m "feat(sector-zero): declare weapon affinity and bestiary types"
+```
+
+---
+
+## Task 2: Create weaponTypes.ts with affinity multipliers
 
 **Files:**
 - Create: `games/sector-zero/web/app/components/engine/weaponTypes.ts`
-- Modify: `games/sector-zero/web/app/components/engine/types.ts` (add re-export convenience)
 
-- [ ] **Step 1: Write the module with types and data**
-
-Create `games/sector-zero/web/app/components/engine/weaponTypes.ts`:
+- [ ] **Step 1: Create the module**
 
 ```typescript
-// Weapon type system — drives the affinity matrix.
-// Each primary weapon belongs to one of four types.
-
-export type WeaponType = "kinetic" | "energy" | "incendiary" | "cryogenic";
+import type { WeaponType, AffinityResult } from "./types";
 
 export const WEAPON_TYPES: WeaponType[] = ["kinetic", "energy", "incendiary", "cryogenic"];
 
-/** Display metadata per weapon type */
 export interface WeaponTypeMeta {
   id: WeaponType;
   name: string;
-  color: string;      // hex, used for bullet tints / UI
-  glowColor: string;  // hex, for bullet glow
-  icon: string;       // single-char symbol for HUD
+  color: string;
+  glowColor: string;
+  icon: string;
 }
 
 export const WEAPON_TYPE_META: Record<WeaponType, WeaponTypeMeta> = {
@@ -87,19 +241,12 @@ export const WEAPON_TYPE_META: Record<WeaponType, WeaponTypeMeta> = {
   cryogenic:  { id: "cryogenic",  name: "Cryogenic",  color: "#aaddff", glowColor: "#ddf2ff", icon: "C" },
 };
 
-/** Affinity outcomes: Effective = 1.5×, Neutral = 1.0×, Resisted = 0.5× */
-export type AffinityResult = "effective" | "neutral" | "resisted";
-
 export const AFFINITY_MULTIPLIER: Record<AffinityResult, number> = {
   effective: 1.5,
   neutral:   1.0,
   resisted:  0.5,
 };
 
-/**
- * Dev-mode self-tests — called on import to catch regressions.
- * Uses console.assert, visible in browser devtools when running yarn sector-zero:dev.
- */
 export function __runWeaponTypeSelfTests(): void {
   console.assert(WEAPON_TYPES.length === 4, "WEAPON_TYPES must have exactly 4 entries");
   console.assert(AFFINITY_MULTIPLIER.effective === 1.5, "Effective must be 1.5×");
@@ -116,58 +263,53 @@ if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
 }
 ```
 
-- [ ] **Step 2: Type-check the build**
+- [ ] **Step 2: Verify + lint**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
-Expected: `✓ Compiled successfully` with no type errors. A successful exit with the standard build output.
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+cd games/sector-zero/web && yarn lint 2>&1 | grep weaponTypes
+```
+
+Expected: weaponTypes.ts itself has no errors (errors in consumers still present).
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/nichalasbarnes/Desktop/projects/knicks-knacks
 git add games/sector-zero/web/app/components/engine/weaponTypes.ts
-git commit -m "feat(sector-zero): add WeaponType enum and affinity multipliers"
+git commit -m "feat(sector-zero): add weapon type metadata and affinity multipliers"
 ```
 
 ---
 
-## Task 2: Define EnemyClass enum and planet class mappings
+## Task 3: Create enemyClasses.ts with stat profiles and resolver
 
 **Files:**
 - Create: `games/sector-zero/web/app/components/engine/enemyClasses.ts`
 
-- [ ] **Step 1: Create the enemy class module**
+- [ ] **Step 1: Verify enum values**
 
-Create `games/sector-zero/web/app/components/engine/enemyClasses.ts`:
+```bash
+cd games/sector-zero/web && grep -n "SCOUT\|DRONE\|GUNNER\|SHIELDER\|BOMBER\|SWARM\|TURRET\|CLOAKER\|ELITE\|MINE\|WRAITH\|ECHO\|MIRROR" app/components/engine/types.ts | head -20
+cd games/sector-zero/web && grep -n "PlanetId" app/components/engine/types.ts | head -5
+```
+
+Confirm EnemyType has 13 values and note PlanetId string union members.
+
+- [ ] **Step 2: Create the module**
 
 ```typescript
-import { EnemyType, type PlanetId } from "./types";
-import type { WeaponType, AffinityResult } from "./weaponTypes";
+import { EnemyType, type PlanetId, type EnemyClass, type WeaponType, type AffinityResult } from "./types";
 
-/** Enemy combat class — governs stat profile + affinity profile. */
-export type EnemyClass =
-  | "armored"
-  | "swarm"
-  | "bio-organic"
-  | "tech-drone"
-  | "heavy-mech"
-  | "elemental-fire"
-  | "elemental-ice"
-  | "elemental-cinder";
-
-/** Stat multipliers relative to an enemy's baseline ENEMY_DEFS values. */
 export interface EnemyClassProfile {
   id: EnemyClass;
   name: string;
-  tint: string;            // multiply-blend overlay color (hex)
-  hpMult: number;          // 0.5 – 2.0
-  speedMult: number;       // 0.5 – 1.8
-  damageMult: number;      // 0.5 – 1.5
-  fireRateMult: number;    // 0.6 – 1.6 (lower = faster fire)
-  scoreMult: number;       // 0.8 – 2.0
-  /** Weapon types this class is weak to (Effective hits) */
+  tint: string;
+  hpMult: number;
+  speedMult: number;
+  damageMult: number;
+  fireRateMult: number;
+  scoreMult: number;
   effectiveVs: WeaponType[];
-  /** Weapon types this class resists (Resisted hits) */
   resistedVs: WeaponType[];
 }
 
@@ -214,15 +356,7 @@ export const ENEMY_CLASS_PROFILES: Record<EnemyClass, EnemyClassProfile> = {
   },
 };
 
-/**
- * Map each EnemyType to a "default" class. This is the base class for
- * enemies when not overridden by planet assignment. A single EnemyType
- * can be re-classed by the wave/level spawner (via `overrideClassId`),
- * but this is the fallback.
- *
- * Philosophy: give existing enemies sensible class identities that
- * preserve their current gameplay roles.
- */
+/** Default class for each EnemyType (can be overridden at spawn) */
 export const DEFAULT_ENEMY_CLASS: Record<EnemyType, EnemyClass> = {
   [EnemyType.SCOUT]:    "swarm",
   [EnemyType.DRONE]:    "tech-drone",
@@ -239,7 +373,7 @@ export const DEFAULT_ENEMY_CLASS: Record<EnemyType, EnemyClass> = {
   [EnemyType.MIRROR]:   "tech-drone",
 };
 
-/** Planet-to-dominant-class mapping (for planet missions). */
+/** Dominant class per planet (for planet-mission overrides) */
 export const PLANET_DOMINANT_CLASS: Record<PlanetId, EnemyClass> = {
   verdania: "bio-organic",
   glaciem:  "elemental-ice",
@@ -253,7 +387,6 @@ export const PLANET_DOMINANT_CLASS: Record<PlanetId, EnemyClass> = {
   bastion:  "heavy-mech",
 };
 
-/** Resolve an affinity outcome for a given weapon vs a given class. */
 export function resolveAffinity(
   weaponType: WeaponType,
   classId: EnemyClass
@@ -264,10 +397,7 @@ export function resolveAffinity(
   return "neutral";
 }
 
-// ─── Dev-mode self-tests ─────────────────────────────────────────────
-
 export function __runEnemyClassSelfTests(): void {
-  // All 8 class profiles defined
   const expectedClasses: EnemyClass[] = [
     "armored", "swarm", "bio-organic", "tech-drone",
     "heavy-mech", "elemental-fire", "elemental-ice", "elemental-cinder",
@@ -276,38 +406,18 @@ export function __runEnemyClassSelfTests(): void {
     console.assert(ENEMY_CLASS_PROFILES[c] !== undefined, `Missing profile: ${c}`);
     console.assert(ENEMY_CLASS_PROFILES[c].id === c, `Profile id mismatch: ${c}`);
   }
-
-  // Every EnemyType has a default class
   const enemyTypes = Object.values(EnemyType);
   for (const t of enemyTypes) {
     console.assert(DEFAULT_ENEMY_CLASS[t] !== undefined, `Missing class for EnemyType.${t}`);
   }
-
-  // Affinity resolution works
-  console.assert(
-    resolveAffinity("energy", "armored") === "effective",
-    "Energy vs Armored should be effective"
-  );
-  console.assert(
-    resolveAffinity("kinetic", "armored") === "resisted",
-    "Kinetic vs Armored should be resisted"
-  );
-  console.assert(
-    resolveAffinity("cryogenic", "armored") === "neutral",
-    "Cryogenic vs Armored should be neutral"
-  );
-
-  // No class should be effective AND resisted vs same weapon
+  console.assert(resolveAffinity("energy", "armored") === "effective", "Energy vs Armored = effective");
+  console.assert(resolveAffinity("kinetic", "armored") === "resisted", "Kinetic vs Armored = resisted");
+  console.assert(resolveAffinity("cryogenic", "armored") === "neutral", "Cryogenic vs Armored = neutral");
   for (const profile of Object.values(ENEMY_CLASS_PROFILES)) {
     for (const w of profile.effectiveVs) {
-      console.assert(
-        !profile.resistedVs.includes(w),
-        `Class ${profile.id} has overlap on ${w}`
-      );
+      console.assert(!profile.resistedVs.includes(w), `Class ${profile.id} has overlap on ${w}`);
     }
   }
-
-  // Stat multipliers in expected ranges (spec §358)
   for (const p of Object.values(ENEMY_CLASS_PROFILES)) {
     console.assert(p.hpMult >= 0.5 && p.hpMult <= 2.0, `${p.id} hpMult out of range`);
     console.assert(p.speedMult >= 0.5 && p.speedMult <= 1.8, `${p.id} speedMult out of range`);
@@ -322,196 +432,37 @@ if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
 }
 ```
 
-- [ ] **Step 2: Verify the build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
-Expected: `✓ Compiled successfully`
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify**
 
 ```bash
-cd /Users/nichalasbarnes/Desktop/projects/knicks-knacks
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
+
+If `PLANET_DOMINANT_CLASS` has missing keys, fix based on actual PlanetId values from Step 1.
+
+- [ ] **Step 4: Commit**
+
+```bash
 git add games/sector-zero/web/app/components/engine/enemyClasses.ts
-git commit -m "feat(sector-zero): add EnemyClass profiles and planet class mappings"
+git commit -m "feat(sector-zero): add enemy class profiles and affinity resolver"
 ```
 
 ---
 
-## Task 3: Extend types (Bullet.weaponType, Enemy.classId, GameState, SaveData)
-
-**Files:**
-- Modify: `games/sector-zero/web/app/components/engine/types.ts`
-
-- [ ] **Step 1: Add `weaponType` to `Bullet` interface**
-
-In `types.ts`, find the `Bullet` interface (around line 56) and add:
-
-```typescript
-export interface Bullet {
-  id: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  width: number;
-  height: number;
-  damage: number;
-  isPlayer: boolean;
-  piercing: boolean;
-  variant?: BulletVariant;
-  weaponType?: WeaponType;  // NEW — set on player bullets for affinity lookup
-}
-```
-
-Also add the import at the top of `types.ts`:
-
-```typescript
-// (if not already present — it won't be at this point)
-// We avoid a circular import by only importing the TYPE, not the value
-```
-
-Actually, to avoid circular imports, declare the type inline:
-
-```typescript
-export type WeaponType = "kinetic" | "energy" | "incendiary" | "cryogenic";
-```
-
-Then have `weaponTypes.ts` import `WeaponType` FROM `types.ts` instead of declaring its own. Update `weaponTypes.ts`:
-
-```typescript
-// First line of weaponTypes.ts — replace local declaration
-import type { WeaponType } from "./types";
-export type { WeaponType };
-```
-
-- [ ] **Step 2: Add `classId` to `Enemy` interface**
-
-Find the `Enemy` interface in `types.ts` (around line 168) and add:
-
-```typescript
-export interface Enemy {
-  id: number;
-  type: EnemyType;
-  // ... existing fields ...
-  cloaked: boolean;
-  classId: EnemyClass;  // NEW — resolved at createEnemy time
-}
-```
-
-Add the `EnemyClass` type declaration in `types.ts`:
-
-```typescript
-export type EnemyClass =
-  | "armored"
-  | "swarm"
-  | "bio-organic"
-  | "tech-drone"
-  | "heavy-mech"
-  | "elemental-fire"
-  | "elemental-ice"
-  | "elemental-cinder";
-```
-
-Update `enemyClasses.ts` to import EnemyClass from types instead of declaring locally.
-
-- [ ] **Step 3: Add `floatingLabels` to `GameState`**
-
-In `types.ts`, find `GameState` (around line 443) and add:
-
-```typescript
-export interface FloatingLabel {
-  id: number;
-  x: number;
-  y: number;
-  vy: number;        // upward drift velocity (negative)
-  text: string;
-  color: string;
-  life: number;      // frames remaining
-  maxLife: number;
-}
-
-export interface GameState {
-  // ... existing fields ...
-  particles: Particle[];
-  explosions: SpriteExplosion[];
-  floatingLabels: FloatingLabel[];  // NEW
-  // ... rest ...
-}
-```
-
-- [ ] **Step 4: Extend `SaveData` for bestiary + equipped weapon type**
-
-Find `SaveData` definition in `types.ts` and add:
-
-```typescript
-export interface BestiaryEntry {
-  enemyType: EnemyType;
-  classId: EnemyClass;
-  killCount: number;
-  firstSeenPlanet?: PlanetId;
-  firstSeenWorld?: number;
-}
-
-export interface SaveData {
-  // ... existing fields ...
-  // NEW:
-  bestiary: Partial<Record<EnemyType, BestiaryEntry>>;
-  equippedWeaponType: WeaponType;  // default: "kinetic"
-}
-```
-
-- [ ] **Step 5: Verify build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -25`
-Expected: Type errors in places that construct GameState / SaveData / Enemy without the new fields — that's fine, we'll fix those in subsequent tasks. The key check: **the type definitions themselves compile without syntax errors.**
-
-To get a clean compile, add defaults in the next task's places. For now verify only the types.ts file has no standalone syntax issues:
-
-Run: `cd games/sector-zero/web && npx tsc --noEmit app/components/engine/types.ts 2>&1 | head -20`
-Expected: Errors from incomplete GameState/SaveData construction elsewhere, but no errors INSIDE types.ts itself.
-
-- [ ] **Step 6: Commit (WIP — will fix consumers next)**
-
-```bash
-cd /Users/nichalasbarnes/Desktop/projects/knicks-knacks
-git add games/sector-zero/web/app/components/engine/types.ts games/sector-zero/web/app/components/engine/enemyClasses.ts games/sector-zero/web/app/components/engine/weaponTypes.ts
-git commit -m "feat(sector-zero): extend types for weapon affinity and enemy classes"
-```
-
----
-
-## Task 4: Update save migration + defaults
+## Task 4: Update save.ts defaults + migration
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/save.ts`
 
-- [ ] **Step 1: Add new fields to `defaultSave`**
+- [ ] **Step 1: Read save.ts**
 
-In `save.ts`, update `defaultSave`:
-
-```typescript
-const defaultSave: SaveData = {
-  // ... existing ...
-  unlockedEnhancements: [],
-  bestiary: {},
-  equippedWeaponType: "kinetic",
-};
+```bash
+cd games/sector-zero/web && head -70 app/components/engine/save.ts
 ```
 
-- [ ] **Step 2: Update `migrateSave` function**
+Identify `defaultSave` (lines ~15-33) and `migrateSave` (lines ~36-57).
 
-Add to `migrateSave`:
-
-```typescript
-return {
-  // ... existing migrations ...
-  unlockedEnhancements: (raw.unlockedEnhancements as EnhancementId[]) ?? [],
-  bestiary: (raw.bestiary as SaveData["bestiary"]) ?? {},
-  equippedWeaponType: (raw.equippedWeaponType as WeaponType) ?? "kinetic",
-};
-```
-
-- [ ] **Step 3: Add imports at top of save.ts**
+- [ ] **Step 2: Add `WeaponType` to imports**
 
 ```typescript
 import {
@@ -526,37 +477,90 @@ import {
 } from "./types";
 ```
 
-- [ ] **Step 4: Verify build**
+- [ ] **Step 3: Extend `defaultSave`**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -25`
-Expected: Still some type errors in enemies.ts / gameEngine.ts (they don't yet set `classId` or `floatingLabels`), but save.ts should have none.
+Add two fields before the closing brace:
 
-- [ ] **Step 5: Commit**
+```typescript
+const defaultSave: SaveData = {
+  // ... all existing fields ...
+  unlockedEnhancements: [],
+  bestiary: {},                    // NEW
+  equippedWeaponType: "kinetic",   // NEW
+};
+```
+
+- [ ] **Step 4: Extend `migrateSave` return**
+
+Add two migrations before the closing brace of the return object:
+
+```typescript
+return {
+  // ... all existing field migrations ...
+  unlockedEnhancements: (raw.unlockedEnhancements as EnhancementId[]) ?? [],
+  bestiary: (raw.bestiary as SaveData["bestiary"]) ?? {},                              // NEW
+  equippedWeaponType: (raw.equippedWeaponType as WeaponType | undefined) ?? "kinetic", // NEW
+};
+```
+
+> **Note on schema versioning:** `save.ts` does not use a schema version number — migration is field-by-field fallback. We follow existing convention. Version-based migration deferred to future plan.
+
+- [ ] **Step 5: Verify build**
+
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add games/sector-zero/web/app/components/engine/save.ts
-git commit -m "feat(sector-zero): migrate save for bestiary and equipped weapon type"
+git commit -m "feat(sector-zero): extend save data for bestiary and equipped weapon"
 ```
 
 ---
 
-## Task 5: Assign classId and apply class stats in createEnemy
+## Task 5: Apply classId and class stats in createEnemy
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/enemies.ts`
 
-- [ ] **Step 1: Import class data**
+- [ ] **Step 1: Confirm `currentDifficultyScale` variable name**
 
-At top of `enemies.ts`:
+```bash
+cd games/sector-zero/web && grep -n "currentDifficultyScale\|difficultyScale" app/components/engine/enemies.ts | head -5
+```
+
+Expected: `currentDifficultyScale` on line 20. If different name appears, adjust Step 3 accordingly.
+
+- [ ] **Step 2: Add imports**
+
+At the top of `enemies.ts`, add:
 
 ```typescript
 import { DEFAULT_ENEMY_CLASS, ENEMY_CLASS_PROFILES } from "./enemyClasses";
-import type { EnemyClass } from "./types";
 ```
 
-- [ ] **Step 2: Extend `createEnemy` to accept class override and apply multipliers**
+Extend the `./types` import to include `EnemyClass`:
 
-Replace the existing `createEnemy` function. New signature:
+```typescript
+import {
+  CANVAS_WIDTH,
+  GAME_AREA_HEIGHT,
+  ENEMY_BULLET_SPEED,
+  ENEMY_DEFS,
+  EnemyType,
+  type Enemy,
+  type EnemyBehavior,
+  type Bullet,
+  type BulletVariant,
+  type Player,
+  type FormationType,
+  type EnemyClass,  // NEW
+} from "./types";
+```
+
+- [ ] **Step 3: Replace `createEnemy`**
 
 ```typescript
 export function createEnemy(
@@ -569,11 +573,9 @@ export function createEnemy(
   const def = ENEMY_DEFS[type];
   const defaultBehavior = getDefaultBehavior(type);
 
-  // Resolve class (override > default)
   const classId = classOverride ?? DEFAULT_ENEMY_CLASS[type];
   const classProfile = ENEMY_CLASS_PROFILES[classId];
 
-  // Apply both world difficulty AND class multipliers
   const scaledHp = Math.max(1, Math.ceil(
     def.hp * currentDifficultyScale.hp * classProfile.hpMult
   ));
@@ -603,16 +605,21 @@ export function createEnemy(
     behaviorTimer: 0,
     cloaked: type === EnemyType.CLOAKER || type === EnemyType.ECHO,
     classId,
+    lastHitAffinity: undefined,
+    lastHitTimer: 0,
   };
 }
 ```
 
-- [ ] **Step 3: Verify build (enemies.ts portion)**
+- [ ] **Step 4: Verify build**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -25`
-Expected: enemies.ts compiles. Still errors in gameEngine.ts if it calls createEnemy with old signature — those still work because `classOverride` is optional. Still errors because `GameState.floatingLabels` isn't initialized anywhere yet.
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
-- [ ] **Step 4: Commit**
+Expected: enemies.ts compiles. Errors remain in gameEngine.ts.
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add games/sector-zero/web/app/components/engine/enemies.ts
@@ -621,53 +628,73 @@ git commit -m "feat(sector-zero): apply enemy class stat multipliers in createEn
 
 ---
 
-## Task 6: Wire classId for planet missions (dominant class from planet)
+## Task 6: Planet dominant class override
 
 **Files:**
-- Modify: `games/sector-zero/web/app/components/engine/enemies.ts` (or wherever waves are spawned — find spawn call sites)
+- Modify: `games/sector-zero/web/app/components/engine/enemies.ts`
+- Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
 
-- [ ] **Step 1: Find spawn call sites**
+- [ ] **Step 1: Find spawn sites**
 
-Run: `cd games/sector-zero/web && grep -rn "createEnemy(" app/components/engine/ 2>&1 | head -20`
-
-Expected output: a list of lines where `createEnemy` is called, likely in `enemies.ts` (spawnFormation) and possibly `gameEngine.ts` (planet-mission spawning).
-
-- [ ] **Step 2: Determine class override strategy**
-
-For MVP:
-- **Main campaign missions:** keep `DEFAULT_ENEMY_CLASS` (no override)
-- **Planet missions:** 70% of spawned enemies use `PLANET_DOMINANT_CLASS[planetId]`, 30% use `DEFAULT_ENEMY_CLASS[type]`
-
-Find the planet-mission spawn site. It's likely in `gameEngine.ts` around `createPlanetGameState` or in `planetLevels.ts`. Inspect:
-
-Run: `cd games/sector-zero/web && grep -n "createEnemy" app/components/engine/planetLevels.ts app/components/engine/gameEngine.ts 2>&1`
-
-- [ ] **Step 3: Extend the planet spawn call site**
-
-For each `createEnemy` call in planet-mission spawning code, add an override:
-
-```typescript
-import { PLANET_DOMINANT_CLASS, DEFAULT_ENEMY_CLASS } from "./enemyClasses";
-
-// In the spawn function (wherever it is):
-const planetClass = PLANET_DOMINANT_CLASS[planetId];
-const useOverride = Math.random() < 0.7;  // 70% dominant, 30% default
-const classOverride = useOverride ? planetClass : DEFAULT_ENEMY_CLASS[enemyType];
-const enemy = createEnemy(enemyType, x, y, behavior, classOverride);
+```bash
+cd games/sector-zero/web && grep -rn "createEnemy(" app/components/engine/ 2>&1
+cd games/sector-zero/web && grep -n "createPlanetGameState\|createGameState" app/components/engine/gameEngine.ts | head -10
 ```
 
-If there is NO existing planet-specific spawn code (i.e., planets currently use the same spawn flow as campaign), defer this to a later task — document that in the commit message and leave `createEnemy` calls unchanged in planet code. The class override system is in place regardless.
+- [ ] **Step 2: Add planet class override to enemies.ts**
+
+Near line 20 in enemies.ts (next to `currentDifficultyScale`):
+
+```typescript
+/** Planet-mission class override. When set, 70% of spawns use this class. */
+let currentPlanetClass: EnemyClass | null = null;
+
+export function setPlanetClassOverride(classId: EnemyClass | null): void {
+  currentPlanetClass = classId;
+}
+```
+
+Update `createEnemy`'s class resolution to honor the override:
+
+```typescript
+const classId = classOverride
+  ?? (currentPlanetClass && Math.random() < 0.7
+    ? currentPlanetClass
+    : DEFAULT_ENEMY_CLASS[type]);
+```
+
+- [ ] **Step 3: Wire override from gameEngine.ts**
+
+At the top of `gameEngine.ts`:
+
+```typescript
+import { PLANET_DOMINANT_CLASS } from "./enemyClasses";
+import { setPlanetClassOverride } from "./enemies";
+```
+
+At the very top of `createPlanetGameState` function body (before state construction):
+
+```typescript
+setPlanetClassOverride(PLANET_DOMINANT_CLASS[planetId]);
+```
+
+At the very top of `createGameState` function body:
+
+```typescript
+setPlanetClassOverride(null);  // clear override for campaign missions
+```
 
 - [ ] **Step 4: Verify build**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
-Expected: `✓ Compiled successfully` (or remaining errors only in floatingLabels-related code).
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add -A
-git commit -m "feat(sector-zero): apply planet dominant class to 70% of spawns"
+git commit -m "feat(sector-zero): apply planet dominant class to 70% of planet-mission spawns"
 ```
 
 ---
@@ -676,14 +703,31 @@ git commit -m "feat(sector-zero): apply planet dominant class to 70% of spawns"
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/weapons.ts`
+- Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
 
-- [ ] **Step 1: Update `createBullet` to accept weaponType**
+- [ ] **Step 1: Verify call signatures**
 
-In `weapons.ts`, update the function:
+```bash
+cd games/sector-zero/web && grep -n "firePlayerWeapon\|fireSideGunners" app/components/engine/gameEngine.ts
+```
+
+Confirm: `firePlayerWeapon(state.player, state.player.weaponLevel)` on ~line 867.
+
+- [ ] **Step 2: Add `WeaponType` import in weapons.ts**
 
 ```typescript
-import type { WeaponType } from "./types";
+import {
+  CANVAS_WIDTH,
+  BULLET_SPEED,
+  type Bullet,
+  type Player,
+  type WeaponType,  // NEW
+} from "./types";
+```
 
+- [ ] **Step 3: Update `createBullet` signature**
+
+```typescript
 function createBullet(
   x: number,
   y: number,
@@ -692,7 +736,7 @@ function createBullet(
   isPlayer: boolean,
   damage: number = 1,
   piercing: boolean = false,
-  weaponType?: WeaponType
+  weaponType?: WeaponType  // NEW
 ): Bullet {
   return {
     id: ++bulletIdCounter,
@@ -702,12 +746,12 @@ function createBullet(
     damage,
     isPlayer,
     piercing,
-    weaponType,
+    weaponType,  // NEW
   };
 }
 ```
 
-- [ ] **Step 2: Update `firePlayerWeapon` to accept and propagate weaponType**
+- [ ] **Step 4: Add optional `weaponType` param to `firePlayerWeapon` + `fireSideGunners`**
 
 ```typescript
 export function firePlayerWeapon(
@@ -715,40 +759,8 @@ export function firePlayerWeapon(
   weaponLevel: number,
   weaponType: WeaponType = "kinetic"
 ): Bullet[] {
-  const cx = player.x + player.width / 2;
-  const top = player.y;
-  const bullets: Bullet[] = [];
-  const damage = 1;
-
-  switch (weaponLevel) {
-    case 1:
-      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
-      break;
-    case 2:
-      bullets.push(createBullet(cx - 8, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx + 4, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
-      break;
-    case 3:
-      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx - 8, top, -1.5, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx + 4, top, 1.5, -BULLET_SPEED, true, damage, false, weaponType));
-      break;
-    case 4:
-      bullets.push(createBullet(cx - 6, top, -0.5, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx + 2, top, 0.5, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx - 12, top, -2, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx + 8, top, 2, -BULLET_SPEED, true, damage, false, weaponType));
-      break;
-    case 5:
-    default:
-      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx - 8, top, -1, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx + 4, top, 1, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx - 14, top, -2.5, -BULLET_SPEED, true, damage, false, weaponType));
-      bullets.push(createBullet(cx + 10, top, 2.5, -BULLET_SPEED, true, damage, false, weaponType));
-      break;
-  }
-  return bullets;
+  // ... existing body; update every createBullet call to pass `weaponType` as 8th arg
+  // Example: bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
 }
 
 export function fireSideGunners(player: Player, weaponType: WeaponType = "kinetic"): Bullet[] {
@@ -762,41 +774,29 @@ export function fireSideGunners(player: Player, weaponType: WeaponType = "kineti
 }
 ```
 
-- [ ] **Step 3: Update call sites in gameEngine.ts**
+Add `weaponType` as the 8th arg to every `createBullet` call inside `firePlayerWeapon` (all 5 weapon levels).
 
-Run: `cd games/sector-zero/web && grep -n "firePlayerWeapon\|fireSideGunners" app/components/engine/gameEngine.ts 2>&1`
-
-For each call site, pass the player's equipped weapon type. The easiest source: the game state should hold this value at the `GameState` level (not SaveData level) during a run. Add to `GameState`:
-
-In `types.ts` add:
+- [ ] **Step 5: Update call sites in gameEngine.ts**
 
 ```typescript
-export interface GameState {
-  // ... existing ...
-  equippedWeaponType: WeaponType;  // NEW — hydrated from SaveData at mission start
-}
+const newBullets = firePlayerWeapon(
+  state.player,
+  state.player.weaponLevel,
+  state.equippedWeaponType  // NEW
+);
 ```
 
-Update all `createGameState` / `createPlanetGameState` callers to initialize from save:
+And any `fireSideGunners(` calls — add `state.equippedWeaponType` as 2nd arg.
 
-```typescript
-equippedWeaponType: save.equippedWeaponType ?? "kinetic",
+- [ ] **Step 6: Verify build**
+
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
 ```
 
-Then in `gameEngine.ts` firing calls:
+Expected: weapons.ts compiles. gameEngine.ts still errors because `state.equippedWeaponType` isn't initialized yet.
 
-```typescript
-const bullets = firePlayerWeapon(s.player, s.player.weaponLevel, s.equippedWeaponType);
-// and:
-const sideBullets = fireSideGunners(s.player, s.equippedWeaponType);
-```
-
-- [ ] **Step 4: Verify build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -20`
-Expected: clean compile for weapons.ts and gameEngine.ts firing paths. Still type errors if `floatingLabels` isn't yet initialized in createGameState.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -805,18 +805,15 @@ git commit -m "feat(sector-zero): tag player bullets with equipped weapon type"
 
 ---
 
-## Task 8: Implement floating damage labels module
+## Task 8: Create floatingLabels.ts
 
 **Files:**
 - Create: `games/sector-zero/web/app/components/engine/floatingLabels.ts`
 
 - [ ] **Step 1: Create the module**
 
-Create `games/sector-zero/web/app/components/engine/floatingLabels.ts`:
-
 ```typescript
-import type { FloatingLabel } from "./types";
-import type { AffinityResult } from "./weaponTypes";
+import type { FloatingLabel, AffinityResult } from "./types";
 
 let labelIdCounter = 0;
 
@@ -836,10 +833,7 @@ const AFFINITY_LABEL_COLOR: Record<AffinityResult, string> = {
   resisted:  "#888899",
 };
 
-/**
- * Spawn a floating label for an affinity hit.
- * Returns null for neutral hits (no label).
- */
+/** Returns null for neutral hits. */
 export function createAffinityLabel(
   x: number,
   y: number,
@@ -853,7 +847,7 @@ export function createAffinityLabel(
     vy: -1.2,
     text: AFFINITY_LABEL_TEXT[affinity],
     color: AFFINITY_LABEL_COLOR[affinity],
-    life: 40,     // ~0.67s at 60fps
+    life: 40,
     maxLife: 40,
   };
 }
@@ -890,116 +884,97 @@ export function drawFloatingLabels(
 }
 ```
 
-- [ ] **Step 2: Verify module compiles**
+- [ ] **Step 2: Verify build**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add games/sector-zero/web/app/components/engine/floatingLabels.ts
-git commit -m "feat(sector-zero): add floating damage label system"
+git commit -m "feat(sector-zero): add floating affinity-label system"
 ```
 
 ---
 
-## Task 9: Initialize floatingLabels in game state, update & render
+## Task 9: Initialize new GameState fields (build becomes clean here)
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
-- Modify: `games/sector-zero/web/app/components/engine/renderer.ts`
 
-- [ ] **Step 1: Initialize `floatingLabels: []` in both game state factories**
+- [ ] **Step 1: Find factory locations**
 
-In `gameEngine.ts`, find every `createGameState` and `createPlanetGameState`. Add `floatingLabels: [],` alongside `particles: [],`:
+```bash
+cd games/sector-zero/web && grep -n "particles: \[\]," app/components/engine/gameEngine.ts
+```
+
+Expected: 2 hits (createGameState + createPlanetGameState).
+
+- [ ] **Step 2: Initialize new fields at both sites**
+
+Add at each location, right after `explosions: [],`:
 
 ```typescript
 particles: [],
 explosions: [],
-floatingLabels: [],
+floatingLabels: [],                                       // NEW
+equippedWeaponType: save.equippedWeaponType ?? "kinetic", // NEW
+pendingBestiaryKills: [],                                 // NEW
 ```
 
-Also add `equippedWeaponType: save.equippedWeaponType ?? "kinetic",` to both factories if not done in Task 7.
+Confirm the save parameter name in each factory (should be `save: SaveData`).
 
-- [ ] **Step 2: Update floating labels each frame**
+- [ ] **Step 3: Verify build**
 
-Import at top of `gameEngine.ts`:
-
-```typescript
-import { updateFloatingLabels, createAffinityLabel, resetFloatingLabelIds } from "./floatingLabels";
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
 ```
 
-Find the particles update line:
+Expected: **`✓ Compiled successfully`** — first clean build since Task 1.
 
-```typescript
-s.particles = updateParticles(s.particles);
-s.explosions = updateSpriteExplosions(s.explosions);
+- [ ] **Step 4: Lint**
+
+```bash
+cd games/sector-zero/web && yarn lint 2>&1 | tail -10
 ```
 
-Add:
+Fix any unused-import warnings.
 
-```typescript
-s.floatingLabels = updateFloatingLabels(s.floatingLabels);
-```
-
-Add this to all 3 places where particles are updated (per earlier `grep` results).
-
-- [ ] **Step 3: Add `resetFloatingLabelIds()` to the game reset path**
-
-Find `resetEnemyIds()` calls in gameEngine.ts. After each, add `resetFloatingLabelIds()`.
-
-- [ ] **Step 4: Render floating labels**
-
-In `renderer.ts`, import:
-
-```typescript
-import { drawFloatingLabels } from "./floatingLabels";
-```
-
-Find `drawSpriteExplosions(ctx, state.explosions);` line (~72) and add below it:
-
-```typescript
-drawFloatingLabels(ctx, state.floatingLabels);
-```
-
-- [ ] **Step 5: Verify build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
-Expected: `✓ Compiled successfully`
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add -A
-git commit -m "feat(sector-zero): wire floating labels into game state and renderer"
+git commit -m "feat(sector-zero): initialize floatingLabels and bestiary fields in game state"
 ```
 
 ---
 
-## Task 10: Apply affinity multiplier in bullet→enemy collision
+## Task 10: Apply affinity multiplier in collisions
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
 
-- [ ] **Step 1: Locate the damage calculation**
+- [ ] **Step 1: Locate damage calc**
 
-The existing collision code (around line 1019) is:
-
-```typescript
-const newHp = enemy.hp - bullet.damage;
+```bash
+cd games/sector-zero/web && grep -n "enemy.hp - bullet.damage\|bossHp - bullet.damage" app/components/engine/gameEngine.ts
 ```
 
-- [ ] **Step 2: Replace with affinity-adjusted damage**
+Expected: line ~1019 (enemy) and line ~730 (boss).
 
-Import at top of `gameEngine.ts`:
+- [ ] **Step 2: Add imports**
 
 ```typescript
-import { resolveAffinity, ENEMY_CLASS_PROFILES } from "./enemyClasses";
+import { resolveAffinity } from "./enemyClasses";
 import { AFFINITY_MULTIPLIER } from "./weaponTypes";
-import { createAffinityLabel } from "./floatingLabels";
+import { createAffinityLabel, updateFloatingLabels, resetFloatingLabelIds } from "./floatingLabels";
 ```
 
-Replace the damage line (around line 1019) with:
+- [ ] **Step 3: Replace enemy damage calc**
+
+Find `const newHp = enemy.hp - bullet.damage;` (line ~1019). Replace:
 
 ```typescript
 // Compute affinity-adjusted damage
@@ -1008,7 +983,9 @@ if (bullet.isPlayer && bullet.weaponType) {
   const affinity = resolveAffinity(bullet.weaponType, enemy.classId);
   finalDamage = bullet.damage * AFFINITY_MULTIPLIER[affinity];
 
-  // Spawn floating label for non-neutral hits
+  enemy.lastHitAffinity = affinity;
+  enemy.lastHitTimer = 120;
+
   const label = createAffinityLabel(
     enemy.x + enemy.width / 2,
     enemy.y - 4,
@@ -1022,64 +999,130 @@ if (bullet.isPlayer && bullet.weaponType) {
 const newHp = enemy.hp - finalDamage;
 ```
 
-- [ ] **Step 3: Apply same treatment to boss damage calculation**
+- [ ] **Step 4: Add TODO on boss damage**
 
-Find the similar pattern around line 730 for bosses:
+At line ~730, add a comment:
 
 ```typescript
+// TODO(affinity): bosses don't yet have classId — add boss class assignment in future plan
 bossHp = Math.max(0, bossHp - bullet.damage);
 ```
 
-Bosses don't have `classId` (yet — future work). For now, skip affinity multiplier for bosses but still spawn labels for visual consistency using a hardcoded neutral. Or just leave bosses unchanged for MVP and note it as a TODO:
+- [ ] **Step 5: Verify build**
 
-```typescript
-// TODO: bosses don't use affinity system in MVP — add per-boss class assignment later
-bossHp = Math.max(0, bossHp - bullet.damage);
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
 ```
-
-- [ ] **Step 4: Verify build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
-Expected: `✓ Compiled successfully`
-
-- [ ] **Step 5: Playtest checklist**
-
-Run: `cd games/sector-zero/web && yarn dev`
-
-Open http://localhost:3000 and verify:
-- [ ] Game starts normally, no console errors
-- [ ] Shoot enemies — they take damage as before (currently all Kinetic player weapon, default enemy classes)
-- [ ] Against armored-class enemies (SHIELDER/GUNNER/ELITE): shots do 0.5× damage → they take 2× as long to kill (this is "RESISTED" even though the label doesn't show yet — we'll add the visual next)
-- [ ] No visual feedback yet (labels exist in state but no label visible is expected because Kinetic vs most classes is neutral or resisted — verify RESISTED labels DO appear via browser dev console inspecting `state.floatingLabels` array)
-
-**Verification via console:**
-Open devtools console while shooting a GUNNER or SHIELDER. You should see floating "RESISTED" labels drift upward from the hit.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A
-git commit -m "feat(sector-zero): apply weapon affinity damage multiplier + spawn labels"
+git add games/sector-zero/web/app/components/engine/gameEngine.ts
+git commit -m "feat(sector-zero): apply affinity multiplier to player-to-enemy damage"
 ```
 
 ---
 
-## Task 11: Render class tint overlay on enemies
+## Task 11: Update floatingLabels + lastHitTimer each frame, render labels
+
+**Files:**
+- Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
+- Modify: `games/sector-zero/web/app/components/engine/renderer.ts`
+- Potentially Modify: `games/sector-zero/web/app/components/engine/enemies.ts`
+
+- [ ] **Step 1: Find particle update sites**
+
+```bash
+cd games/sector-zero/web && grep -n "updateParticles(s.particles)" app/components/engine/gameEngine.ts
+```
+
+Expected: 3 call sites.
+
+- [ ] **Step 2: Add floating label updates**
+
+After each `s.particles = updateParticles(s.particles);`, add:
+
+```typescript
+s.floatingLabels = updateFloatingLabels(s.floatingLabels);
+```
+
+- [ ] **Step 3: Decrement `lastHitTimer` in enemy update**
+
+```bash
+cd games/sector-zero/web && grep -n "export function updateEnemy\b\|updated.behaviorTimer" app/components/engine/enemies.ts
+```
+
+If `updateEnemy` exists in enemies.ts, at the end of the function (before `return updated;`), add:
+
+```typescript
+if (updated.lastHitTimer > 0) {
+  updated.lastHitTimer -= 1;
+  if (updated.lastHitTimer === 0) {
+    updated.lastHitAffinity = undefined;
+  }
+}
+```
+
+If updates happen in gameEngine instead, add it inside the enemy update loop there.
+
+- [ ] **Step 4: Add reset call**
+
+```bash
+cd games/sector-zero/web && grep -n "resetEnemyIds()" app/components/engine/gameEngine.ts
+```
+
+After each `resetEnemyIds();` call, add `resetFloatingLabelIds();`.
+
+- [ ] **Step 5: Render labels in renderer.ts**
+
+In `renderer.ts` imports:
+
+```typescript
+import { drawFloatingLabels } from "./floatingLabels";
+```
+
+Find `drawSpriteExplosions(ctx, state.explosions);` (line ~72). **After it**, add:
+
+```typescript
+drawFloatingLabels(ctx, state.floatingLabels);
+```
+
+- [ ] **Step 6: Verify build**
+
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
+
+- [ ] **Step 7: Playtest**
+
+```bash
+cd games/sector-zero/web && yarn dev
+```
+
+Open http://localhost:3000. Start a mission, shoot enemies.
+
+- [ ] Shoot GUNNER/SHIELDER: see **RESISTED** label drift up
+- [ ] Shoot TURRET/ELITE: see **CRITICAL** label (kinetic vs heavy-mech is effective)
+- [ ] No label for neutral hits (e.g., Kinetic vs bio-organic)
+- [ ] Labels fade out over ~40 frames
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A
+git commit -m "feat(sector-zero): render floating labels and decrement hit timers"
+```
+
+---
+
+## Task 12: Draw class tint overlay + affinity indicator
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/enemies.ts`
 
-- [ ] **Step 1: Import class profiles**
+- [ ] **Step 1: Replace `drawEnemies`**
 
-Top of `enemies.ts`:
-
-```typescript
-import { DEFAULT_ENEMY_CLASS, ENEMY_CLASS_PROFILES } from "./enemyClasses";
-```
-
-- [ ] **Step 2: Update `drawEnemies` to apply tint overlay**
-
-Replace the existing `drawEnemies` function:
+Find `export function drawEnemies(` (line ~322). Replace body:
 
 ```typescript
 export function drawEnemies(
@@ -1109,20 +1152,21 @@ export function drawEnemies(
       ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
     }
 
-    // Class tint overlay (multiply blend, subtle)
+    // Class tint overlay (subtle multiply blend)
     const classProfile = ENEMY_CLASS_PROFILES[enemy.classId];
     if (classProfile) {
+      const baseAlpha = enemy.cloaked ? 0.15 : 1;
       ctx.globalCompositeOperation = "multiply";
-      ctx.globalAlpha = (enemy.cloaked ? 0.15 : 1) * 0.35;  // subtle tint
+      ctx.globalAlpha = baseAlpha * 0.35;
       ctx.fillStyle = classProfile.tint;
       ctx.fillRect(dx, dy, dw, dh);
       ctx.globalCompositeOperation = "source-over";
-      ctx.globalAlpha = enemy.cloaked ? 0.15 : 1;
+      ctx.globalAlpha = baseAlpha;
     }
 
     ctx.restore();
 
-    // HP bar (unchanged)
+    // HP bar
     if (enemy.maxHp > 1 && enemy.hp < enemy.maxHp) {
       const barW = enemy.width;
       const barH = 3;
@@ -1134,172 +1178,138 @@ export function drawEnemies(
       ctx.fillRect(barX, barY, barW * (enemy.hp / enemy.maxHp), barH);
     }
 
+    // Affinity indicator (arrow above enemy after hit)
+    if (enemy.lastHitAffinity && enemy.lastHitTimer > 0 && enemy.lastHitAffinity !== "neutral") {
+      const arrow = enemy.lastHitAffinity === "effective" ? "\u2B06" : "\u2B07";
+      const color = enemy.lastHitAffinity === "effective" ? "#ffdd44" : "#888899";
+      const alpha = Math.min(1, enemy.lastHitTimer / 60);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(arrow, enemy.x + enemy.width / 2, enemy.y - 10);
+      ctx.restore();
+    }
+
     ctx.globalAlpha = 1;
   }
 }
 ```
 
-- [ ] **Step 3: Verify build**
+- [ ] **Step 2: Verify build**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
-- [ ] **Step 4: Playtest checklist**
+- [ ] **Step 3: Playtest**
 
-Run: `cd games/sector-zero/web && yarn dev`
+```bash
+yarn dev
+```
 
-Open http://localhost:3000 and verify:
-- [ ] Enemies visibly show class tints:
-  - Scouts/Swarm: orange tint
-  - Drones/Cloakers/Echo/Mirror: cyan tint
-  - Gunners/Shielders: red tint
-  - Turrets/Elite: brown tint
-  - Bombers/Mines: green tint
-  - Wraiths: amber tint
-- [ ] Tints are subtle, not overwhelming — the enemy sprite should still be clearly visible
-- [ ] Cloaked enemies (Cloaker/Echo) remain low-alpha as before, but with tint also applied
+- [ ] All enemies show subtle color tint (red armored, orange swarm, green bio, cyan tech, brown mech, amber cinder)
+- [ ] Cloaked enemies keep low-alpha with tint applied
+- [ ] Shooting armored: ⬇ arrow briefly appears
+- [ ] Shooting heavy-mech: ⬆ arrow briefly appears
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add games/sector-zero/web/app/components/engine/enemies.ts
+git commit -m "feat(sector-zero): draw class tint overlay and affinity arrow on enemies"
+```
+
+---
+
+## Task 13: Record kills to pendingBestiaryKills
+
+**Files:**
+- Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
+
+- [ ] **Step 1: Find destruction sites**
+
+```bash
+cd games/sector-zero/web && grep -n "destroyedEnemies.add(enemy.id)" app/components/engine/gameEngine.ts
+```
+
+- [ ] **Step 2: Record kills at main collision site**
+
+After `destroyedEnemies.add(enemy.id);` (around line 1020):
+
+```typescript
+s.pendingBestiaryKills = [
+  ...s.pendingBestiaryKills,
+  { type: enemy.type, classId: enemy.classId },
+];
+```
+
+- [ ] **Step 3: Handle bomb-kill site**
+
+Read around the second hit site:
+
+```bash
+cd games/sector-zero/web && sed -n '1255,1315p' app/components/engine/gameEngine.ts
+```
+
+Determine if the bomb handler mutates `s` or builds a new state object.
+
+**If bomb handler builds a new state object:**
+
+```typescript
+// Near top of bomb handler:
+const bombKills: Array<{ type: EnemyType; classId: EnemyClass }> = [];
+
+// Inside enemy loop:
+bombKills.push({ type: enemy.type, classId: enemy.classId });
+
+// In final return:
+pendingBestiaryKills: [...state.pendingBestiaryKills, ...bombKills],
+```
+
+**If bomb handler mutates `s`:**
+
+```typescript
+s.pendingBestiaryKills = [
+  ...s.pendingBestiaryKills,
+  { type: enemy.type, classId: enemy.classId },
+];
+```
+
+Add `type EnemyClass` to gameEngine's types import if not already present.
+
+- [ ] **Step 4: Verify build**
+
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add games/sector-zero/web/app/components/engine/enemies.ts
-git commit -m "feat(sector-zero): render class tint overlay on enemies"
+git add games/sector-zero/web/app/components/engine/gameEngine.ts
+git commit -m "feat(sector-zero): track enemy kills for bestiary"
 ```
 
 ---
 
-## Task 12: Add affinity icon above enemy HP bar on hit
-
-**Files:**
-- Modify: `games/sector-zero/web/app/components/engine/types.ts`
-- Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
-- Modify: `games/sector-zero/web/app/components/engine/enemies.ts`
-
-- [ ] **Step 1: Add `lastHitAffinity` and `lastHitTimer` to Enemy interface**
-
-In `types.ts` Enemy interface:
-
-```typescript
-export interface Enemy {
-  // ... existing ...
-  classId: EnemyClass;
-  lastHitAffinity?: AffinityResult;  // NEW
-  lastHitTimer: number;              // NEW — frames remaining on hit marker (0 = none)
-}
-```
-
-Add import:
-
-```typescript
-import type { AffinityResult } from "./weaponTypes";
-```
-
-Or declare `AffinityResult` in types.ts to avoid circular imports:
-
-```typescript
-export type AffinityResult = "effective" | "neutral" | "resisted";
-```
-
-And import it in `weaponTypes.ts` from types.ts instead.
-
-- [ ] **Step 2: Initialize new fields in createEnemy**
-
-Add to the return object in `createEnemy` (enemies.ts):
-
-```typescript
-lastHitAffinity: undefined,
-lastHitTimer: 0,
-```
-
-- [ ] **Step 3: Set `lastHitAffinity` in collision code**
-
-In `gameEngine.ts`, inside the block where you computed `finalDamage` (from Task 10), after recording the label:
-
-```typescript
-// Mark enemy with last hit affinity for visual indicator
-enemy.lastHitAffinity = affinity;
-enemy.lastHitTimer = 120;  // visible for 2s at 60fps
-```
-
-Note: `enemy` is a loop variable. To mutate the stored enemy, use the enemyById Map or mutate by reference (they're already object references in the array). Verify the surrounding code pattern — if it rebuilds arrays immutably, you'll need to track updates differently. If enemies are mutated in place (which they are in this codebase based on `enemy.hp - bullet.damage` usage), direct mutation works.
-
-- [ ] **Step 4: Decrement `lastHitTimer` each frame**
-
-In `gameEngine.ts`, find the enemy update loop or `updateEnemies` function. Add at the end of each enemy update:
-
-```typescript
-if (updated.lastHitTimer > 0) {
-  updated.lastHitTimer -= 1;
-  if (updated.lastHitTimer === 0) {
-    updated.lastHitAffinity = undefined;
-  }
-}
-```
-
-- [ ] **Step 5: Draw affinity indicator in drawEnemies**
-
-In `enemies.ts` `drawEnemies`, after the HP bar block:
-
-```typescript
-// Affinity indicator (appears above HP bar when recently hit)
-if (enemy.lastHitAffinity && enemy.lastHitTimer > 0 && enemy.lastHitAffinity !== "neutral") {
-  const icon = enemy.lastHitAffinity === "effective" ? "⬆" : "⬇";
-  const color = enemy.lastHitAffinity === "effective" ? "#ffdd44" : "#888899";
-  const alpha = Math.min(1, enemy.lastHitTimer / 60);
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = color;
-  ctx.font = "bold 10px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "bottom";
-  ctx.fillText(icon, enemy.x + enemy.width / 2, enemy.y - 10);
-  ctx.restore();
-}
-```
-
-- [ ] **Step 6: Verify build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
-Expected: `✓ Compiled successfully`
-
-- [ ] **Step 7: Playtest checklist**
-
-Run: `cd games/sector-zero/web && yarn dev`
-
-- [ ] Shoot armored enemies (gunner/shielder/elite/turret) → see ⬇ indicator above them briefly (Kinetic RESISTED)
-- [ ] Shoot heavy-mech class enemies (elite/turret) → see ⬆ (Kinetic EFFECTIVE)
-- [ ] Indicator fades out after ~2 seconds
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add -A
-git commit -m "feat(sector-zero): show affinity up/down indicator above enemies on hit"
-```
-
----
-
-## Task 13: Bestiary data helpers
+## Task 14: Create bestiary.ts
 
 **Files:**
 - Create: `games/sector-zero/web/app/components/engine/bestiary.ts`
 
-- [ ] **Step 1: Create the bestiary module**
-
-Create `games/sector-zero/web/app/components/engine/bestiary.ts`:
+- [ ] **Step 1: Create the module**
 
 ```typescript
-import type { BestiaryEntry, EnemyType, PlanetId, SaveData } from "./types";
-import { DEFAULT_ENEMY_CLASS, ENEMY_CLASS_PROFILES } from "./enemyClasses";
+import { EnemyType, type BestiaryEntry, type EnemyClass, type PlanetId, type SaveData } from "./types";
 import { ENEMY_DEFS } from "./types";
 
-/**
- * Record a kill in the bestiary. Mutates and returns the updated bestiary.
- * First kill of a type creates the entry; subsequent kills increment count.
- */
 export function recordKill(
   bestiary: SaveData["bestiary"],
   enemyType: EnemyType,
-  classId: BestiaryEntry["classId"],
+  classId: EnemyClass,
   context: { planetId?: PlanetId; world?: number }
 ): SaveData["bestiary"] {
   const existing = bestiary[enemyType];
@@ -1321,130 +1331,75 @@ export function recordKill(
   };
 }
 
-/** Entries sorted by display order (EnemyType enum order). */
 export function getBestiaryList(bestiary: SaveData["bestiary"]): BestiaryEntry[] {
-  const allTypes = Object.values(ENEMY_DEFS).map((d) => d.type);
+  const allTypes = Object.values(EnemyType);
   return allTypes
-    .filter((t) => bestiary[t] !== undefined)
-    .map((t) => bestiary[t]!);
+    .map((t) => bestiary[t])
+    .filter((e): e is BestiaryEntry => e !== undefined);
 }
 
-/** Total distinct enemies discovered */
 export function getDiscoveredCount(bestiary: SaveData["bestiary"]): number {
   return Object.keys(bestiary).length;
 }
 
-/** Total possible enemies */
 export function getTotalEnemyCount(): number {
   return Object.keys(ENEMY_DEFS).length;
 }
 
-/** Human-readable lore for each enemy type (1-2 sentences each) */
 export const ENEMY_LORE: Record<EnemyType, string> = {
-  SCOUT:
-    "Fast reconnaissance unit. Dies easily but attacks in swarms. First seen in Aurelia Belt.",
-  DRONE:
-    "Automated attack drone. Fires while strafing. Tech-class, vulnerable to energy weapons.",
-  GUNNER:
-    "Armored heavy-weapons platform. Slow but devastating sustained fire.",
-  SHIELDER:
-    "Front-line bulwark with frontal barrier. Difficult to damage head-on.",
-  BOMBER:
-    "Kamikaze unit that detonates on contact. Leaks biological spores.",
-  SWARM:
-    "Small, fast, numerous. Individually weak, terrifying in formation.",
-  TURRET:
-    "Stationary emplacement. High fire rate when player is in range.",
-  CLOAKER:
-    "Phase-shift enemy. Invisible at rest, briefly visible when firing.",
-  ELITE:
-    "Heavy assault unit combining multiple weapon systems. Priority target.",
-  MINE:
-    "Drifting explosive. Attracted to player ship mass. Do not touch.",
-  WRAITH:
-    "Ghost-class entity from the deeper sectors. Phases through projectiles.",
-  ECHO:
-    "Temporal anomaly unit. Flickers between existence states every 1.5s.",
-  MIRROR:
-    "Adaptive reflection enemy. Copies player movement patterns with jitter.",
+  [EnemyType.SCOUT]:    "Fast reconnaissance unit. Dies easily but attacks in swarms.",
+  [EnemyType.DRONE]:    "Automated attack drone. Fires while strafing. Vulnerable to energy weapons.",
+  [EnemyType.GUNNER]:   "Armored heavy-weapons platform. Slow but devastating sustained fire.",
+  [EnemyType.SHIELDER]: "Front-line bulwark with frontal barrier. Difficult to damage head-on.",
+  [EnemyType.BOMBER]:   "Kamikaze unit that detonates on contact. Leaks biological spores.",
+  [EnemyType.SWARM]:    "Small, fast, numerous. Individually weak, terrifying in formation.",
+  [EnemyType.TURRET]:   "Stationary emplacement. High fire rate when player is in range.",
+  [EnemyType.CLOAKER]:  "Phase-shift enemy. Invisible at rest, briefly visible when firing.",
+  [EnemyType.ELITE]:    "Heavy assault unit combining multiple weapon systems. Priority target.",
+  [EnemyType.MINE]:     "Drifting explosive. Attracted to player ship mass. Do not touch.",
+  [EnemyType.WRAITH]:   "Ghost-class entity from deeper sectors. Phases through projectiles.",
+  [EnemyType.ECHO]:     "Temporal anomaly. Flickers between existence states every 1.5s.",
+  [EnemyType.MIRROR]:   "Adaptive reflection enemy. Copies player movement with jitter.",
 };
 ```
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add games/sector-zero/web/app/components/engine/bestiary.ts
-git commit -m "feat(sector-zero): add bestiary data helpers and enemy lore"
+git commit -m "feat(sector-zero): add bestiary helpers and enemy lore"
 ```
 
 ---
 
-## Task 14: Record kills to bestiary
+## Task 15: Flush pendingBestiaryKills on mission complete
 
 **Files:**
-- Modify: `games/sector-zero/web/app/components/engine/gameEngine.ts`
-- Modify: `games/sector-zero/web/app/components/engine/types.ts`
+- Modify: `games/sector-zero/web/app/components/Game.tsx`
 
-- [ ] **Step 1: Add pendingBestiaryKills to GameState**
+- [ ] **Step 1: Find mission-complete save sites**
 
-In `types.ts`:
-
-```typescript
-export interface GameState {
-  // ... existing ...
-  /** Enemy kills recorded this session — flushed to SaveData on mission complete */
-  pendingBestiaryKills: Array<{ type: EnemyType; classId: EnemyClass }>;
-}
+```bash
+cd games/sector-zero/web && grep -n "saveSave\|LEVEL_COMPLETE\|levelComplete" app/components/Game.tsx | head -20
 ```
 
-Initialize as `pendingBestiaryKills: []` in both game state factories.
-
-- [ ] **Step 2: Record kills in collision code**
-
-In `gameEngine.ts`, find the enemy destruction block (around line 1020):
-
-```typescript
-if (newHp <= 0) {
-  destroyedEnemies.add(enemy.id);
-  audioEvents.push(AudioEvent.ENEMY_DESTROY);
-
-  // ... existing explosion / score code ...
-
-  // NEW: record kill for bestiary
-  s.pendingBestiaryKills = [
-    ...s.pendingBestiaryKills,
-    { type: enemy.type, classId: enemy.classId },
-  ];
-}
-```
-
-Do the same in the bomb kill loop (around line 1278):
-
-```typescript
-for (const enemy of enemies) {
-  // ... existing ...
-  s.pendingBestiaryKills.push({ type: enemy.type, classId: enemy.classId });
-}
-```
-
-(Note: for bomb kills, `pendingBestiaryKills` may not be on `s` in that function — check the scope. If the bomb handler returns a new state object, push to a local array and include in the returned state.)
-
-- [ ] **Step 3: Flush kills to SaveData on mission complete**
-
-Find where levels are completed / saves happen. Likely in `Game.tsx` or a saveSave call. Search:
-
-Run: `cd games/sector-zero/web && grep -n "saveSave\|LEVEL_COMPLETE\|levelComplete" app/components/Game.tsx 2>&1 | head -20`
-
-At the mission-complete save point, flush pending kills:
+- [ ] **Step 2: Add import**
 
 ```typescript
 import { recordKill } from "./engine/bestiary";
+```
 
-// when mission completes:
+- [ ] **Step 3: Flush kills before save write**
+
+At each site where `saveSave(newSave)` is called after level/mission completion, BEFORE the save call:
+
+```typescript
 let updatedBestiary = save.bestiary;
 for (const kill of gameState.pendingBestiaryKills) {
   updatedBestiary = recordKill(updatedBestiary, kill.type, kill.classId, {
@@ -1452,60 +1407,70 @@ for (const kill of gameState.pendingBestiaryKills) {
     planetId: gameState.planetId,
   });
 }
-const newSave = { ...save, bestiary: updatedBestiary };
-saveSave(newSave);
-setSave(newSave);
+
+const newSave = {
+  ...save,
+  bestiary: updatedBestiary,
+  // ... other existing fields for this save write ...
+};
 ```
+
+Apply at each relevant save site (regular level complete, boss defeat, planet mission complete).
 
 - [ ] **Step 4: Verify build**
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
-- [ ] **Step 5: Playtest checklist**
+- [ ] **Step 5: Playtest**
 
-Run: `yarn dev`
+```bash
+yarn dev
+```
 
-- [ ] Complete a level, kill some enemies along the way
-- [ ] After level-complete, open browser devtools console and inspect `localStorage.getItem("sector-zero-save")`
-- [ ] Verify the `bestiary` object has entries matching killed enemy types with `killCount > 0`
+- [ ] Complete a level with varied enemies killed
+- [ ] In browser devtools console: `JSON.parse(localStorage.getItem("sector-zero-save")).bestiary`
+- [ ] Verify entries populated with `killCount`, `classId`, `firstSeenWorld`
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A
-git commit -m "feat(sector-zero): record enemy kills to bestiary on mission complete"
+git add games/sector-zero/web/app/components/Game.tsx
+git commit -m "feat(sector-zero): flush kill counters to bestiary on mission complete"
 ```
 
 ---
 
-## Task 15: Bestiary screen UI (cockpit hub)
+## Task 16: Bestiary cockpit screen
 
 **Files:**
 - Modify: `games/sector-zero/web/app/components/engine/cockpit.ts`
 - Modify: `games/sector-zero/web/app/components/engine/cockpitRenderer.ts`
 - Modify: `games/sector-zero/web/app/components/Game.tsx`
 
-- [ ] **Step 1: Add `bestiary` to cockpit screen enum**
+- [ ] **Step 1: Read cockpit.ts**
 
-In `cockpit.ts`, find the `CockpitScreen` type and add:
-
-```typescript
-export type CockpitScreen =
-  | "hub"
-  | "armory"
-  | "crew"
-  | "missions"
-  | "codex"
-  | "bestiary";  // NEW
+```bash
+cd games/sector-zero/web && cat app/components/engine/cockpit.ts | head -80
 ```
 
-Also add a `bestiarySelected: number` to `CockpitHubState` and initialize to 0.
+Identify `CockpitScreen` union, `CockpitHubState`, `COCKPIT_HOTSPOTS` array.
 
-Add a hotspot entry to `COCKPIT_HOTSPOTS` for the bestiary. Copy an existing hotspot (like codex) as a template. Position it in an unused screen corner — e.g., beside the codex.
+- [ ] **Step 2: Extend types and hotspots**
 
-- [ ] **Step 2: Add `drawBestiaryScreen` in cockpitRenderer.ts**
+Add `"bestiary"` to `CockpitScreen` union. Add `bestiarySelected: number` to `CockpitHubState` (default 0 in initialization).
 
-In `cockpitRenderer.ts`:
+Read the shape of existing hotspots, then add a new one after the codex hotspot. **Coordinates are designer-choice for MVP** — pick any non-overlapping location (suggestion: below or beside codex):
+
+```typescript
+// Example (adjust coords to your existing hotspot layout):
+{ id: "bestiary", x: 330, y: 560, w: 120, h: 42, label: "BESTIARY", targetScreen: "bestiary" }
+```
+
+- [ ] **Step 3: Add drawBestiaryScreen**
+
+In `cockpitRenderer.ts`, add imports at top:
 
 ```typescript
 import { getBestiaryList, getDiscoveredCount, getTotalEnemyCount, ENEMY_LORE } from "./bestiary";
@@ -1513,7 +1478,7 @@ import { ENEMY_CLASS_PROFILES } from "./enemyClasses";
 import { WEAPON_TYPE_META } from "./weaponTypes";
 ```
 
-Add a new function, modeled on `drawCodexScreen`:
+Append the function near `drawCodexScreen`:
 
 ```typescript
 function drawBestiaryScreen(
@@ -1521,13 +1486,12 @@ function drawBestiaryScreen(
   state: CockpitHubState,
   save: SaveData
 ): void {
-  drawSubScreenFrame(ctx, "BESTIARY", SPRITES.CODEX_BG);  // reuse codex bg for now
+  drawSubScreenFrame(ctx, "BESTIARY", SPRITES.CODEX_BG);
 
   const entries = getBestiaryList(save.bestiary);
   const total = getTotalEnemyCount();
   const discovered = getDiscoveredCount(save.bestiary);
 
-  // Discovery progress
   ctx.fillStyle = "#667788";
   ctx.font = "10px monospace";
   ctx.textAlign = "left";
@@ -1544,12 +1508,10 @@ function drawBestiaryScreen(
     return;
   }
 
-  // List of entries on left; detail panel on right
   const listX = 16;
   const listW = 160;
   const startY = 70;
   const rowH = 42;
-
   const selected = Math.min(state.bestiarySelected, entries.length - 1);
 
   for (let i = 0; i < entries.length; i++) {
@@ -1557,7 +1519,6 @@ function drawBestiaryScreen(
     const y = startY + i * rowH;
     const isSelected = i === selected;
 
-    // Row background
     if (isSelected) {
       ctx.fillStyle = "rgba(68, 204, 255, 0.15)";
       ctx.beginPath();
@@ -1565,12 +1526,10 @@ function drawBestiaryScreen(
       ctx.fill();
     }
 
-    // Class tint swatch
     const profile = ENEMY_CLASS_PROFILES[entry.classId];
     ctx.fillStyle = profile.tint;
     ctx.fillRect(listX + 8, y + 12, 8, 14);
 
-    // Name + kill count
     ctx.fillStyle = isSelected ? "#ffffff" : "#889999";
     ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
     ctx.textAlign = "left";
@@ -1580,13 +1539,11 @@ function drawBestiaryScreen(
     ctx.fillText(`x${entry.killCount} kills`, listX + 24, y + 28);
   }
 
-  // Detail panel on right
   const entry = entries[selected];
   const profile = ENEMY_CLASS_PROFILES[entry.classId];
   const detailX = listX + listW + 16;
   const detailW = CANVAS_WIDTH - detailX - 16;
 
-  // Name + class
   ctx.shadowBlur = 4;
   ctx.shadowColor = profile.tint;
   ctx.fillStyle = profile.tint;
@@ -1599,7 +1556,6 @@ function drawBestiaryScreen(
   ctx.font = "9px monospace";
   ctx.fillText(`CLASS: ${profile.name.toUpperCase()}`, detailX, startY + 18);
 
-  // Affinity profile
   let ay = startY + 40;
   ctx.fillStyle = "#ffdd44";
   ctx.font = "bold 9px monospace";
@@ -1620,7 +1576,6 @@ function drawBestiaryScreen(
   ctx.fillText(resStr, detailX, ay);
   ay += 20;
 
-  // Stat profile
   ctx.fillStyle = "#667788";
   ctx.font = "bold 9px monospace";
   ctx.fillText("STAT PROFILE", detailX, ay);
@@ -1634,31 +1589,36 @@ function drawBestiaryScreen(
   ctx.fillText(`RATE: ${profile.fireRateMult.toFixed(1)}x`, detailX + 90, ay);
   ay += 20;
 
-  // Lore
   ctx.fillStyle = "#667788";
   ctx.font = "bold 9px monospace";
   ctx.fillText("INTEL", detailX, ay);
   ay += 12;
   ctx.fillStyle = "#aaaaaa";
   ctx.font = "10px monospace";
-  wrapText(ctx, ENEMY_LORE[entry.enemyType], detailX, ay, detailW, 14);
+  // wrapText returns string[] in cockpitRenderer.ts — does not draw, just wraps
+  const loreLines = wrapText(ctx, ENEMY_LORE[entry.enemyType], detailW);
+  for (const line of loreLines) {
+    ctx.fillText(line, detailX, ay);
+    ay += 14;
+  }
 }
-
-// Helper wrapText is already defined elsewhere; if not, copy from renderer.ts
 ```
 
-Add dispatch case in the main screen dispatch function (around line 20):
+- [ ] **Step 4: Wire screen dispatch**
+
+In the main cockpit render function (around line 20), add to the if/else chain:
 
 ```typescript
 } else if (state.screen === "bestiary") {
   drawBestiaryScreen(ctx, state, save);
 ```
 
-- [ ] **Step 3: Handle input for bestiary screen**
-
-In `Game.tsx`, find the cockpit input handling. Add arrow-up/arrow-down to navigate bestiary entries:
+- [ ] **Step 5: Add input handling in Game.tsx**
 
 ```typescript
+import { getBestiaryList } from "./engine/bestiary";
+
+// In cockpit input handler:
 if (cockpitState.screen === "bestiary") {
   const entries = getBestiaryList(save.bestiary);
   if (key === "ArrowUp") {
@@ -1675,23 +1635,26 @@ if (cockpitState.screen === "bestiary") {
 }
 ```
 
-Also wire the hotspot click to set `screen: "bestiary"`.
+- [ ] **Step 6: Verify build**
 
-- [ ] **Step 4: Verify build**
+```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -20
+```
 
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -15`
+- [ ] **Step 7: Playtest**
 
-- [ ] **Step 5: Playtest checklist**
+```bash
+yarn dev
+```
 
-Run: `yarn dev`
+- [ ] Complete a mission with killed enemies
+- [ ] Open cockpit hub → see BESTIARY hotspot
+- [ ] Click → Bestiary screen opens
+- [ ] List shows discovered enemies with tint swatches + kill counts
+- [ ] Arrow keys navigate entries
+- [ ] Detail panel shows name, class, effective/resists, stat multipliers, lore
 
-- [ ] Complete a mission with varied enemies
-- [ ] Open cockpit hub → navigate to Bestiary
-- [ ] See list of discovered enemies with class tint swatch, kill counts
-- [ ] Arrow keys navigate the list
-- [ ] Detail panel shows: name, class, effective/resisted weapons, stat multipliers, lore
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -1700,81 +1663,87 @@ git commit -m "feat(sector-zero): add Bestiary screen to cockpit hub"
 
 ---
 
-## Task 16: Final verification + polish pass
+## Task 17: Final verification
 
-**Files:** All touched files
+**Files:** All
 
-- [ ] **Step 1: Full build**
-
-Run: `cd games/sector-zero/web && yarn build 2>&1 | tail -20`
-Expected: `✓ Compiled successfully` with no errors or warnings (except any pre-existing Next.js warnings).
-
-- [ ] **Step 2: Lint**
-
-Run: `cd games/sector-zero/web && yarn lint 2>&1 | tail -20`
-Expected: no new lint errors. Fix any introduced.
-
-- [ ] **Step 3: End-to-end playtest checklist**
-
-Run: `yarn dev`
-
-- [ ] Load the game with an existing save — migration runs without crashing
-- [ ] Load the game without a save (clear localStorage) — new save has `bestiary: {}`, `equippedWeaponType: "kinetic"`
-- [ ] Start a mission, shoot enemies — damage + affinity feedback works
-- [ ] Play through to mission complete — bestiary updates with kills
-- [ ] Open Bestiary screen — entries display correctly
-- [ ] Open Codex — still works (no regression)
-- [ ] Enemies visibly have class tint overlays
-- [ ] Shooting armored enemies shows RESISTED labels; heavy-mech shows CRITICAL
-- [ ] Enemy stats vary — swarm enemies die fast, armored enemies take more hits
-- [ ] Planet missions still load and play (if they didn't have planet-dominant class overrides from Task 6, they work with default classes)
-
-- [ ] **Step 4: Open-browser dev-console check**
-
-Run: `yarn dev`, open the game, check browser console for:
-
-- [ ] No errors on load
-- [ ] Self-test assertions from `weaponTypes.ts` and `enemyClasses.ts` pass silently (console.assert only logs on failure)
-
-- [ ] **Step 5: Final commit (if any polish changes)**
+- [ ] **Step 1: Full build + lint**
 
 ```bash
+cd games/sector-zero/web && yarn build 2>&1 | tail -25
+cd games/sector-zero/web && yarn lint 2>&1 | tail -20
+```
+
+Expected: `✓ Compiled successfully`, no new errors/warnings.
+
+- [ ] **Step 2: Console self-tests**
+
+```bash
+yarn dev
+```
+
+Open devtools console — verify:
+- [ ] No errors on page load
+- [ ] No `console.assert` failures
+
+- [ ] **Step 3: Campaign regression playtest**
+
+- [ ] Game starts, player shoots, enemies die
+- [ ] Enemies show class tints
+- [ ] CRITICAL / RESISTED labels appear on non-neutral hits
+- [ ] ⬆/⬇ arrow indicators show after hits
+- [ ] Enemy HP varies by class (armored = ~2× hits, swarm = ~1 hit)
+- [ ] Level completes, save persists
+- [ ] Bestiary populates with kills
+
+- [ ] **Step 4: Fresh-save regression**
+
+- [ ] Clear localStorage, reload, start mission
+- [ ] No errors
+- [ ] Bestiary empty → "No enemies discovered yet" message
+- [ ] After playing, bestiary populates
+
+- [ ] **Step 5: Planet mission regression**
+
+- [ ] Start planet mission from dev panel
+- [ ] Enemies spawn with planet dominant class (visible tint distribution skewed)
+- [ ] Affinity damage works
+- [ ] Bestiary updates with `firstSeenPlanet` populated
+
+- [ ] **Step 6: Final polish commit (if any)**
+
+```bash
+git status
 git add -A
-git status  # verify what's changed
-git commit -m "chore(sector-zero): affinity system final polish and verification" || echo "Nothing to commit"
+git commit -m "chore(sector-zero): affinity system final polish" || echo "Nothing to commit"
 ```
 
 ---
 
 ## Summary
 
-After all 16 tasks complete, the game will have:
+After Task 17, the game has:
 
-- ✅ 4 weapon types defined (Kinetic / Energy / Incendiary / Cryogenic)
+- ✅ 4 weapon types (Kinetic / Energy / Incendiary / Cryogenic)
 - ✅ 8 enemy classes with distinct stat profiles and affinity profiles
-- ✅ All existing enemies auto-tagged with default classes
-- ✅ Planet missions use 70% dominant class + 30% default (where planet spawn code exists)
-- ✅ Affinity damage multipliers (1.5× / 1.0× / 0.5×) applied to all player→enemy damage
-- ✅ Floating CRITICAL / RESISTED labels on non-neutral hits
-- ✅ Subtle class tint overlay on all enemy sprites
-- ✅ Up/down affinity arrow above enemies for 2s after each hit
-- ✅ Bestiary screen in cockpit hub tracking kills, showing class/stats/affinities/lore
-- ✅ Save data migrated to include bestiary + equipped weapon type
-- ✅ Player weapon tagged as Kinetic by default (ready for future weapon-type swapping)
+- ✅ All existing enemies auto-tagged with a default class
+- ✅ Planet missions apply dominant class to 70% of spawns
+- ✅ Affinity damage multipliers applied to player→enemy damage
+- ✅ Floating CRITICAL / RESISTED labels
+- ✅ Class tint overlays on all enemies
+- ✅ Up/down affinity arrow after each hit
+- ✅ Bestiary screen in cockpit hub
+- ✅ Save data migrated (field-fallback) with new fields
+- ✅ Player weapon tagged Kinetic by default
 
-**Remaining post-MVP work** (future plans):
-- Pilot leveling layer
-- Multi-phase level architecture
-- Ground run-and-gun mode
-- Rare/legendary materials (Stage 1 of reward economy)
-- Scout ship passive reveal (requires Hangar system from Expansion 1)
-- Resonance Beacon consumable (requires Workshop from Expansion 2)
+**Out of scope (future plans):** Pilot leveling, multi-phase levels, ground run-and-gun, reward economy tiers 4-5, Scout ship reveal, Resonance Beacon, boss class assignments, full sprite redesign.
 
 ---
 
-## Open Decisions Deferred to Implementation
+## Open Implementation Notes
 
-- **Bosses & affinity:** MVP leaves bosses unaffected by affinity. Future task assigns bosses their own `classId`.
-- **Weapon type switching:** Player stays on Kinetic forever in MVP. A future Loadout screen lets player equip other types once other weapons are unlocked.
-- **Planet spawn override:** If no planet-specific spawner exists in current code, Task 6 becomes a no-op. This is acceptable — the data is in place.
-- **Bestiary screen art:** Uses existing SPRITES.CODEX_BG for now. A dedicated bestiary background sprite is future polish.
+- **Bosses:** MVP leaves bosses unaffected by affinity (TODO comment placed).
+- **Weapon type switching:** Player always uses Kinetic in MVP. Future Loadout screen will let players equip other types.
+- **Hotspot coordinates:** Bestiary hotspot position in Task 16 is designer-choice. Adjust after playtest.
+- **Schema versioning:** save.ts uses field-fallback migration (existing convention). Version-based migration deferred.
+- **Weapon-type icons in detail view:** MVP shows weapon type names. Icons in detail panel a future polish pass.

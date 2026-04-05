@@ -90,15 +90,30 @@ export default function Game() {
 
   const finishIntro = useCallback(() => {
     setShowIntro(false);
+    introFrameRef.current = 0;
+    // If we came from the start screen (replay), return to it
+    if (showStartScreen) {
+      // Mark as seen but stay on start screen
+      if (!saveData.introSeen) {
+        const updated = { ...saveData, introSeen: true };
+        saveSave(updated);
+        setSaveData(updated);
+      }
+      return;
+    }
+    // First-time flow: advance into the cockpit
     setShowCockpit(true);
     setGameState(null);
     resetCockpitKeys();
-    introFrameRef.current = 0;
-    // Mark intro as seen
     const updated = { ...saveData, introSeen: true };
     saveSave(updated);
     setSaveData(updated);
-  }, [saveData]);
+  }, [saveData, showStartScreen]);
+
+  const replayIntro = useCallback(() => {
+    introFrameRef.current = 0;
+    setShowIntro(true);
+  }, []);
 
   const openMap = useCallback(() => {
     const audio = ensureAudio();
@@ -866,9 +881,29 @@ export default function Game() {
           <p className="text-gray-600 text-sm mb-1 tracking-wider">
             THE LAST PILOT OF SECTOR ZERO
           </p>
-          <p className="text-gray-700 text-xs mb-8">{playerName}</p>
+          <p className="text-gray-700 text-xs mb-4">{playerName}</p>
 
-          <div className="text-center mb-8 text-gray-400 text-sm space-y-1">
+          {/* Scrolling story crawl */}
+          <div
+            className="relative overflow-hidden w-full max-w-lg mb-6"
+            style={{ height: "180px", maskImage: "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)" }}
+          >
+            <div className="sector-crawl absolute left-0 right-0 text-center text-gray-400 text-xs leading-relaxed space-y-3">
+              <p className="text-cyan-400 font-bold tracking-[0.2em] text-sm">THE YEAR 2847</p>
+              <p>Humanity has spread across the stars.<br/>Thousands of colony worlds.<br/>A golden age of expansion.</p>
+              <p className="text-purple-400 italic">Then The Signal arrived.</p>
+              <p>An electromagnetic whisper from the void.<br/>Coming from a region every star chart<br/>labeled FORBIDDEN.</p>
+              <p className="text-cyan-400 font-bold tracking-[0.2em] text-sm">SECTOR ZERO</p>
+              <p>The colonies closest to the source<br/>fell silent first. Then entire systems<br/>went dark.</p>
+              <p>Survivors spoke of hostiles<br/>unlike anything in our records.</p>
+              <p className="text-cyan-400 font-bold tracking-[0.2em] text-sm">THE HOLLOW</p>
+              <p>An alien hivemind.<br/>Fast. Adaptive. Relentless.<br/>They consumed everything in their path.</p>
+              <p>The United Earth Coalition<br/>has one option remaining.</p>
+              <p>Send a strike team into Sector Zero.<br/>Find the source of The Signal.<br/>Destroy the Hollow Mind.<br/>End this war.</p>
+              <p className="text-purple-400 italic">Whatever the cost.</p>
+            </div>
+          </div>
+          <div className="text-center mb-6 text-gray-400 text-xs space-y-1">
             <p>Arrow Keys / WASD to move</p>
             <p>SPACE to shoot</p>
             <p>P to pause &middot; M to mute</p>

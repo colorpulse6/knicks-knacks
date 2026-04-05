@@ -19,3 +19,12 @@ body {
   -webkit-user-select: none;
   user-select: none;
 }
+
+@keyframes sectorCrawl {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
+.sector-crawl {
+  animation: sectorCrawl 60s linear infinite;
+}

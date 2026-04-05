@@ -37,12 +37,29 @@ All existing content (40 main-campaign levels, 10 planet missions) remains playa
 
 A level is no longer a single gameplay scene. It is a sequence of 1-N **phases**, each a distinct gameplay mode. Most existing levels remain single-phase. New content introduces multi-phase structure.
 
+### HP & Loadout Translation Across Modes
+
+Each mode has its own HP scale, but shares a **single normalized HP pool** expressed as a 0-1 fraction. When transitioning phases, HP is translated via fraction:
+
+- Shooter mode: 3 HP baseline (matches existing)
+- Ground Run-and-Gun: 3 HP baseline (infantry)
+- Boarding: 3 HP baseline (infantry)
+- Ship Turret: shared with dropship (3 HP baseline)
+- Base Defense: shared with fortress core (separate large HP pool — see Mode 4)
+- Mech Duel: 5 HP baseline (mech chassis is tankier)
+
+Pilot HP bonuses (+1 per 10 levels) apply to whichever baseline is active.
+
+**Loadout translation:** The player's equipped primary weapon *type* (Kinetic/Energy/Incendiary/Cryogenic) carries across modes. Mode-specific weapon sprites represent the same type (e.g., a Cryogenic ship cannon becomes a Cryogenic infantry rifle in Ground mode). Weapon level carries over as a damage multiplier. Secondary systems and consumables are mode-gated (some won't apply — e.g., no bombs in Boarding; the spec will define per-mode loadout compatibility during implementation planning).
+
 ### Phase Transitions
 
 - Phase completes on win condition (clear waves, defeat boss, reach objective, survive timer)
 - **Hard transition:** dialog line + fade-to-black + cinematic card ("DESCENDING TO SURFACE" / "BOARDING DERELICT VESSEL") → next phase loads fresh
-- **Player state persists across phases:** HP carries over, weapon level carries over, lives do NOT reset
-- Failing any phase = level fail (retry from phase 1)
+- **Player state persists across phases:** HP carries over (not restored between phases), weapon level carries over, lives carry over without replenishment
+- **On phase failure:** by default, retry restarts from the failed phase's entry state (HP, weapon level, lives snapshot taken at phase start — a mid-level checkpoint). Consumables used during the failed run are NOT refunded.
+- **Mid-level checkpoints are IN MVP.** Each phase boundary is a checkpoint: if you die in Phase 3, you retry Phase 3 from its entry state (not restart the whole level).
+- **Hard retry (restart from Phase 1)** is available as an optional menu action if the player wants to redo the whole level (e.g., for better rewards / combo runs).
 
 ### Data Model
 
@@ -151,7 +168,7 @@ All modes share the same damage system, affinity system, and HP pool. Loadout st
 | Win | Defeat opposing mech |
 | Fail | Mech HP depleted |
 
-**Feel:** Weighty, patient, pattern-learning. Used sparingly (one fight per applicable world).
+**Feel:** Weighty, patient, pattern-learning. **Used very sparingly** — fewer than once per world. Likely 2-3 total appearances across the entire expansion (climactic story beats only).
 
 ### Rollout Phases
 
@@ -192,6 +209,8 @@ Add a **Hangar** screen in the cockpit hub. Multiple ships ownable; one selected
 
 **Upgrades are per-ship** (not shared). Each ship has independent upgrade trees.
 
+**Design intent:** Per-ship upgrades create an intentional "commitment cost" — switching ships is a real investment. This prevents trivial swapping and makes ship choice meaningful. Pilot-level HP bonuses and skill-tree passives apply universally across ships to soften the re-grind.
+
 ### Stage 3: Modular Loadouts
 
 Pre-mission **Loadout** screen. Equip:
@@ -202,6 +221,8 @@ Pre-mission **Loadout** screen. Equip:
 - **Consumable slots** (2-3 slots per ship)
 
 Slot counts vary by ship (Interceptor: 2 consumable slots, Gunship: 3). Loadouts savable as presets. **Unlocks at Pilot Lv 10.**
+
+**Note:** Consumable slots appear empty / disabled on the Loadout screen until Workshop unlocks at Lv 20. Between Lv 10–20, players can only equip primary/secondary/hull mods.
 
 ### Stage 4: Consumables (Workshop)
 
@@ -225,8 +246,12 @@ Consumables equipped via Loadout screen. Consumed on use. **Unlocks at Pilot Lv 
 | Credits | Kills, completion | Base upgrades, ships, weapons |
 | XP | Kills, completion | Pilot level, gates upgrade tiers |
 | Common materials | Existing (bio-fiber, cryo-alloy, etc.) | Tier 2-3 upgrades, basic consumables |
-| Rare materials | NEW — multi-phase missions | Tier 4-5 upgrades, ships, advanced consumables |
-| Legendary materials | NEW — boss rare drops + optional phases | Prestige weapons, mech chassis, final-tier consumables |
+| Rare materials (4 new types) | Multi-phase missions | Tier 4-5 upgrades, ships, advanced consumables |
+| Legendary materials (2 new types) | Boss rare drops + optional phases | Prestige weapons, mech chassis, final-tier consumables |
+
+**Rare materials:** 4 distinct types (names TBD — one per dominant weapon affinity, roughly: kinetic-core, energy-cell, ember-shard, cryo-essence).
+**Legendary materials:** 2 distinct types (names TBD — one campaign-boss-themed, one optional-phase-themed).
+Drop rates deferred to balance pass.
 
 ---
 
@@ -249,7 +274,7 @@ Account-wide progression layer, above ships and upgrades.
 
 **Every 3 levels:** 1 skill point
 
-**Milestone unlocks:**
+**Milestone unlocks (levels are INITIAL TARGETS — subject to XP-curve balance pass):**
 
 | Level | Unlock |
 |-------|--------|
@@ -260,11 +285,16 @@ Account-wide progression layer, above ships and upgrades.
 | 25 | Scout ship |
 | 30 | Prestige weapon tier |
 | 40 | Mech chassis |
-| 50 | NG+ / Prestige mode (future) |
+| 50 | NG+ / Prestige mode (TBD — see Deferred Decisions) |
+
+**XP sources clarified:**
+- **First-mode-completion bonus:** one-time XP grant the first time the player completes a mission of each new mode type (Ground Run-and-Gun, Boarding, Turret, Base Defense, Mech Duel). Does not repeat.
 
 ### Three Skill Trees
 
-Each tree has 6 nodes + capstone. 50 levels = 16 skill points (fully fill one tree + half another).
+Each tree has 5 regular nodes + 1 capstone (6 total nodes). Regular nodes cost 1 point each (5 per tree). Capstone costs 2 points and requires all 5 regular nodes in that tree filled first.
+
+**Cost math:** Full tree = 5 × 1 + 2 = **7 points**. 50 levels × (1 point per 3 levels) = **16 points**. 16 points = one full tree (7) + one full tree (7) + 2 points into a third tree. Players fill 2 of 3 trees by Lv 50.
 
 **Combat Tree (offensive)**
 - Sharpshooter — +X% damage to weak points
@@ -324,7 +354,16 @@ Strategic depth layer — makes loadout choices matter.
 - Neutral: standard flash, normal sound
 - Resisted: dim flash + floating "RESISTED" text + muted sound
 
-**Pre-mission:** loadout screen shows planet's enemy affinity icons. Scout ship's passive reveals affinities without needing pre-view. Resonance Beacon consumable reveals affinities mid-mission.
+**Pre-mission:** loadout screen shows planet's enemy affinity icons (only for enemies the player has already discovered in Bestiary).
+**Scout ship passive:** displays affinity icon above every enemy's HP bar at all times, for all enemies (including undiscovered).
+**Resonance Beacon consumable:** same effect as Scout passive for mission duration when activated.
+**Bestiary:** always displays affinity for discovered enemies regardless of ship.
+
+### Existing Weapon Migration
+
+The current single player weapon (bullets at weapon levels 1-5) is retroactively assigned to the **Kinetic** type on save-data upgrade. Existing saves retain all progress; the weapon is visually unchanged, just tagged as Kinetic for the affinity system.
+
+New weapons of the other 3 types (Energy, Incendiary, Cryogenic) unlock via missions/rewards post-MVP.
 
 ### Enemy Classes (Full Stat Profiles)
 
@@ -338,7 +377,7 @@ Each class has stats varying on 5 dimensions relative to baseline:
 | Fire Rate | 0.6× – 1.6× |
 | Score Value | 0.8× – 2.0× |
 
-**Class identities:**
+**Class identities (INITIAL TARGET values — subject to balance pass):**
 
 | Class | HP | Speed | Damage | Fire | Score | Role |
 |-------|----|----|-------|-----|-------|------|
@@ -366,7 +405,7 @@ Each class has stats varying on 5 dimensions relative to baseline:
 | Luminos | Tech-drone | Energy | Kinetic |
 | Bastion | Heavy mech | Kinetic (AP) | Energy |
 
-**Each planet has 20-30% off-type enemies** — no single weapon is ever a trivial answer. Optimal loadouts use 2+ weapon types.
+**Each planet has 20-30% off-type enemies** — enforced per-level (each level's enemy roster is 70-80% dominant class + 20-30% alternate classes). No single weapon is ever a trivial answer. Optimal loadouts use 2+ weapon types.
 
 ### Bestiary
 
@@ -379,7 +418,7 @@ New cockpit hub screen. For each discovered enemy:
 - Lore entry (1-2 sentences)
 - Times killed counter
 
-Enemies discovered on first kill. Accessible from cockpit hub alongside Codex.
+Enemies discovered on first kill. Accessible from cockpit hub alongside Codex. **Persistence:** Bestiary is account-wide (saved alongside pilot level, not per-ship). "Times killed" counter persists across all sessions. Does NOT reset on NG+ — discovery is permanent.
 
 ### Visual Implementation (Phase 1)
 
@@ -390,6 +429,55 @@ Enemies discovered on first kill. Accessible from cockpit hub alongside Codex.
 Full sprite redesign deferred — evaluated after playtesting.
 
 ---
+
+## Save Data Migration
+
+Existing saves use localStorage with a versioned schema. The expansion introduces significant new fields (pilot level, skill trees, bestiary, hangar, loadout presets, rare/legendary materials).
+
+**Strategy:**
+- Increment save schema version on first expansion load
+- Run a **migration function** that reads old save → produces new save with defaults:
+  - Pilot level = 1 (existing XP rolled into pilot level via XP curve)
+  - Skill points = 0
+  - Bestiary empty (enemies discovered on next kill)
+  - Default ship: Vanguard
+  - Existing weapon assigned Kinetic type
+  - Empty loadout presets
+  - Rare/legendary material inventories = 0
+- Old saves are never deleted; migration is one-way (no downgrade path)
+- Version mismatch beyond supported range → show "save too old / too new" dialog
+
+Schema migration functions live in `save.ts` and are tested against fixture saves from each prior version.
+
+## Engine Architecture: Shared Systems & Per-Mode Modules
+
+The existing game is a single vertical-shooter renderer on HTML5 Canvas. Five new modes require engine expansion. To avoid a monolith, modes will share a common framework and isolate mode-specific logic.
+
+**Shared systems (used by ALL modes):**
+- Damage model (HP, affinity multipliers, damage calculation)
+- Weapon type system (Kinetic/Energy/Incendiary/Cryogenic classification)
+- Enemy class stat profiles
+- Loadout state
+- Pilot stats & skill tree effects
+- Particle/explosion rendering
+- Audio events
+- Sprite loading/caching
+
+**Per-mode modules (one per game mode):**
+- Mode-specific update loop (physics, collision, AI, terrain)
+- Mode-specific renderer (view, camera, HUD layout)
+- Mode-specific input handlers
+- Mode-specific enemy behaviors
+- Mode-specific win/fail conditions
+
+**New engine infrastructure required:**
+- **Ground Run-and-Gun:** 2D platformer physics (gravity, ground collision, jumping, 8-dir aim). New `physics.ts` module.
+- **Boarding:** tile-based rooms, simple A* or grid pathfinding for enemy AI, line-of-sight checks. New `tiles.ts` and `pathfinding.ts` modules.
+- **Turret:** pseudo-3D perspective projection, rail scrolling. New `rail.ts` module.
+- **Base Defense:** aimable turret pivot math, multi-wave scheduler with distinct enemy waves. Reuses existing wave system.
+- **Mech Duel:** arena bounds, weighty physics, lock-on targeting. New `mechPhysics.ts` module.
+
+**Engine work as MVP prerequisite:** The Ground Run-and-Gun mode alone requires a platformer physics module and side-scrolling camera. This is substantial infrastructure. MVP scope acknowledges this as the primary non-content development cost.
 
 ## Implementation Phasing
 
@@ -441,8 +529,7 @@ Full sprite redesign deferred — evaluated after playtesting.
 
 ## Open Questions / Deferred Decisions
 
-- **Checkpoint system:** Should multi-phase levels support mid-level checkpoints, or is full restart acceptable? (Deferred to MVP playtest.)
-- **Enemy sprite redesign:** Full overhaul vs permanent tint system — decide after MVP feedback.
-- **Mech Duel pacing:** Is once-per-world too sparse / too frequent? Needs playtest.
-- **NG+ design:** What changes on prestige — stats reset but skills retained? Different enemy classes? Deferred.
-- **Balance specifics:** All numeric values (XP curve, material drop rates, upgrade costs) require dedicated balance pass — not designed here.
+- **Enemy sprite redesign:** Intentionally kept minimal — tint/overlay system only for foreseeable future. Full redesign only if playtest strongly demands.
+- **NG+ design:** What changes on prestige — stats reset but skills retained? Different enemy classes? Skill-tree re-selection? Deferred until MVP ships.
+- **Balance specifics:** Numeric values (XP curve, material drop rates, upgrade costs, damage numbers) marked as initial targets throughout. Dedicated balance pass follows MVP playtesting.
+- **Mode-specific loadout compatibility:** Per-mode weapon/consumable applicability rules defined during implementation (e.g., bombs in Ground Run-and-Gun = grenades? N/A?).

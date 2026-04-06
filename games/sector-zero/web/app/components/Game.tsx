@@ -42,6 +42,7 @@ import {
 } from "./engine/cockpit";
 import { checkQuestCompletion, type QuestCheckData } from "./engine/sideQuests";
 import { recordKill } from "./engine/bestiary";
+import { allocateNode } from "./engine/skillTree";
 import { drawCockpit } from "./engine/cockpitRenderer";
 import {
   drawPreChoice, drawChoiceScreen, drawEnding, drawCredits,
@@ -745,6 +746,19 @@ export default function Game() {
       if (action.type === "save-updated" && action.save) {
         saveSave(action.save);
         setSaveData(action.save);
+      }
+
+      if (action.type === "allocate-skill") {
+        const result = allocateNode(action.nodeId, saveData.allocatedSkills, saveData.skillPoints);
+        if (result) {
+          const newSave = {
+            ...saveData,
+            allocatedSkills: result.allocated,
+            skillPoints: result.pointsRemaining,
+          };
+          saveSave(newSave);
+          setSaveData(newSave);
+        }
       }
 
       drawCockpit(ctx, newState, action.type === "save-updated" && action.save ? action.save : saveData);

@@ -6,10 +6,12 @@ import { CODEX_CATEGORIES, getEntriesForCategory, markCodexRead } from "./codex"
 import { getBestiaryList } from "./bestiary";
 import { getAvailableQuests, isQuestActive, isQuestCompleted, acceptQuest, abandonQuest } from "./sideQuests";
 import { PLANET_DEFS, isPlanetUnlocked, isPlanetCompleted } from "./planets";
+import { getTreeNodes, canAllocate } from "./skillTree";
+import type { SkillNodeId } from "./types";
 
 // ─── Cockpit Screen Types ───────────────────────────────────────────
 
-export type CockpitScreen = "hub" | "starmap" | "armory" | "crew" | "missions" | "codex" | "bestiary";
+export type CockpitScreen = "hub" | "starmap" | "armory" | "crew" | "missions" | "codex" | "bestiary" | "pilot";
 
 export interface CockpitHubState {
   screen: CockpitScreen;
@@ -31,6 +33,7 @@ export interface CockpitHubState {
   codexReading: boolean;
   bestiarySelected: number;
   bestiaryReading: boolean;
+  pilotTreeSelected: number;
 }
 
 // ─── Hotspot Definitions ────────────────────────────────────────────
@@ -52,17 +55,19 @@ export const COCKPIT_HOTSPOTS: Hotspot[] = [
   { id: "missions", name: "MISSION BOARD",   x: 310, y: 280, w: 130, h: 80, description: "Side quests" },
   { id: "codex",    name: "SHIP'S LOG",      x: 40,  y: 110, w: 120, h: 70, description: "Intel & research" },
   { id: "bestiary", name: "BESTIARY",         x: 310, y: 110, w: 120, h: 70, description: "Enemy database" },
+  { id: "pilot",   name: "PILOT",             x: 190, y: 720, w: 100, h: 60, description: "Level & skills" },
 ];
 
 // ─── Navigation Graph (which hotspot each arrow goes to) ────────────
 // Maps: [up, down, left, right] → hotspot index (-1 = no move)
 const NAV_GRAPH: Record<number, [number, number, number, number]> = {
   0: [2, 1, 2, 3],    // starmap: up→crew(L), down→armory, left→crew, right→missions
-  1: [0, -1, -1, -1],  // armory: up→starmap
+  1: [0, 6, -1, -1],  // armory: up→starmap, down→PILOT
   2: [4, 0, -1, 3],   // crew: up→codex, down→starmap, right→missions
   3: [5, 0, 2, -1],   // missions: up→bestiary, down→starmap, left→crew
   4: [-1, 2, -1, 5],  // codex: down→crew, right→bestiary
   5: [-1, 3, 4, -1],  // bestiary: down→missions, left→codex
+  6: [1, -1, -1, -1], // pilot: up→armory
 };
 
 // Transition duration in frames
@@ -89,16 +94,19 @@ export function createCockpitState(): CockpitHubState {
     codexReading: false,
     bestiarySelected: 0,
     bestiaryReading: false,
+    pilotTreeSelected: 0,
   };
 }
 
 // ─── Actions ────────────────────────────────────────────────────────
 
-export interface CockpitAction {
-  type: "none" | "open-starmap" | "back" | "save-updated" | "launch-planet";
-  save?: SaveData;
-  planetId?: PlanetId;
-}
+export type CockpitAction =
+  | { type: "none" }
+  | { type: "open-starmap" }
+  | { type: "back" }
+  | { type: "save-updated"; save: SaveData }
+  | { type: "launch-planet"; planetId: PlanetId }
+  | { type: "allocate-skill"; nodeId: SkillNodeId };
 
 // ─── Input Handling ─────────────────────────────────────────────────
 
@@ -182,6 +190,11 @@ export function updateCockpit(
   // ── Missions screen ──
   if (s.screen === "missions") {
     return updateMissions(s, justPressed, save);
+  }
+
+  // ── Pilot screen ──
+  if (s.screen === "pilot") {
+    return updatePilot(s, justPressed, save);
   }
 
   // ── Other sub-screens: left goes back to hub ──
@@ -567,6 +580,49 @@ function updateBestiary(
     s.bestiaryReading = true;
     s.audioEvents.push(AudioEvent.COCKPIT_OPEN);
     return { newState: s, action: { type: "none" } };
+  }
+
+  // Back to hub
+  if (justPressed.left) {
+    s.screen = "hub";
+    s.transitionTimer = TRANSITION_FRAMES;
+    s.audioEvents.push(AudioEvent.COCKPIT_BACK);
+    return { newState: s, action: { type: "none" } };
+  }
+
+  return { newState: s, action: { type: "none" } };
+}
+
+// ─── Pilot Input ──────────────────────────────────────────────────────
+
+function updatePilot(
+  s: CockpitHubState,
+  justPressed: Record<string, boolean>,
+  save: SaveData
+): { newState: CockpitHubState; action: CockpitAction } {
+  const nodes = getTreeNodes("combat");
+
+  if (justPressed.up && s.pilotTreeSelected > 0) {
+    s.pilotTreeSelected -= 1;
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+  }
+  if (justPressed.down && s.pilotTreeSelected < nodes.length - 1) {
+    s.pilotTreeSelected += 1;
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+  }
+
+  // Allocate skill point
+  if (justPressed.shoot && nodes.length > 0) {
+    const node = nodes[s.pilotTreeSelected];
+    if (canAllocate(node.id, save.allocatedSkills, save.skillPoints)) {
+      s.audioEvents.push(AudioEvent.UPGRADE_PURCHASE);
+      return {
+        newState: s,
+        action: { type: "allocate-skill", nodeId: node.id },
+      };
+    } else {
+      s.audioEvents.push(AudioEvent.UPGRADE_DENIED);
+    }
   }
 
   // Back to hub

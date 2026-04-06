@@ -51,6 +51,7 @@ import {
   type EndingChoice,
 } from "./engine/ending";
 import { restoreCheckpoint } from "./engine/phases";
+import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./engine/groundLevel";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -200,6 +201,10 @@ export default function Game() {
     // If we have a checkpoint (multi-phase, not phase 1), restart from checkpoint
     if (gameState?.phaseCheckpoint && gameState.currentPhase > 0) {
       const restored = restoreCheckpoint(gameState, gameState.phaseCheckpoint);
+      // For ground-run mode, re-initialize ground state and reset player spawn position
+      const isGroundRun = gameState.currentMode === "ground-run";
+      const freshGroundState = isGroundRun ? createTestGroundState() : undefined;
+      const groundSpawn = isGroundRun && freshGroundState ? getGroundSpawn(freshGroundState.tileMap) : null;
       setGameState({
         ...gameState,
         ...restored,
@@ -217,6 +222,10 @@ export default function Game() {
         levelCompleteTimer: 0,
         screenShake: 0,
         bombCooldown: 0,
+        ...(isGroundRun && freshGroundState && groundSpawn ? {
+          groundState: freshGroundState,
+          player: { ...restored.player, x: groundSpawn.x, y: groundSpawn.y },
+        } : {}),
       } as GameState);
       return;
     }

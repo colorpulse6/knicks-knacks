@@ -40,6 +40,7 @@ import {
   COCKPIT_HOTSPOTS,
 } from "./engine/cockpit";
 import { checkQuestCompletion, type QuestCheckData } from "./engine/sideQuests";
+import { recordKill } from "./engine/bestiary";
 import { drawCockpit } from "./engine/cockpitRenderer";
 import {
   drawPreChoice, drawChoiceScreen, drawEnding, drawCredits,
@@ -206,6 +207,17 @@ export default function Game() {
     // Planet mission completion — award rewards and return to cockpit
     if (activePlanetId) {
       let newSave = completePlanet(saveData, activePlanetId);
+      // Flush pending bestiary kills
+      let updatedBestiary = newSave.bestiary;
+      if (gameState?.pendingBestiaryKills?.length) {
+        for (const kill of gameState.pendingBestiaryKills) {
+          updatedBestiary = recordKill(updatedBestiary, kill.type, kill.classId, {
+            world: gameState.currentWorld,
+            planetId: gameState.planetId,
+          });
+        }
+      }
+      newSave = { ...newSave, bestiary: updatedBestiary };
       saveSave(newSave);
       setSaveData(newSave);
       returnToCockpit();
@@ -234,6 +246,18 @@ export default function Game() {
     };
     const questResult = checkQuestCompletion(newSave, questData);
     newSave = questResult.newSave;
+
+    // Flush pending bestiary kills
+    let updatedBestiary = newSave.bestiary;
+    if (gameState?.pendingBestiaryKills?.length) {
+      for (const kill of gameState.pendingBestiaryKills) {
+        updatedBestiary = recordKill(updatedBestiary, kill.type, kill.classId, {
+          world: gameState.currentWorld,
+          planetId: gameState.planetId,
+        });
+      }
+    }
+    newSave = { ...newSave, bestiary: updatedBestiary };
 
     saveSave(newSave);
     setSaveData(newSave);
@@ -774,6 +798,17 @@ export default function Game() {
           playerMaxHp: gameState.player.maxHp,
         };
         advSave = checkQuestCompletion(advSave, advQuestData).newSave;
+        // Flush pending bestiary kills
+        let advBestiary = advSave.bestiary;
+        if (gameState?.pendingBestiaryKills?.length) {
+          for (const kill of gameState.pendingBestiaryKills) {
+            advBestiary = recordKill(advBestiary, kill.type, kill.classId, {
+              world: gameState.currentWorld,
+              planetId: gameState.planetId,
+            });
+          }
+        }
+        advSave = { ...advSave, bestiary: advBestiary };
         saveSave(advSave);
         setSaveData(advSave);
       }
@@ -815,6 +850,17 @@ export default function Game() {
         playerMaxHp: gameState.player.maxHp,
       };
       finalSave = checkQuestCompletion(finalSave, questData).newSave;
+      // Flush pending bestiary kills
+      let finalBestiary = finalSave.bestiary;
+      if (gameState?.pendingBestiaryKills?.length) {
+        for (const kill of gameState.pendingBestiaryKills) {
+          finalBestiary = recordKill(finalBestiary, kill.type, kill.classId, {
+            world: gameState.currentWorld,
+            planetId: gameState.planetId,
+          });
+        }
+      }
+      finalSave = { ...finalSave, bestiary: finalBestiary };
       saveSave(finalSave);
       setSaveData(finalSave);
       startEnding();

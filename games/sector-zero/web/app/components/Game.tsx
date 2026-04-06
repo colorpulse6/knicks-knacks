@@ -92,6 +92,7 @@ export default function Game() {
     jump: false,
   });
   const touchPosRef = useRef<{ x: number; y: number } | null>(null);
+  const mouseRef = useRef<{ x: number; y: number; down: boolean }>({ x: 0.5, y: 0.5, down: false });
   const animationFrameRef = useRef<number | null>(null);
   const audioRef = useRef<AudioEngine | null>(null);
   const introFrameRef = useRef(0);
@@ -1148,6 +1149,14 @@ export default function Game() {
     if (!ctx) return;
 
     const gameLoop = () => {
+      // Feed mouse position into turret crosshair + mouse-click as shoot
+      if (gameState?.currentMode === "turret" && gameState.turretState) {
+        const m = mouseRef.current;
+        gameState.turretState.crosshairX = Math.max(0.05, Math.min(0.95, m.x));
+        gameState.turretState.crosshairY = Math.max(0.05, Math.min(0.95, m.y));
+        if (m.down) keysRef.current.shoot = true;
+      }
+
       const newState = updateGame(
         gameState,
         keysRef.current,
@@ -1260,6 +1269,23 @@ export default function Game() {
           maxHeight: "100vh",
           maxWidth: "100vw",
           objectFit: "contain",
+          cursor: gameState?.currentMode === "turret" ? "none" : "default",
+        }}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const scaleX = CANVAS_WIDTH / rect.width;
+          const scaleY = CANVAS_HEIGHT / rect.height;
+          mouseRef.current.x = (e.clientX - rect.left) * scaleX / CANVAS_WIDTH;
+          mouseRef.current.y = (e.clientY - rect.top) * scaleY / CANVAS_HEIGHT;
+        }}
+        onMouseDown={(e) => {
+          if (e.button === 0) mouseRef.current.down = true;
+        }}
+        onMouseUp={(e) => {
+          if (e.button === 0) mouseRef.current.down = false;
+        }}
+        onMouseLeave={() => {
+          mouseRef.current.down = false;
         }}
       />
 

@@ -362,17 +362,25 @@ function drawXpBar(
 ): void {
   const barX = PAD_X;
   const barW = CANVAS_WIDTH - PAD_X * 2;
+  const BADGE_WIDTH = 35;
+
+  // Pilot level badge
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 9px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`Lv${state.pilotLevel}`, barX, XP_BAR_Y + XP_BAR_H / 2);
 
   // XP label
   ctx.fillStyle = "#556677";
   ctx.font = "9px monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
-  ctx.fillText("XP", barX, XP_BAR_Y - 1);
+  ctx.fillText("XP", barX + BADGE_WIDTH, XP_BAR_Y - 1);
 
   // Background
   ctx.fillStyle = "#1a1a2a";
-  ctx.fillRect(barX + 20, XP_BAR_Y, barW - 20, XP_BAR_H);
+  ctx.fillRect(barX + BADGE_WIDTH + 20, XP_BAR_Y, barW - BADGE_WIDTH - 20, XP_BAR_H);
 
   const xp = state.xp;
   // Simple threshold display: show progress to next milestone
@@ -394,7 +402,7 @@ function drawXpBar(
 
   // XP bar fill with gradient feel
   ctx.fillStyle = "#6644aa";
-  ctx.fillRect(barX + 20, XP_BAR_Y, (barW - 20) * Math.min(1, xpProgress), XP_BAR_H);
+  ctx.fillRect(barX + BADGE_WIDTH + 20, XP_BAR_Y, (barW - BADGE_WIDTH - 20) * Math.min(1, xpProgress), XP_BAR_H);
 
   // XP amount (right)
   ctx.fillStyle = "#7766aa";

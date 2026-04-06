@@ -1,4 +1,4 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, type SaveData } from "./types";
+import { CANVAS_WIDTH, CANVAS_HEIGHT, type SaveData, type BestiaryEntry } from "./types";
 import { getSprite, SPRITES } from "./sprites";
 import { type CockpitHubState, COCKPIT_HOTSPOTS } from "./cockpit";
 import { UPGRADE_DEFS, getUpgradeCost, canPurchase, isUpgradeLevelUnlocked, getUnlockRequirement, getXpProgress, getNextEffect, getCurrentEffect } from "./upgrades";
@@ -10,6 +10,7 @@ import { WORLD_NAMES } from "./levels";
 import { getBestiaryList, getDiscoveredCount, getTotalEnemyCount, ENEMY_LORE } from "./bestiary";
 import { ENEMY_CLASS_PROFILES } from "./enemyClasses";
 import { WEAPON_TYPE_META } from "./weaponTypes";
+import { ENEMY_SPRITE_MAP } from "./enemies";
 
 // ─── Main Cockpit Drawing ───────────────────────────────────────────
 
@@ -1700,9 +1701,17 @@ function drawBestiaryScreen(
   state: CockpitHubState,
   save: SaveData
 ): void {
+  const entries = getBestiaryList(save.bestiary);
+
+  // ── Detail / Reading view ──
+  if (state.bestiaryReading && entries.length > 0) {
+    drawBestiaryDetail(ctx, state, entries);
+    return;
+  }
+
+  // ── List view ──
   drawSubScreenFrame(ctx, "BESTIARY", SPRITES.CODEX_BG);
 
-  const entries = getBestiaryList(save.bestiary);
   const total = getTotalEnemyCount();
   const discovered = getDiscoveredCount(save.bestiary);
 
@@ -1723,99 +1732,60 @@ function drawBestiaryScreen(
   }
 
   const listX = 16;
-  const listW = 160;
+  const listW = CANVAS_WIDTH - 32;
   const startY = 70;
   const rowH = 42;
+  const maxVisible = Math.floor((CANVAS_HEIGHT - 140 - startY) / rowH);
+  const scrollOffset = Math.max(0, state.bestiarySelected - maxVisible + 1);
   const selected = Math.min(state.bestiarySelected, entries.length - 1);
 
-  for (let i = 0; i < entries.length; i++) {
+  for (let i = scrollOffset; i < Math.min(entries.length, scrollOffset + maxVisible); i++) {
     const entry = entries[i];
-    const y = startY + i * rowH;
+    const y = startY + (i - scrollOffset) * rowH;
     const isSelected = i === selected;
 
     if (isSelected) {
-      ctx.fillStyle = "rgba(68, 204, 255, 0.15)";
+      ctx.fillStyle = "rgba(68, 204, 255, 0.1)";
       ctx.beginPath();
       ctx.roundRect(listX, y, listW, rowH - 4, 4);
       ctx.fill();
+      ctx.strokeStyle = "#44ccff44";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 4);
+      ctx.stroke();
     }
 
     const profile = ENEMY_CLASS_PROFILES[entry.classId];
-    ctx.fillStyle = profile.tint;
-    ctx.fillRect(listX + 8, y + 12, 8, 14);
 
+    // Class tint swatch
+    ctx.fillStyle = profile.tint;
+    ctx.fillRect(listX + 8, y + 10, 10, 18);
+
+    // Enemy name
     ctx.fillStyle = isSelected ? "#ffffff" : "#889999";
-    ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+    ctx.font = isSelected ? "bold 12px monospace" : "12px monospace";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(entry.enemyType, listX + 24, y + 14);
+    ctx.fillText(entry.enemyType, listX + 28, y + 8);
+
+    // Class + kill count
     ctx.fillStyle = "#667788";
     ctx.font = "9px monospace";
-    ctx.fillText(`x${entry.killCount} kills`, listX + 24, y + 28);
-  }
+    ctx.fillText(`${profile.name}  \u00B7  ${entry.killCount} kills`, listX + 28, y + 24);
 
-  // Detail panel
-  const entry = entries[selected];
-  const profile = ENEMY_CLASS_PROFILES[entry.classId];
-  const detailX = listX + listW + 16;
-  const detailW = CANVAS_WIDTH - detailX - 16;
-
-  ctx.shadowBlur = 4;
-  ctx.shadowColor = profile.tint;
-  ctx.fillStyle = profile.tint;
-  ctx.font = "bold 14px monospace";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  ctx.fillText(entry.enemyType, detailX, startY);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = "#667788";
-  ctx.font = "9px monospace";
-  ctx.fillText(`CLASS: ${profile.name.toUpperCase()}`, detailX, startY + 18);
-
-  let ay = startY + 40;
-  ctx.fillStyle = "#ffdd44";
-  ctx.font = "bold 9px monospace";
-  ctx.textAlign = "left";
-  ctx.fillText("EFFECTIVE VS", detailX, ay);
-  ay += 12;
-  ctx.font = "9px monospace";
-  ctx.fillStyle = "#aaaaaa";
-  const effStr = profile.effectiveVs.map((w) => WEAPON_TYPE_META[w].name).join(", ") || "\u2014";
-  ctx.fillText(effStr, detailX, ay);
-  ay += 18;
-  ctx.fillStyle = "#888899";
-  ctx.font = "bold 9px monospace";
-  ctx.fillText("RESISTS", detailX, ay);
-  ay += 12;
-  ctx.font = "9px monospace";
-  ctx.fillStyle = "#aaaaaa";
-  const resStr = profile.resistedVs.map((w) => WEAPON_TYPE_META[w].name).join(", ") || "\u2014";
-  ctx.fillText(resStr, detailX, ay);
-  ay += 20;
-
-  ctx.fillStyle = "#667788";
-  ctx.font = "bold 9px monospace";
-  ctx.fillText("STAT PROFILE", detailX, ay);
-  ay += 12;
-  ctx.font = "9px monospace";
-  ctx.fillStyle = "#aaaaaa";
-  ctx.fillText(`HP: ${profile.hpMult.toFixed(1)}x`, detailX, ay);
-  ctx.fillText(`SPD: ${profile.speedMult.toFixed(1)}x`, detailX + 90, ay);
-  ay += 12;
-  ctx.fillText(`DMG: ${profile.damageMult.toFixed(1)}x`, detailX, ay);
-  ctx.fillText(`RATE: ${profile.fireRateMult.toFixed(1)}x`, detailX + 90, ay);
-  ay += 20;
-
-  ctx.fillStyle = "#667788";
-  ctx.font = "bold 9px monospace";
-  ctx.fillText("INTEL", detailX, ay);
-  ay += 12;
-  ctx.fillStyle = "#aaaaaa";
-  ctx.font = "10px monospace";
-  const loreLines = wrapText(ctx, ENEMY_LORE[entry.enemyType], detailW);
-  for (const line of loreLines) {
-    ctx.fillText(line, detailX, ay);
-    ay += 14;
+    // Affinity icons on right
+    const rightX = listX + listW - 8;
+    ctx.textAlign = "right";
+    ctx.font = "8px monospace";
+    if (profile.effectiveVs.length > 0) {
+      ctx.fillStyle = "#ffdd44";
+      ctx.fillText(`\u2B06 ${profile.effectiveVs.map(w => WEAPON_TYPE_META[w].icon).join("")}`, rightX, y + 10);
+    }
+    if (profile.resistedVs.length > 0) {
+      ctx.fillStyle = "#888899";
+      ctx.fillText(`\u2B07 ${profile.resistedVs.map(w => WEAPON_TYPE_META[w].icon).join("")}`, rightX, y + 22);
+    }
   }
 
   // Bottom bar
@@ -1832,7 +1802,210 @@ function drawBestiaryScreen(
   ctx.font = "9px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("\u2191\u2193 SELECT   \u2190 BACK", CANVAS_WIDTH / 2, barY + 25);
+  ctx.fillText("\u2191\u2193 SELECT   ENTER VIEW   \u2190 BACK", CANVAS_WIDTH / 2, barY + 25);
+}
+
+// ─── Bestiary Detail View ──────────────────────────────────────────
+function drawBestiaryDetail(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  entries: BestiaryEntry[]
+): void {
+  const selected = Math.min(state.bestiarySelected, entries.length - 1);
+  const entry = entries[selected];
+  const profile = ENEMY_CLASS_PROFILES[entry.classId];
+
+  // Dark background
+  ctx.fillStyle = "#060610";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  // Subtle grid pattern
+  ctx.strokeStyle = "#111122";
+  ctx.lineWidth = 0.5;
+  for (let gx = 0; gx < CANVAS_WIDTH; gx += 20) {
+    ctx.beginPath();
+    ctx.moveTo(gx, 0);
+    ctx.lineTo(gx, CANVAS_HEIGHT);
+    ctx.stroke();
+  }
+  for (let gy = 0; gy < CANVAS_HEIGHT; gy += 20) {
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(CANVAS_WIDTH, gy);
+    ctx.stroke();
+  }
+
+  // ── Enemy Sprite (centered, animated bob + slow rotation glow) ──
+  const spritePath = ENEMY_SPRITE_MAP[entry.enemyType];
+  const sprite = spritePath ? getSprite(spritePath) : null;
+
+  const spriteCx = CANVAS_WIDTH / 2;
+  const spriteCy = 140;
+  const spriteSize = 96;
+  const bob = Math.sin(state.animTimer * 0.04) * 4;
+
+  if (sprite) {
+    ctx.save();
+    // Glow ring behind sprite (rotating)
+    const glowAngle = state.animTimer * 0.02;
+    ctx.strokeStyle = profile.tint + "44";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(spriteCx, spriteCy + bob, spriteSize * 0.6, glowAngle, glowAngle + Math.PI * 1.5);
+    ctx.stroke();
+    ctx.strokeStyle = profile.tint + "22";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(spriteCx, spriteCy + bob, spriteSize * 0.7, -glowAngle, -glowAngle + Math.PI);
+    ctx.stroke();
+
+    // Enemy sprite
+    ctx.drawImage(
+      sprite,
+      spriteCx - spriteSize / 2,
+      spriteCy - spriteSize / 2 + bob,
+      spriteSize,
+      spriteSize
+    );
+
+    // Class tint overlay on the sprite
+    ctx.globalCompositeOperation = "multiply";
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = profile.tint;
+    ctx.fillRect(
+      spriteCx - spriteSize / 2,
+      spriteCy - spriteSize / 2 + bob,
+      spriteSize,
+      spriteSize
+    );
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  } else {
+    // Fallback colored circle
+    ctx.fillStyle = profile.tint;
+    ctx.beginPath();
+    ctx.arc(spriteCx, spriteCy + bob, 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ── Title bar ──
+  const titleY = spriteCy + spriteSize / 2 + 20;
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = profile.tint;
+  ctx.fillStyle = profile.tint;
+  ctx.font = "bold 18px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(entry.enemyType, spriteCx, titleY);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#667788";
+  ctx.font = "10px monospace";
+  ctx.fillText(`CLASS: ${profile.name.toUpperCase()}  \u00B7  ${entry.killCount} KILLS`, spriteCx, titleY + 22);
+
+  // ── Stats row ──
+  const statsY = titleY + 46;
+  const statsW = CANVAS_WIDTH - 60;
+  const statsX = 30;
+
+  ctx.fillStyle = "rgba(0, 0, 10, 0.5)";
+  ctx.beginPath();
+  ctx.roundRect(statsX, statsY, statsW, 60, 6);
+  ctx.fill();
+  ctx.strokeStyle = profile.tint + "33";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(statsX, statsY, statsW, 60, 6);
+  ctx.stroke();
+
+  // Stat labels + values (2 rows of 2)
+  ctx.font = "9px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  const col1 = statsX + 12;
+  const col2 = statsX + statsW / 2 + 12;
+  const row1 = statsY + 10;
+  const row2 = statsY + 32;
+
+  ctx.fillStyle = "#667788";
+  ctx.fillText("HP", col1, row1);
+  ctx.fillText("SPEED", col2, row1);
+  ctx.fillText("DAMAGE", col1, row2);
+  ctx.fillText("FIRE RATE", col2, row2);
+
+  ctx.fillStyle = "#cccccc";
+  ctx.fillText(`${profile.hpMult.toFixed(1)}x`, col1 + 60, row1);
+  ctx.fillText(`${profile.speedMult.toFixed(1)}x`, col2 + 80, row1);
+  ctx.fillText(`${profile.damageMult.toFixed(1)}x`, col1 + 60, row2);
+  ctx.fillText(`${profile.fireRateMult.toFixed(1)}x`, col2 + 80, row2);
+
+  // ── Affinity row ──
+  const affY = statsY + 72;
+  ctx.textAlign = "center";
+  const halfW = CANVAS_WIDTH / 2;
+
+  ctx.fillStyle = "#ffdd44";
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("EFFECTIVE VS", halfW - halfW / 2, affY);
+  ctx.font = "10px monospace";
+  ctx.fillStyle = "#ddddaa";
+  const effNames = profile.effectiveVs.map((w) => WEAPON_TYPE_META[w].name).join(", ") || "\u2014";
+  ctx.fillText(effNames, halfW - halfW / 2, affY + 14);
+
+  ctx.fillStyle = "#888899";
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("RESISTS", halfW + halfW / 2, affY);
+  ctx.font = "10px monospace";
+  ctx.fillStyle = "#999999";
+  const resNames = profile.resistedVs.map((w) => WEAPON_TYPE_META[w].name).join(", ") || "\u2014";
+  ctx.fillText(resNames, halfW + halfW / 2, affY + 14);
+
+  // ── Lore / Intel section ──
+  const loreY = affY + 40;
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("ANALYSIS", 24, loreY);
+
+  ctx.fillStyle = "#999999";
+  ctx.font = "10px monospace";
+  const loreText = ENEMY_LORE[entry.enemyType];
+  // Handle explicit newlines in lore text
+  const paragraphs = loreText.split("\n");
+  let ly = loreY + 16;
+  const maxLoreW = CANVAS_WIDTH - 48;
+  for (const para of paragraphs) {
+    if (para.trim() === "") {
+      ly += 8;
+      continue;
+    }
+    const lines = wrapText(ctx, para, maxLoreW);
+    for (const line of lines) {
+      ctx.fillText(line, 24, ly);
+      ly += 14;
+    }
+  }
+
+  // ── Bottom bar ──
+  const barY = CANVAS_HEIGHT - 50;
+  ctx.fillStyle = "rgba(0, 0, 10, 0.7)";
+  ctx.fillRect(0, barY, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, barY);
+  ctx.lineTo(CANVAS_WIDTH, barY);
+  ctx.stroke();
+
+  const pulseAlpha = 0.4 + 0.2 * Math.sin(state.animTimer * 0.06);
+  ctx.globalAlpha = pulseAlpha;
+  ctx.fillStyle = "#445566";
+  ctx.font = "10px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("[ENTER] or [\u2190] CLOSE", CANVAS_WIDTH / 2, barY + 25);
+  ctx.globalAlpha = 1;
 }
 
 // ─── Codex Reading View ─────────────────────────────────────────────

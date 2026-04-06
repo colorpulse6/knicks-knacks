@@ -30,6 +30,7 @@ export interface CockpitHubState {
   codexSelected: number;
   codexReading: boolean;
   bestiarySelected: number;
+  bestiaryReading: boolean;
 }
 
 // ─── Hotspot Definitions ────────────────────────────────────────────
@@ -87,6 +88,7 @@ export function createCockpitState(): CockpitHubState {
     codexSelected: 0,
     codexReading: false,
     bestiarySelected: 0,
+    bestiaryReading: false,
   };
 }
 
@@ -539,6 +541,15 @@ function updateBestiary(
 ): { newState: CockpitHubState; action: CockpitAction } {
   const entries = getBestiaryList(save.bestiary);
 
+  // In reading mode — Enter or Left closes detail view
+  if (s.bestiaryReading) {
+    if (justPressed.left || justPressed.shoot) {
+      s.bestiaryReading = false;
+      s.audioEvents.push(AudioEvent.COCKPIT_BACK);
+    }
+    return { newState: s, action: { type: "none" } };
+  }
+
   // Navigate entry list
   const prevSelected = s.bestiarySelected;
   if (justPressed.up && s.bestiarySelected > 0) {
@@ -549,6 +560,13 @@ function updateBestiary(
   }
   if (s.bestiarySelected !== prevSelected) {
     s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+  }
+
+  // Enter to open detail view
+  if (justPressed.shoot && entries.length > 0) {
+    s.bestiaryReading = true;
+    s.audioEvents.push(AudioEvent.COCKPIT_OPEN);
+    return { newState: s, action: { type: "none" } };
   }
 
   // Back to hub

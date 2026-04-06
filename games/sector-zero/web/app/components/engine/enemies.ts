@@ -335,7 +335,7 @@ export function isEnemyOffscreen(enemy: Enemy): boolean {
 
 // ─── Sprite map ──────────────────────────────────────────────────────
 
-const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
+export const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   [EnemyType.SCOUT]: SPRITES.ENEMY_SCOUT,
   [EnemyType.DRONE]: SPRITES.ENEMY_DRONE,
   [EnemyType.GUNNER]: SPRITES.ENEMY_GUNNER,

@@ -6,7 +6,6 @@ export type CodexCategory = "intel" | "enemies" | "transmissions" | "research" |
 
 export const CODEX_CATEGORIES: { id: CodexCategory; name: string; color: string }[] = [
   { id: "intel", name: "INTEL", color: "#44ccff" },
-  { id: "enemies", name: "ENEMIES", color: "#ff4444" },
   { id: "transmissions", name: "SIGNALS", color: "#aa44ff" },
   { id: "research", name: "RESEARCH", color: "#44ff88" },
   { id: "personal", name: "PERSONAL", color: "#ffaa44" },

@@ -55,9 +55,13 @@ function updatePlayerMovement(
   if (keys.left) {
     vx = -PLAYER_MOVE_SPEED;
     ground.playerFacingRight = false;
+    gs.player.bankDir = -1; // Signal to renderer: moving left
   } else if (keys.right) {
     vx = PLAYER_MOVE_SPEED;
     ground.playerFacingRight = true;
+    gs.player.bankDir = 1; // Signal to renderer: moving right
+  } else {
+    gs.player.bankDir = 0; // Idle
   }
 
   const newX = resolveHorizontal(map, p.x, p.y, vx, PLAYER_W, PLAYER_H);

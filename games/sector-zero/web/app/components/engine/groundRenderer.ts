@@ -86,9 +86,9 @@ function drawTileMap(
         // Floor tile (frame 0)
         ctx.drawImage(tileSheet, cropInset, cropInset, cropW, cropH, screenX, screenY, T, T);
       } else if (tile === "platform" && tileSheet) {
-        // Platform tile (frame 1) — draw thinner, just top portion
+        // Platform tile (frame 1) — draw full sprite but at reduced height for floating look
         const sx = sheetFrameW + cropInset;
-        ctx.drawImage(tileSheet, sx, cropInset, cropW, cropH * 0.4, screenX, screenY, T, T * 0.4);
+        ctx.drawImage(tileSheet, sx, cropInset, cropW, cropH, screenX, screenY - 4, T + 8, T + 4);
       } else if (tile === "solid") {
         // Fallback solid
         ctx.fillStyle = "#2a2a3a";
@@ -258,6 +258,9 @@ function drawGroundPlayer(
     let frameCol = 0;
     let frameRow = 0;
 
+    // Determine animation state from input keys
+    const isMoving = state.player.bankDir !== 0; // bankDir is repurposed: nonzero = moving
+
     if (!gs.playerOnGround) {
       // Jumping / falling → row 1, col 1 (jump frame)
       frameRow = 1;
@@ -266,7 +269,7 @@ function drawGroundPlayer(
       // Just fired → row 1, col 2 (shoot frame)
       frameRow = 1;
       frameCol = 2;
-    } else if (Math.abs(player.x - (state.frameCount > 1 ? player.x : 0)) > 0.1 || state.frameCount % 60 < 30) {
+    } else if (isMoving) {
       // Running → row 0, cycle through 4 frames
       frameRow = 0;
       frameCol = Math.floor(state.frameCount / 8) % 4;

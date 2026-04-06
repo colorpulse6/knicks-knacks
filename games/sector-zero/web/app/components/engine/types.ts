@@ -500,6 +500,8 @@ export interface GameState {
   floatingLabels: FloatingLabel[];
   equippedWeaponType: WeaponType;
   pendingBestiaryKills: Array<{ type: EnemyType; classId: EnemyClass }>;
+  pilotLevel: number;
+  allocatedSkills: SkillNodeId[];
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -651,6 +653,23 @@ export type PlanetId =
   | "luminos"
   | "bastion";
 
+// ─── Pilot Leveling ─────────────────────────────────────────────────
+export type SkillTreeId = "combat" | "engineering" | "piloting";
+
+export type SkillNodeId =
+  | "sharpshooter"
+  | "overcharge"
+  | "berserker"
+  | "glass-cannon"
+  | "adrenaline"
+  | "signature-weapon";
+
+export interface PilotMilestone {
+  level: number;
+  label: string;
+  unlocked: boolean;
+}
+
 // ─── Bestiary ───────────────────────────────────────────────────────
 export interface BestiaryEntry {
   enemyType: EnemyType;
@@ -683,4 +702,7 @@ export interface SaveData {
   unlockedEnhancements: EnhancementId[];
   bestiary: Partial<Record<EnemyType, BestiaryEntry>>;
   equippedWeaponType: WeaponType;
+  pilotLevel: number;
+  skillPoints: number;
+  allocatedSkills: SkillNodeId[];
 }

@@ -51,31 +51,43 @@ function drawTileMap(
       const sx = col * T - camX;
       const sy = row * T - camY;
 
-      if ((tile === "wall") && tileSheet) {
-        ctx.drawImage(tileSheet, sheetFrameW, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
-      } else if ((tile === "floor" || tile === "spawn") && tileSheet) {
-        ctx.drawImage(tileSheet, 0, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
-      } else if (tile === "door" && tileSheet) {
-        ctx.drawImage(tileSheet, sheetFrameW * 2, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
-      } else if (tile === "wall") {
-        ctx.fillStyle = "#2a2a3a";
-        ctx.fillRect(sx, sy, T, T);
-        ctx.fillStyle = "#3a3a4e";
-        ctx.fillRect(sx, sy, T, 1);
-        ctx.fillRect(sx, sy, 1, T);
+      if (tile === "wall") {
+        // Wall: use sprite tile (frame 1) — darker, solid
+        if (tileSheet) {
+          ctx.drawImage(tileSheet, sheetFrameW, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
+        } else {
+          ctx.fillStyle = "#1a1a2a";
+          ctx.fillRect(sx, sy, T, T);
+        }
       } else if (tile === "floor" || tile === "spawn") {
-        ctx.fillStyle = "#12121e";
-        ctx.fillRect(sx, sy, T, T);
-        ctx.strokeStyle = "#1a1a28";
+        // Floor: use sprite tile (frame 0) with brightened overlay for contrast
+        if (tileSheet) {
+          ctx.drawImage(tileSheet, 0, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
+          // Brighten floor slightly so it contrasts with walls
+          ctx.fillStyle = "rgba(60, 80, 100, 0.15)";
+          ctx.fillRect(sx, sy, T, T);
+        } else {
+          ctx.fillStyle = "#181828";
+          ctx.fillRect(sx, sy, T, T);
+        }
+        // Subtle grid lines for floor
+        ctx.strokeStyle = "rgba(100, 140, 180, 0.08)";
         ctx.lineWidth = 0.5;
-        ctx.strokeRect(sx, sy, T, T);
+        ctx.strokeRect(sx + 0.5, sy + 0.5, T - 1, T - 1);
       } else if (tile === "door") {
-        ctx.fillStyle = "#12121e";
+        // Door: use sprite tile (frame 2) + glowing border
+        if (tileSheet) {
+          ctx.drawImage(tileSheet, sheetFrameW * 2, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
+        } else {
+          ctx.fillStyle = "#181828";
+          ctx.fillRect(sx, sy, T, T);
+        }
+        // Green glow on doors to make them visible
+        ctx.fillStyle = "rgba(68, 204, 102, 0.12)";
         ctx.fillRect(sx, sy, T, T);
-        ctx.fillStyle = "#22664433";
-        ctx.fillRect(sx + 2, sy + 2, T - 4, T - 4);
-        ctx.fillStyle = "#44cc66";
-        ctx.fillRect(sx + T / 2 - 2, sy, 4, T);
+        ctx.strokeStyle = "rgba(68, 204, 102, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx + 1, sy + 1, T - 2, T - 2);
       } else if (tile === "goal") {
         const pulse = 0.5 + 0.3 * Math.sin(frameCount * 0.06);
         ctx.fillStyle = "#12121e";
@@ -343,6 +355,16 @@ export function drawBoardingGame(
   drawSpriteExplosions(ctx, state.explosions);
   drawFloatingLabels(ctx, state.floatingLabels);
   ctx.restore();
+
+  // Player ambient light (illuminates nearby area)
+  const plx = state.player.x + 12 - bs.cameraX;
+  const ply = state.player.y + 12 - bs.cameraY;
+  const lightGrad = ctx.createRadialGradient(plx, ply, 20, plx, ply, 120);
+  lightGrad.addColorStop(0, "rgba(100, 160, 220, 0.12)");
+  lightGrad.addColorStop(0.5, "rgba(60, 100, 160, 0.06)");
+  lightGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = lightGrad;
+  ctx.fillRect(plx - 120, ply - 120, 240, 240);
 
   // Player
   drawPlayer(ctx, state, bs);

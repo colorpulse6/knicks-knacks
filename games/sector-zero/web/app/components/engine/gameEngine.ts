@@ -53,7 +53,7 @@ import { AFFINITY_MULTIPLIER } from "./weaponTypes";
 import { createAffinityLabel, updateFloatingLabels, resetFloatingLabelIds } from "./floatingLabels";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap, SpatialHash } from "./physics";
-import { getLevelData, getWorldLevelCount } from "./levels";
+import { getLevelData, getWorldLevelCount, getMultiPhaseLevelData } from "./levels";
 import { clamp } from "./physics";
 
 const spatialHash = new SpatialHash();
@@ -183,6 +183,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
   resetPowerUpIds();
 
   const levelData = getLevelData(world, level);
+  const multiPhaseData = getMultiPhaseLevelData(world, level);
   const waves: Wave[] = (levelData?.waves ?? []).map((def) => ({
     definition: def,
     spawned: false,
@@ -238,7 +239,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     pilotLevel,
     allocatedSkills,
     currentPhase: 0,
-    totalPhases: 1,
+    totalPhases: multiPhaseData?.phases.length ?? 1,
     phaseCheckpoint: null,
     phaseTransitionTimer: 0,
     phaseTransitionCard: "",
@@ -539,6 +540,34 @@ export function updateGame(
         s.phaseCheckpoint = createCheckpoint(s);
         s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
         s.phaseTransitionSubtext = "Preparing next phase...";
+        // Load next phase's waves
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        if (nextPhaseData?.transitionIn) {
+          s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
+          s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
+          s.phaseTransitionTimer = nextPhaseData.transitionIn.duration;
+        }
+        if (nextPhaseData?.config.waves) {
+          const newWaves = nextPhaseData.config.waves.map((def) => ({
+            definition: def,
+            spawned: false,
+            enemiesRemaining: def.enemies.reduce((sum, e) => sum + e.count, 0),
+          }));
+          s.waves = newWaves;
+          s.currentWave = 0;
+          s.totalWaves = newWaves.length;
+          s.waveDelay = 120;
+          s.totalEnemies += newWaves.reduce((sum, w) => sum + w.enemiesRemaining, 0);
+          // Clear battlefield
+          s.enemies = [];
+          s.enemyBullets = [];
+          s.playerBullets = [];
+          s.particles = [];
+          s.explosions = [];
+          s.floatingLabels = [];
+          s.boss = null;
+        }
       } else {
         s.screen = GameScreen.LEVEL_COMPLETE;
       }
@@ -725,6 +754,34 @@ function updateBossFight(
         s.phaseCheckpoint = createCheckpoint(s);
         s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
         s.phaseTransitionSubtext = "Preparing next phase...";
+        // Load next phase's waves
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        if (nextPhaseData?.transitionIn) {
+          s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
+          s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
+          s.phaseTransitionTimer = nextPhaseData.transitionIn.duration;
+        }
+        if (nextPhaseData?.config.waves) {
+          const newWaves = nextPhaseData.config.waves.map((def) => ({
+            definition: def,
+            spawned: false,
+            enemiesRemaining: def.enemies.reduce((sum, e) => sum + e.count, 0),
+          }));
+          s.waves = newWaves;
+          s.currentWave = 0;
+          s.totalWaves = newWaves.length;
+          s.waveDelay = 120;
+          s.totalEnemies += newWaves.reduce((sum, w) => sum + w.enemiesRemaining, 0);
+          // Clear battlefield
+          s.enemies = [];
+          s.enemyBullets = [];
+          s.playerBullets = [];
+          s.particles = [];
+          s.explosions = [];
+          s.floatingLabels = [];
+          s.boss = null;
+        }
       } else {
         // Check if this is the final level in the game
         const maxLevels = getWorldLevelCount(s.currentWorld);

@@ -16,6 +16,7 @@ import {
   AudioEvent,
   EnemyType,
   POWER_UP_DURATION,
+  type EnemyClass,
   type GameState,
   type Player,
   type Keys,
@@ -1060,6 +1061,10 @@ function handleCollisions(state: GameState): GameState {
 
         if (newHp <= 0) {
           destroyedEnemies.add(enemy.id);
+          s.pendingBestiaryKills = [
+            ...s.pendingBestiaryKills,
+            { type: enemy.type, classId: enemy.classId },
+          ];
           audioEvents.push(AudioEvent.ENEMY_DESTROY);
 
           // Explosion particles + sprite explosion
@@ -1316,6 +1321,7 @@ function activateBomb(state: GameState): GameState {
 
   // Destroy all non-boss enemies on screen
   const bombExplosions: SpriteExplosion[] = [];
+  const bombKills: Array<{ type: EnemyType; classId: EnemyClass }> = [];
   for (const enemy of enemies) {
     const ecx = enemy.x + enemy.width / 2;
     const ecy = enemy.y + enemy.height / 2;
@@ -1333,6 +1339,7 @@ function activateBomb(state: GameState): GameState {
     comboTimer = COMBO_WINDOW;
     maxCombo = Math.max(maxCombo, combo);
     kills += 1;
+    bombKills.push({ type: enemy.type, classId: enemy.classId });
   }
   enemies = [];
 
@@ -1378,6 +1385,7 @@ function activateBomb(state: GameState): GameState {
     bombCooldown: BOMB_COOLDOWN,
     screenShake: Math.max(state.screenShake, 10),
     audioEvents,
+    pendingBestiaryKills: [...state.pendingBestiaryKills, ...bombKills],
     // Incendiary bombs enhancement: leave 3-second damage zone
     incendiaryTimer: hasEnhancement("incendiary-bombs") ? 180 : (state.incendiaryTimer ?? 0),
   };

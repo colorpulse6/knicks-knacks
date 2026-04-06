@@ -1,5 +1,5 @@
 import type { GameState, GroundState, GroundEntity, Keys, Bullet } from "./types";
-import { GameScreen, AudioEvent, BULLET_SPEED, ENEMY_BULLET_SPEED, PLAYER_INVINCIBLE_FRAMES } from "./types";
+import { GameScreen, AudioEvent, BULLET_SPEED, ENEMY_BULLET_SPEED, PLAYER_INVINCIBLE_FRAMES, CANVAS_WIDTH, GAME_AREA_HEIGHT } from "./types";
 // EnemyType.SCOUT is the PoC category for bestiary tracking (resolved at SaveData level)
 import { applyGravity, resolveHorizontal, JUMP_VELOCITY, GROUND_TILE_SIZE } from "./groundPhysics";
 import { getGoalPosition, getSpawnPosition } from "./groundLevel";
@@ -10,8 +10,6 @@ import { createSpriteExplosion } from "./particles";
 import { hasSkill, getSkillEffect } from "./skillTree";
 
 // ─── Constants ────────────────────────────────────────────────────────
-const CANVAS_WIDTH = 480;
-const GAME_AREA_HEIGHT = 714;
 const PLAYER_MOVE_SPEED = 3;
 const PLAYER_FIRE_RATE = 12;
 const PLAYER_W = 32;
@@ -20,8 +18,11 @@ const BULLET_W = 10;
 const BULLET_H = 6;
 const ENEMY_BULLET_W = 8;
 const ENEMY_BULLET_H = 8;
-const TURRET_FIRE_RATE = 90;
-const JUMPER_JUMP_COOLDOWN = 60;
+const TURRET_FIRE_RATE = 180; // 3 seconds between shots
+const JUMPER_JUMP_COOLDOWN = 90;
+const FLYER_BOB_SPEED = 0.04;
+const FLYER_BOB_AMP = 20;
+const FLYER_MOVE_SPEED = 1.5;
 const ENEMY_BULLET_DAMAGE = 1;
 const PLAYER_BULLET_DAMAGE = 1;
 const GOAL_OVERLAP_W = 24;
@@ -209,10 +210,13 @@ function updateEnemyAI(gs: GameState, ground: GroundState): void {
         // Face player
         enemy.facingRight = p.x > enemy.x;
 
+        // Only shoot when within screen range (~500px)
+        const distToPlayer = Math.abs((enemy.x + enemy.width / 2) - (p.x + PLAYER_W / 2));
+
         if (enemy.fireTimer > 0) {
           enemy.fireTimer--;
-        } else {
-          // Fire toward player
+        } else if (distToPlayer < CANVAS_WIDTH + 50) {
+          // Fire toward player (only when on/near screen)
           const cx = enemy.x + enemy.width / 2;
           const cy = enemy.y + enemy.height / 2;
           const dx = (p.x + PLAYER_W / 2) - cx;
@@ -267,6 +271,26 @@ function updateEnemyAI(gs: GameState, ground: GroundState): void {
         if (enemy.fireTimer > 0) {
           enemy.fireTimer--;
         }
+        break;
+      }
+
+      // ── Flyer: bobs in air, drifts toward player ──────────────────
+      case "flyer": {
+        // No gravity — flies
+        const dirToPlayer = p.x + PLAYER_W / 2 > enemy.x + enemy.width / 2 ? 1 : -1;
+        enemy.facingRight = dirToPlayer > 0;
+
+        // Drift toward player horizontally
+        enemy.x += dirToPlayer * FLYER_MOVE_SPEED;
+
+        // Sine-wave vertical bobbing (use fireTimer as frame counter)
+        enemy.fireTimer += 1;
+        enemy.vy = Math.cos(enemy.fireTimer * FLYER_BOB_SPEED) * FLYER_BOB_AMP * 0.05;
+        enemy.y += enemy.vy;
+
+        // Clamp to stay in game area
+        enemy.y = Math.max(32, Math.min(enemy.y, GAME_AREA_HEIGHT - 64));
+
         break;
       }
     }

@@ -239,6 +239,7 @@ export const SPRITES = {
   GROUND_ENEMY_TURRET: "/sprites/ground/enemy-turret.png",
   GROUND_ENEMY_PATROL: "/sprites/ground/enemy-patrol.png",
   GROUND_ENEMY_JUMPER: "/sprites/ground/enemy-jumper.png",
+  GROUND_ENEMY_FLYER: "/sprites/ground/enemy-flyer.png",
   GROUND_TILES: "/sprites/ground/tiles.png",
   GROUND_BG_FAR: "/sprites/ground/bg-surface-far.png",
   GROUND_BG_MID: "/sprites/ground/bg-surface-mid.png",

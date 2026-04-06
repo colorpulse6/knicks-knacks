@@ -731,7 +731,7 @@ export interface GroundEntity {
   vy: number;
   hp: number;
   maxHp: number;
-  type: "patrol" | "turret" | "jumper";
+  type: "patrol" | "turret" | "jumper" | "flyer";
   onGround: boolean;
   facingRight: boolean;
   fireTimer: number;

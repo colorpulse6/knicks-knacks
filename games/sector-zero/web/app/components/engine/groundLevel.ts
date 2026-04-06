@@ -84,11 +84,23 @@ const TEST_GROUND_ENEMIES: Omit<GroundEntity, "id">[] = [
   enemyOnRow(52, 21, "jumper", 3, "bio-organic", 2),
   enemyOnRow(56, 15, "turret", 3, "heavy-mech"),
 
+  // Flyers — airborne across the level (placed at various heights)
+  { x: 18 * T, y: 12 * T, width: 28, height: 28, vx: 0, vy: 0, hp: 1, maxHp: 1,
+    type: "flyer", onGround: false, facingRight: false, fireTimer: 0, classId: "tech-drone" },
+  { x: 38 * T, y: 10 * T, width: 28, height: 28, vx: 0, vy: 0, hp: 2, maxHp: 2,
+    type: "flyer", onGround: false, facingRight: false, fireTimer: 30, classId: "tech-drone" },
+  { x: 55 * T, y: 8 * T, width: 28, height: 28, vx: 0, vy: 0, hp: 2, maxHp: 2,
+    type: "flyer", onGround: false, facingRight: false, fireTimer: 60, classId: "tech-drone" },
+
   // Section 4: Ascent (cols 60-80) — vertical climb to goal
   enemyOnRow(62, 21, "patrol", 2, "swarm", 1),
   enemyOnRow(66, 16, "turret", 3, "armored"),  // on solid at row 16
   enemyOnRow(70, 13, "turret", 4, "heavy-mech"),  // on platform
   enemyOnRow(74, 11, "jumper", 3, "bio-organic", 2),  // near goal
+
+  // Final flyer guarding the goal
+  { x: 72 * T, y: 6 * T, width: 28, height: 28, vx: 0, vy: 0, hp: 3, maxHp: 3,
+    type: "flyer", onGround: false, facingRight: false, fireTimer: 0, classId: "tech-drone" },
 ];
 
 let groundEntityId = 0;

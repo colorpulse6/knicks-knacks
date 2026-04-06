@@ -136,6 +136,7 @@ function drawGroundEnemies(
   const turretSheet = getSprite(SPRITES.GROUND_ENEMY_TURRET);
   const patrolSheet = getSprite(SPRITES.GROUND_ENEMY_PATROL);
   const jumperSheet = getSprite(SPRITES.GROUND_ENEMY_JUMPER);
+  const flyerSheet = getSprite(SPRITES.GROUND_ENEMY_FLYER);
 
   for (const e of enemies) {
     const sx = e.x - cameraX;
@@ -163,6 +164,10 @@ function drawGroundEnemies(
       sheet = jumperSheet;
       totalFrames = 3;
       frameIdx = e.onGround ? 0 : 1; // Crouch on ground, leap in air
+    } else if (e.type === "flyer" && flyerSheet) {
+      sheet = flyerSheet;
+      totalFrames = 2;
+      frameIdx = Math.floor(frameCount / 8) % 2; // Wing flap
     }
 
     if (sheet) {

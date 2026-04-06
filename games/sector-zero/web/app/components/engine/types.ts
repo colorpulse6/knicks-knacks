@@ -505,11 +505,14 @@ export interface GameState {
   allocatedSkills: SkillNodeId[];
   // Multi-phase tracking
   currentPhase: number;
+  currentMode: GameMode;
   totalPhases: number;
   phaseCheckpoint: CheckpointState | null;
   phaseTransitionTimer: number;
   phaseTransitionCard: string;
   phaseTransitionSubtext: string;
+  /** Ground run-and-gun mode state (only populated when currentMode === "ground-run") */
+  groundState?: GroundState;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -704,6 +707,45 @@ export interface CheckpointState {
   deaths: number;
   maxCombo: number;
   activePowerUps: ActivePowerUp[];
+}
+
+// ─── Ground Run-and-Gun ─────────────────────────────────────────────
+
+export type TileType = "empty" | "solid" | "platform" | "spawn" | "goal";
+
+export interface TileMap {
+  width: number;
+  height: number;
+  tileSize: number;
+  tiles: TileType[][];
+}
+
+export interface GroundEntity {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vx: number;
+  vy: number;
+  hp: number;
+  maxHp: number;
+  type: "patrol" | "turret" | "jumper";
+  onGround: boolean;
+  facingRight: boolean;
+  fireTimer: number;
+  classId: EnemyClass;
+}
+
+export interface GroundState {
+  tileMap: TileMap;
+  cameraX: number;
+  groundEnemies: GroundEntity[];
+  groundBullets: Bullet[];
+  playerOnGround: boolean;
+  playerVY: number;
+  playerFacingRight: boolean;
+  goalReached: boolean;
 }
 
 // ─── Pilot Leveling ─────────────────────────────────────────────────

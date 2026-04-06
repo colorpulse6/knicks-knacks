@@ -6,6 +6,7 @@ import {
   type PlanetId,
   type SaveData,
   type ShipUpgrades,
+  type WeaponType,
 } from "./types";
 import { unlockCodexEntries } from "./codex";
 export type { SaveData };
@@ -30,6 +31,8 @@ const defaultSave: SaveData = {
   consumableInventory: {},
   equippedConsumables: [],
   unlockedEnhancements: [],
+  bestiary: {},
+  equippedWeaponType: "kinetic",
 };
 
 /** Migrate old saves that lack new fields */
@@ -53,6 +56,8 @@ function migrateSave(raw: Record<string, unknown>): SaveData {
     consumableInventory: (raw.consumableInventory as Partial<Record<ConsumableId, number>>) ?? {},
     equippedConsumables: (raw.equippedConsumables as ConsumableId[]) ?? [],
     unlockedEnhancements: (raw.unlockedEnhancements as EnhancementId[]) ?? [],
+    bestiary: (raw.bestiary as SaveData["bestiary"]) ?? {},
+    equippedWeaponType: (raw.equippedWeaponType as WeaponType | undefined) ?? "kinetic",
   };
 }
 

@@ -145,7 +145,7 @@ export function createPlayer(
     hp: maxHp,
     maxHp,
     speed: PLAYER_SPEED + upgrades.engineBoost * 0.5,
-    weaponLevel: 1 + upgrades.weaponCore,
+    weaponLevel: Math.min(5, 1 + upgrades.weaponCore),
     invincibleTimer: 0,
     fireTimer: 0,
     energy: 100,

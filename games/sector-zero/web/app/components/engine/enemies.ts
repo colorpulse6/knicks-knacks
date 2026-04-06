@@ -273,6 +273,13 @@ export function updateEnemy(enemy: Enemy, player: Player): Enemy {
   updated.x += updated.vx;
   updated.y += updated.vy;
 
+  if (updated.lastHitTimer > 0) {
+    updated.lastHitTimer -= 1;
+    if (updated.lastHitTimer === 0) {
+      updated.lastHitAffinity = undefined;
+    }
+  }
+
   return updated;
 }
 
@@ -358,24 +365,34 @@ export function drawEnemies(
     const spritePath = ENEMY_SPRITE_MAP[enemy.type];
     const sprite = spritePath ? getSprite(spritePath) : null;
 
+    const pad = 4;
+    const dx = enemy.x - pad;
+    const dy = enemy.y - pad;
+    const dw = enemy.width + pad * 2;
+    const dh = enemy.height + pad * 2;
+
     if (sprite) {
-      // Draw the sprite scaled to enemy size
-      // Add some padding so the sprite isn't clipped at exact bounds
-      const pad = 4;
-      ctx.drawImage(
-        sprite,
-        enemy.x - pad,
-        enemy.y - pad,
-        enemy.width + pad * 2,
-        enemy.height + pad * 2
-      );
+      ctx.drawImage(sprite, dx, dy, dw, dh);
     } else {
-      // Fallback colored rectangle
       ctx.fillStyle = "#aa44ff";
       ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
     }
 
-    // HP bar for enemies with > 1 max hp
+    // Class tint overlay (subtle multiply blend)
+    const classProfile = ENEMY_CLASS_PROFILES[enemy.classId];
+    if (classProfile) {
+      const baseAlpha = enemy.cloaked ? 0.15 : 1;
+      ctx.globalCompositeOperation = "multiply";
+      ctx.globalAlpha = baseAlpha * 0.35;
+      ctx.fillStyle = classProfile.tint;
+      ctx.fillRect(dx, dy, dw, dh);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = baseAlpha;
+    }
+
+    ctx.restore();
+
+    // HP bar
     if (enemy.maxHp > 1 && enemy.hp < enemy.maxHp) {
       const barW = enemy.width;
       const barH = 3;
@@ -387,7 +404,21 @@ export function drawEnemies(
       ctx.fillRect(barX, barY, barW * (enemy.hp / enemy.maxHp), barH);
     }
 
-    ctx.restore();
+    // Affinity indicator (arrow above enemy after hit)
+    if (enemy.lastHitAffinity && enemy.lastHitTimer > 0 && enemy.lastHitAffinity !== "neutral") {
+      const arrow = enemy.lastHitAffinity === "effective" ? "\u2B06" : "\u2B07";
+      const color = enemy.lastHitAffinity === "effective" ? "#ffdd44" : "#888899";
+      const alpha = Math.min(1, enemy.lastHitTimer / 60);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(arrow, enemy.x + enemy.width / 2, enemy.y - 10);
+      ctx.restore();
+    }
+
     ctx.globalAlpha = 1;
   }
 }

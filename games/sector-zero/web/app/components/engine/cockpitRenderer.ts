@@ -1859,27 +1859,36 @@ function drawBestiaryDetail(
     ctx.arc(spriteCx, spriteCy + bob, spriteSize * 0.7, -glowAngle, -glowAngle + Math.PI);
     ctx.stroke();
 
-    // Enemy sprite
+    // Enemy sprite with turntable rotation
+    const rotAngle = state.animTimer * 0.015;
+    const scaleX = Math.cos(rotAngle);
+    const absScale = Math.abs(scaleX);
+    ctx.save();
+    ctx.translate(spriteCx, spriteCy + bob);
+    ctx.scale(scaleX, 1);
+
+    // Sprite
     ctx.drawImage(
       sprite,
-      spriteCx - spriteSize / 2,
-      spriteCy - spriteSize / 2 + bob,
+      -spriteSize / 2,
+      -spriteSize / 2,
       spriteSize,
       spriteSize
     );
 
     // Class tint overlay on the sprite
     ctx.globalCompositeOperation = "multiply";
-    ctx.globalAlpha = 0.25;
+    ctx.globalAlpha = 0.25 * absScale;
     ctx.fillStyle = profile.tint;
     ctx.fillRect(
-      spriteCx - spriteSize / 2,
-      spriteCy - spriteSize / 2 + bob,
+      -spriteSize / 2,
+      -spriteSize / 2,
       spriteSize,
       spriteSize
     );
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1;
+    ctx.restore();
     ctx.restore();
   } else {
     // Fallback colored circle

@@ -218,6 +218,8 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     dialogTriggers: getDialogTriggers(world, level),
     xp: 0,
     hpWarningTriggered: false,
+    pilotLevel: 1,
+    allocatedSkills: [],
   };
 }
 
@@ -292,6 +294,8 @@ export function createPlanetGameState(
     dialogTriggers: getPlanetDialogTriggers(planetId),
     xp: 0,
     hpWarningTriggered: false,
+    pilotLevel: 1,
+    allocatedSkills: [],
     planetId,
     objective,
     escort,

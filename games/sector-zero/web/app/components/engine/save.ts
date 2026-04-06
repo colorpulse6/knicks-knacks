@@ -33,6 +33,9 @@ const defaultSave: SaveData = {
   unlockedEnhancements: [],
   bestiary: {},
   equippedWeaponType: "kinetic",
+  pilotLevel: 1,
+  skillPoints: 0,
+  allocatedSkills: [],
 };
 
 /** Migrate old saves that lack new fields */
@@ -58,6 +61,9 @@ function migrateSave(raw: Record<string, unknown>): SaveData {
     unlockedEnhancements: (raw.unlockedEnhancements as EnhancementId[]) ?? [],
     bestiary: (raw.bestiary as SaveData["bestiary"]) ?? {},
     equippedWeaponType: (raw.equippedWeaponType as WeaponType | undefined) ?? "kinetic",
+    pilotLevel: (raw.pilotLevel as number) ?? 1,
+    skillPoints: (raw.skillPoints as number) ?? 0,
+    allocatedSkills: (raw.allocatedSkills as SaveData["allocatedSkills"]) ?? [],
   };
 }
 

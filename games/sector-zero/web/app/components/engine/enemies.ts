@@ -4,6 +4,7 @@ import {
   ENEMY_BULLET_SPEED,
   ENEMY_DEFS,
   EnemyType,
+  type EnemyClass,
   type Enemy,
   type EnemyBehavior,
   type Bullet,
@@ -12,6 +13,7 @@ import {
   type FormationType,
 } from "./types";
 import { getSprite, SPRITES } from "./sprites";
+import { DEFAULT_ENEMY_CLASS, ENEMY_CLASS_PROFILES } from "./enemyClasses";
 
 let enemyIdCounter = 0;
 let bulletIdCounter = 10000; // offset from player bullets
@@ -44,12 +46,22 @@ export function createEnemy(
   x: number,
   y: number,
   behavior?: EnemyBehavior,
+  classOverride?: EnemyClass,
 ): Enemy {
   const def = ENEMY_DEFS[type];
   const defaultBehavior = getDefaultBehavior(type);
-  const scaledHp = Math.ceil(def.hp * currentDifficultyScale.hp);
-  const scaledSpeed = def.speed * currentDifficultyScale.speed;
-  const scaledFireRate = Math.max(10, Math.floor(def.fireRate * currentDifficultyScale.fireRate));
+
+  const classId = classOverride ?? DEFAULT_ENEMY_CLASS[type];
+  const classProfile = ENEMY_CLASS_PROFILES[classId];
+
+  const scaledHp = Math.max(1, Math.ceil(
+    def.hp * currentDifficultyScale.hp * classProfile.hpMult
+  ));
+  const scaledSpeed = def.speed * currentDifficultyScale.speed * classProfile.speedMult;
+  const scaledFireRate = Math.max(10, Math.floor(
+    def.fireRate * currentDifficultyScale.fireRate * classProfile.fireRateMult
+  ));
+  const scaledScore = Math.floor(def.score * classProfile.scoreMult);
 
   return {
     id: ++enemyIdCounter,
@@ -63,13 +75,16 @@ export function createEnemy(
     speed: scaledSpeed,
     vx: 0,
     vy: scaledSpeed,
-    score: def.score,
+    score: scaledScore,
     fireTimer: Math.floor(Math.random() * scaledFireRate),
     fireRate: scaledFireRate,
     shoots: def.shoots,
     behavior: behavior ?? defaultBehavior,
     behaviorTimer: 0,
     cloaked: type === EnemyType.CLOAKER || type === EnemyType.ECHO,
+    classId,
+    lastHitAffinity: undefined,
+    lastHitTimer: 0,
   };
 }
 

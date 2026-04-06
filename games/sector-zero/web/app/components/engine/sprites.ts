@@ -227,8 +227,15 @@ export const SPRITES = {
   DEFEND_STRUCTURE: "/sprites/effects/defend-structure.png",
   COLLECTIBLE_ORB: "/sprites/effects/collectible-orb.png",
 
-  // Ground Run-and-Gun
-  GROUND_PLAYER: "/sprites/ground/player-infantry.png",
+  // Ground Run-and-Gun — Player (individual frames)
+  GROUND_PLAYER_IDLE: "/sprites/ground/player-idle.png",
+  GROUND_PLAYER_RUN_1: "/sprites/ground/player-run-1.png",
+  GROUND_PLAYER_RUN_2: "/sprites/ground/player-run-2.png",
+  GROUND_PLAYER_RUN_3: "/sprites/ground/player-run-3.png",
+  GROUND_PLAYER_RUN_4: "/sprites/ground/player-run-4.png",
+  GROUND_PLAYER_JUMP: "/sprites/ground/player-jump.png",
+  GROUND_PLAYER_SHOOT: "/sprites/ground/player-shoot.png",
+  GROUND_PLAYER_HURT: "/sprites/ground/player-hurt.png",
   GROUND_ENEMY_TURRET: "/sprites/ground/enemy-turret.png",
   GROUND_ENEMY_PATROL: "/sprites/ground/enemy-patrol.png",
   GROUND_ENEMY_JUMPER: "/sprites/ground/enemy-jumper.png",

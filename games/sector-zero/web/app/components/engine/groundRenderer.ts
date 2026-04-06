@@ -244,77 +244,50 @@ function drawGroundPlayer(
   const sx = player.x - gs.cameraX;
   const sy = player.y;
 
-  const sheet = getSprite(SPRITES.GROUND_PLAYER);
+  // Pick the right sprite based on animation state
+  const runFrames = [
+    SPRITES.GROUND_PLAYER_RUN_1,
+    SPRITES.GROUND_PLAYER_RUN_2,
+    SPRITES.GROUND_PLAYER_RUN_3,
+    SPRITES.GROUND_PLAYER_RUN_4,
+  ];
 
-  if (sheet) {
-    // 4 cols × 2 rows = 8 frames
-    // Row 1 (top): run cycle (4 frames)
-    // Row 2 (bottom): idle, jump, shoot, hurt
-    const cols = 4;
-    const rows = 2;
-    const frameW = sheet.width / cols;
-    const frameH = sheet.height / rows;
+  let spritePath: string;
+  const isMoving = player.bankDir !== 0;
 
-    let frameCol = 0;
-    let frameRow = 0;
+  if (player.invincibleTimer > 0 && player.hp <= 0) {
+    spritePath = SPRITES.GROUND_PLAYER_HURT;
+  } else if (!gs.playerOnGround) {
+    spritePath = SPRITES.GROUND_PLAYER_JUMP;
+  } else if (player.fireTimer > 8) {
+    spritePath = SPRITES.GROUND_PLAYER_SHOOT;
+  } else if (isMoving) {
+    spritePath = runFrames[Math.floor(state.frameCount / 10) % 4];
+  } else {
+    spritePath = SPRITES.GROUND_PLAYER_IDLE;
+  }
 
-    // Detect movement from playerFacingRight changes or velocity
-    // bankDir is set by groundEngine: -1=left, 1=right, 0=idle
-    const isMoving = player.bankDir !== 0;
+  const sprite = getSprite(spritePath);
 
-    if (!gs.playerOnGround) {
-      // Jumping / falling → row 1, col 1 (jump frame)
-      frameRow = 1;
-      frameCol = 1;
-    } else if (player.fireTimer > 8) {
-      // Just fired → row 1, col 2 (shoot frame)
-      frameRow = 1;
-      frameCol = 2;
-    } else if (isMoving) {
-      // Running → row 0, cycle through 4 frames (slower: /12 instead of /8)
-      frameRow = 0;
-      frameCol = Math.floor(state.frameCount / 12) % 4;
-    } else {
-      // Idle → row 1, col 0
-      frameRow = 1;
-      frameCol = 0;
-    }
+  // Draw size — anchor feet to ground
+  const drawW = 56;
+  const drawH = 64;
+  const drawX = sx + (player.width - drawW) / 2;
+  const drawY = sy + player.height - drawH;
 
-    // Each frame is 384×512 in the 1536×1024 sheet (4 cols × 2 rows)
-    // Characters sit in the center ~60% of each frame
-    const cropX = frameW * 0.20;
-    const cropY = frameH * 0.10;
-    const cropW = frameW * 0.60;
-    const cropH = frameH * 0.80;
-
-    // Draw size and position — feet should align with player.y + player.height
-    const drawW = 56;
-    const drawH = 64;
-    const drawX = sx + (player.width - drawW) / 2;
-    const drawY = sy + player.height - drawH;
-
+  if (sprite) {
     ctx.save();
-    // Flip if facing left
     if (!gs.playerFacingRight) {
       ctx.translate(sx + player.width / 2, 0);
       ctx.scale(-1, 1);
       ctx.translate(-(sx + player.width / 2), 0);
     }
-    ctx.drawImage(
-      sheet,
-      frameCol * frameW + cropX, frameRow * frameH + cropY, cropW, cropH,
-      drawX, drawY, drawW, drawH
-    );
+    ctx.drawImage(sprite, drawX, drawY, drawW, drawH);
     ctx.restore();
   } else {
     // Fallback rectangle
     ctx.fillStyle = "#3366ff";
     ctx.fillRect(sx, sy, player.width, player.height);
-    const eyeX = gs.playerFacingRight ? sx + player.width - 8 : sx + 6;
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(eyeX, sy + player.height * 0.3, 4, 0, Math.PI * 2);
-    ctx.fill();
   }
 }
 

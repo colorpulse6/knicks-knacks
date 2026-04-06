@@ -11,6 +11,8 @@ import { getBestiaryList, getDiscoveredCount, getTotalEnemyCount, ENEMY_LORE } f
 import { ENEMY_CLASS_PROFILES } from "./enemyClasses";
 import { WEAPON_TYPE_META } from "./weaponTypes";
 import { ENEMY_SPRITE_MAP } from "./enemies";
+import { xpForLevel, xpProgress, getMilestones, MAX_PILOT_LEVEL, bonusHp, creditBonus, materialDropBonus, skillPointsAtLevel } from "./pilotLevel";
+import { getTreeNodes, canAllocate } from "./skillTree";
 
 // ─── Main Cockpit Drawing ───────────────────────────────────────────
 
@@ -33,6 +35,8 @@ export function drawCockpit(
     drawCodexScreen(ctx, state, save);
   } else if (state.screen === "bestiary") {
     drawBestiaryScreen(ctx, state, save);
+  } else if (state.screen === "pilot") {
+    drawPilotScreen(ctx, state, save);
   }
 
   // Screen transition overlay (fade from black)
@@ -152,9 +156,14 @@ function drawCockpitHub(
   ctx.fillText("UEC VANGUARD — BRIDGE", CANVAS_WIDTH / 2, 220);
   ctx.shadowBlur = 0;
 
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(`PILOT Lv ${save.pilotLevel}`, CANVAS_WIDTH / 2, 238);
+
   ctx.fillStyle = "#556666";
   ctx.font = "10px monospace";
-  ctx.fillText("SELECT STATION", CANVAS_WIDTH / 2, 244);
+  ctx.fillText("SELECT STATION", CANVAS_WIDTH / 2, 252);
 
   // Hotspots
   for (let i = 0; i < COCKPIT_HOTSPOTS.length; i++) {

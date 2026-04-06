@@ -13,8 +13,8 @@ export function drawPhaseTransition(
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   const elapsed = totalDuration - timer;
-  const fadeIn = Math.min(1, elapsed / 30);
-  const fadeOut = Math.min(1, timer / 30);
+  const fadeIn = Math.min(1, elapsed / 15);  // faster fade in (0.25s)
+  const fadeOut = Math.min(1, timer / 15);
   const alpha = Math.min(fadeIn, fadeOut);
 
   ctx.globalAlpha = alpha;

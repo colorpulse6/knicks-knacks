@@ -465,7 +465,10 @@ export default function Game() {
           } else if (gameState?.screen === GameScreen.BRIEFING) {
             setGameState((prev) => prev ? { ...prev, briefingTimer: 0 } : null);
           } else if (gameState?.screen === GameScreen.PHASE_TRANSITION) {
-            setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
+            // Only allow skip after 1s minimum
+            if (gameState.phaseTransitionTimer < 120) {
+              setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
+            }
           } else if (gameState?.screen === GameScreen.GAME_OVER) {
             returnToCockpit();
           } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
@@ -624,7 +627,9 @@ export default function Game() {
       } else if (gameState?.screen === GameScreen.BRIEFING) {
         setGameState((prev) => prev ? { ...prev, briefingTimer: 0 } : null);
       } else if (gameState?.screen === GameScreen.PHASE_TRANSITION) {
-        setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
+        if (gameState.phaseTransitionTimer < 120) {
+          setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
+        }
       } else if (gameState?.screen === GameScreen.GAME_OVER) {
         returnToCockpit();
       } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {

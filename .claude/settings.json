@@ -21,7 +21,11 @@
       "Bash(yarn sector-zero:build:*)",
       "Bash(sips:*)",
       "Bash(grep:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(git stash:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(yarn lint:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

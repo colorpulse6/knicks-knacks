@@ -155,7 +155,20 @@ After the last existing material definition, add:
   },
 ```
 
-Note: `sourcePlanet: undefined` because rare/legendary materials come from multi-phase missions, not a specific planet. If the MaterialDef interface requires `sourcePlanet` to be a PlanetId, check and adjust — it may need to be optional.
+**IMPORTANT:** `MaterialDef.sourcePlanet` is typed as required `PlanetId` (not optional). Before adding the new entries, make the field optional in the `MaterialDef` interface in planets.ts:
+
+```typescript
+export interface MaterialDef {
+  id: MaterialId;
+  name: string;
+  icon: string;
+  color: string;
+  sourcePlanet?: PlanetId;  // Changed from required to optional
+  description: string;
+}
+```
+
+This is safe — existing entries all have `sourcePlanet` set. The new rare/legendary materials omit it because they come from multi-phase missions, not a specific planet.
 
 - [ ] **Step 3: Verify build**
 
@@ -199,8 +212,8 @@ For each upgrade, extend `maxLevel`, `costs`, `effects`, `xpRequired`, `material
     "+1 Max HP (4 total)",
     "+2 Max HP (5 total)",
     "+3 Max HP (6 total)",
+    "+3 Max HP + regen between waves",
     "+4 Max HP (7 total)",
-    "+5 Max HP (8 total)",
   ],
   icon: "\u2666",
   color: "#44aaff",
@@ -243,8 +256,8 @@ For each upgrade, extend `maxLevel`, `costs`, `effects`, `xpRequired`, `material
     "Start at Weapon Lv 2",
     "Start at Weapon Lv 3",
     "Start at Weapon Lv 4",
+    "Start at Weapon Lv 4",
     "Start at Weapon Lv 5",
-    "Start at Weapon Lv 5 + bonus damage",
   ],
   icon: "\u2726",
   color: "#ff4444",
@@ -287,8 +300,8 @@ For each upgrade, extend `maxLevel`, `costs`, `effects`, `xpRequired`, `material
     "-1 Frame Fire Delay",
     "-2 Frame Fire Delay",
     "-3 Frame Fire Delay",
+    "-3 Frame Fire Delay + tracking",
     "-4 Frame Fire Delay",
-    "-5 Frame Fire Delay",
   ],
   icon: "\u2694",
   color: "#44ff88",
@@ -460,13 +473,9 @@ import { getMultiPhaseLevelData } from "./engine/levels";
 After `newSave = recalcPilotLevel(newSave);` and before `saveSave(newSave)`:
 
 ```typescript
-// Award multi-phase completion rewards (first time only)
+// Award multi-phase completion rewards (deduplicated per material — each rare material can only be obtained once)
 const multiPhaseData = getMultiPhaseLevelData(gameState.currentWorld, gameState.currentLevel);
 if (multiPhaseData?.completionRewards && gameState.currentPhase >= gameState.totalPhases - 1) {
-  const levelKey = `${gameState.currentWorld}-${gameState.currentLevel}`;
-  // Check if this is first completion with all phases
-  const wasCompleted = newSave.levels[levelKey]?.completed;
-  // Award materials not already owned (can only get each once from this source)
   for (const matId of multiPhaseData.completionRewards) {
     if (!newSave.materials.includes(matId)) {
       newSave = { ...newSave, materials: [...newSave.materials, matId] };
@@ -489,6 +498,8 @@ In Game.tsx, find the LEVEL_COMPLETE overlay. After the credits display, add a m
 ```bash
 cd games/sector-zero/web && grep -n "CREDITS\|completionRewards\|material.*reward" app/components/Game.tsx | head -10
 ```
+
+**Timing note:** The overlay renders while `screen === LEVEL_COMPLETE`, BEFORE the player clicks "NEXT LEVEL" (which triggers `nextLevel`). So `saveData` still reflects pre-completion state. The `!saveData.materials.includes(m)` check correctly identifies new materials because they haven't been awarded yet.
 
 After the credits `<p>` tag, add:
 
@@ -522,7 +533,7 @@ cd games/sector-zero/web && yarn build 2>&1 | tail -15
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A
+git add games/sector-zero/web/app/components/engine/types.ts games/sector-zero/web/app/components/engine/levels.ts games/sector-zero/web/app/components/Game.tsx
 git commit -m "feat(sector-zero): award rare materials from multi-phase level completions"
 ```
 

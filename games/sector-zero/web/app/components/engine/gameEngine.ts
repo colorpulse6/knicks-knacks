@@ -239,6 +239,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     pilotLevel,
     allocatedSkills,
     currentPhase: 0,
+    currentMode: "shooter",
     totalPhases: multiPhaseData?.phases.length ?? 1,
     phaseCheckpoint: null,
     phaseTransitionTimer: 0,
@@ -323,6 +324,7 @@ export function createPlanetGameState(
     pilotLevel,
     allocatedSkills,
     currentPhase: 0,
+    currentMode: "shooter",
     totalPhases: 1,
     phaseCheckpoint: null,
     phaseTransitionTimer: 0,
@@ -537,12 +539,13 @@ export function updateGame(
         s.screen = GameScreen.PHASE_TRANSITION;
         s.phaseTransitionTimer = 180;
         s.currentPhase += 1;
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        const nextMode = nextPhaseData?.config.mode ?? "shooter";
+        s.currentMode = nextMode;
         s.phaseCheckpoint = createCheckpoint(s);
         s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
         s.phaseTransitionSubtext = "Preparing next phase...";
-        // Load next phase's waves
-        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
-        const nextPhaseData = multiPhase?.phases[s.currentPhase];
         if (nextPhaseData?.transitionIn) {
           s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
           s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
@@ -751,12 +754,13 @@ function updateBossFight(
         s.screen = GameScreen.PHASE_TRANSITION;
         s.phaseTransitionTimer = 180;
         s.currentPhase += 1;
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        const nextMode = nextPhaseData?.config.mode ?? "shooter";
+        s.currentMode = nextMode;
         s.phaseCheckpoint = createCheckpoint(s);
         s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
         s.phaseTransitionSubtext = "Preparing next phase...";
-        // Load next phase's waves
-        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
-        const nextPhaseData = multiPhase?.phases[s.currentPhase];
         if (nextPhaseData?.transitionIn) {
           s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
           s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";

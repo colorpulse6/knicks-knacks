@@ -15,6 +15,7 @@ export enum GameScreen {
   PAUSED = "PAUSED",
   BOSS_INTRO = "BOSS_INTRO",
   BOSS_FIGHT = "BOSS_FIGHT",
+  PHASE_TRANSITION = "PHASE_TRANSITION",
   LEVEL_COMPLETE = "LEVEL_COMPLETE",
   GAME_OVER = "GAME_OVER",
   ENDING = "ENDING",
@@ -49,6 +50,22 @@ export interface Player {
   bankDir: number;
 }
 
+// ─── Weapon Affinity System ─────────────────────────────────────────
+export type WeaponType = "kinetic" | "energy" | "incendiary" | "cryogenic";
+
+export type AffinityResult = "effective" | "neutral" | "resisted";
+
+// ─── Enemy Classes ──────────────────────────────────────────────────
+export type EnemyClass =
+  | "armored"
+  | "swarm"
+  | "bio-organic"
+  | "tech-drone"
+  | "heavy-mech"
+  | "elemental-fire"
+  | "elemental-ice"
+  | "elemental-cinder";
+
 // ─── Bullets ─────────────────────────────────────────────────────────
 export const BULLET_SPEED = 10;
 export const ENEMY_BULLET_SPEED = 4;
@@ -67,6 +84,7 @@ export interface Bullet {
   isPlayer: boolean;
   piercing: boolean;
   variant?: BulletVariant;
+  weaponType?: WeaponType;
 }
 
 // ─── Enemy Types ─────────────────────────────────────────────────────
@@ -184,6 +202,9 @@ export interface Enemy {
   behavior: EnemyBehavior;
   behaviorTimer: number;
   cloaked: boolean;
+  classId: EnemyClass;
+  lastHitAffinity?: AffinityResult;
+  lastHitTimer: number;
 }
 
 export type EnemyBehavior =
@@ -300,6 +321,18 @@ export interface SpriteExplosion {
   totalFrames: number;
   frameTimer: number;
   frameDelay: number; // ticks per frame
+}
+
+// ─── Floating Labels (damage/affinity indicators) ───────────────────
+export interface FloatingLabel {
+  id: number;
+  x: number;
+  y: number;
+  vy: number;
+  text: string;
+  color: string;
+  life: number;
+  maxLife: number;
 }
 
 // ─── Bosses ──────────────────────────────────────────────────────────
@@ -465,6 +498,18 @@ export interface GameState {
   activePowerUps: ActivePowerUp[];
   particles: Particle[];
   explosions: SpriteExplosion[];
+  floatingLabels: FloatingLabel[];
+  equippedWeaponType: WeaponType;
+  pendingBestiaryKills: Array<{ type: EnemyType; classId: EnemyClass }>;
+  pilotLevel: number;
+  allocatedSkills: SkillNodeId[];
+  // Multi-phase tracking
+  currentPhase: number;
+  totalPhases: number;
+  phaseCheckpoint: CheckpointState | null;
+  phaseTransitionTimer: number;
+  phaseTransitionCard: string;
+  phaseTransitionSubtext: string;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -579,16 +624,13 @@ export interface DefendStructure {
 }
 
 export type MaterialId =
-  | "bio-fiber"
-  | "cryogenic-alloy"
-  | "molten-core"
-  | "ruin-shard"
-  | "abyssal-plating"
-  | "desert-glass"
-  | "phase-crystal"
-  | "genesis-seed"
-  | "neon-circuitry"
-  | "ferro-steel";
+  | "bio-fiber" | "cryogenic-alloy" | "molten-core" | "ruin-shard"
+  | "abyssal-plating" | "desert-glass" | "phase-crystal" | "genesis-seed"
+  | "neon-circuitry" | "ferro-steel"
+  // Rare materials (from multi-phase missions)
+  | "kinetic-core" | "energy-cell" | "ember-shard" | "cryo-essence"
+  // Legendary materials (from boss rare drops + optional phases)
+  | "void-fragment" | "hollow-resonance";
 
 export type ConsumableId =
   | "hull-repair"
@@ -616,6 +658,80 @@ export type PlanetId =
   | "luminos"
   | "bastion";
 
+// ─── Multi-Phase Levels ─────────────────────────────────────────────
+export type GameMode = "shooter" | "ground-run" | "boarding" | "turret" | "base-defense" | "mech-duel";
+
+export interface PhaseConfig {
+  mode: GameMode;
+  waves: WaveDefinition[];
+  isBoss?: boolean;
+  briefingText?: string;
+  objectiveType?: ObjectiveType;
+  objectiveTarget?: number;
+}
+
+export interface TransitionSequence {
+  dialogLine?: string;
+  dialogSpeaker?: string;
+  cardText: string;
+  cardSubtext?: string;
+  duration: number;
+}
+
+export interface PhaseDefinition {
+  config: PhaseConfig;
+  transitionIn?: TransitionSequence;
+}
+
+export interface MultiPhaseLevelData {
+  world: number;
+  level: number;
+  name: string;
+  briefingText: string;
+  worldIntroText?: string;
+  phases: PhaseDefinition[];
+  /** Materials awarded on completing ALL phases. Only awarded once per material. */
+  completionRewards?: MaterialId[];
+}
+
+export interface CheckpointState {
+  hp: number;
+  maxHp: number;
+  lives: number;
+  weaponLevel: number;
+  score: number;
+  kills: number;
+  deaths: number;
+  maxCombo: number;
+  activePowerUps: ActivePowerUp[];
+}
+
+// ─── Pilot Leveling ─────────────────────────────────────────────────
+export type SkillTreeId = "combat" | "engineering" | "piloting";
+
+export type SkillNodeId =
+  | "sharpshooter"
+  | "overcharge"
+  | "berserker"
+  | "glass-cannon"
+  | "adrenaline"
+  | "signature-weapon";
+
+export interface PilotMilestone {
+  level: number;
+  label: string;
+  unlocked: boolean;
+}
+
+// ─── Bestiary ───────────────────────────────────────────────────────
+export interface BestiaryEntry {
+  enemyType: EnemyType;
+  classId: EnemyClass;
+  killCount: number;
+  firstSeenPlanet?: PlanetId;
+  firstSeenWorld?: number;
+}
+
 // ─── Save Data ───────────────────────────────────────────────────────
 export interface SaveData {
   currentWorld: number;
@@ -637,4 +753,9 @@ export interface SaveData {
   consumableInventory: Partial<Record<ConsumableId, number>>;
   equippedConsumables: ConsumableId[];
   unlockedEnhancements: EnhancementId[];
+  bestiary: Partial<Record<EnemyType, BestiaryEntry>>;
+  equippedWeaponType: WeaponType;
+  pilotLevel: number;
+  skillPoints: number;
+  allocatedSkills: SkillNodeId[];
 }

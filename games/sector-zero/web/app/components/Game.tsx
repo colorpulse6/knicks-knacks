@@ -18,12 +18,13 @@ import {
   loadSave,
   saveSave,
   updateLevelResult,
+  recalcPilotLevel,
   calculateCreditsEarned,
   getPlayerName,
   updateSectorZeroProfile,
   type SaveData,
 } from "./engine/save";
-import { WORLD_NAMES, getWorldLevelCount } from "./engine/levels";
+import { WORLD_NAMES, getWorldLevelCount, getMultiPhaseLevelData } from "./engine/levels";
 import { preloadAll } from "./engine/sprites";
 import {
   type StarMapState,
@@ -40,6 +41,8 @@ import {
   COCKPIT_HOTSPOTS,
 } from "./engine/cockpit";
 import { checkQuestCompletion, type QuestCheckData } from "./engine/sideQuests";
+import { recordKill } from "./engine/bestiary";
+import { allocateNode } from "./engine/skillTree";
 import { drawCockpit } from "./engine/cockpitRenderer";
 import {
   drawPreChoice, drawChoiceScreen, drawEnding, drawCredits,
@@ -47,6 +50,7 @@ import {
   getCreditsFrameCount,
   type EndingChoice,
 } from "./engine/ending";
+import { restoreCheckpoint } from "./engine/phases";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -193,6 +197,29 @@ export default function Game() {
     if (gameState) {
       updateSectorZeroProfile(gameState.score);
     }
+    // If we have a checkpoint (multi-phase, not phase 1), restart from checkpoint
+    if (gameState?.phaseCheckpoint && gameState.currentPhase > 0) {
+      const restored = restoreCheckpoint(gameState, gameState.phaseCheckpoint);
+      setGameState({
+        ...gameState,
+        ...restored,
+        screen: GameScreen.PLAYING,
+        enemies: [],
+        boss: null,
+        playerBullets: [],
+        enemyBullets: [],
+        particles: [],
+        explosions: [],
+        floatingLabels: [],
+        pendingBestiaryKills: [],
+        currentWave: 0,
+        waveDelay: 120,
+        levelCompleteTimer: 0,
+        screenShake: 0,
+        bombCooldown: 0,
+      } as GameState);
+      return;
+    }
     if (activePlanetId) {
       setGameState(createPlanetGameState(activePlanetId, saveData.upgrades, saveData.unlockedEnhancements));
     } else {
@@ -206,6 +233,17 @@ export default function Game() {
     // Planet mission completion — award rewards and return to cockpit
     if (activePlanetId) {
       let newSave = completePlanet(saveData, activePlanetId);
+      // Flush pending bestiary kills
+      let updatedBestiary = newSave.bestiary;
+      if (gameState?.pendingBestiaryKills?.length) {
+        for (const kill of gameState.pendingBestiaryKills) {
+          updatedBestiary = recordKill(updatedBestiary, kill.type, kill.classId, {
+            world: gameState.currentWorld,
+            planetId: gameState.planetId,
+          });
+        }
+      }
+      newSave = { ...newSave, bestiary: updatedBestiary };
       saveSave(newSave);
       setSaveData(newSave);
       returnToCockpit();
@@ -221,6 +259,18 @@ export default function Game() {
           : 1;
     let newSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
 
+    // Perfect clear bonus: 100% enemies killed
+    const isPerfectClear = gameState.totalEnemies > 0 && gameState.kills >= gameState.totalEnemies;
+    if (isPerfectClear) {
+      newSave = { ...newSave, credits: newSave.credits + 500 };
+    }
+
+    const prevLevel = newSave.pilotLevel;
+    newSave = recalcPilotLevel(newSave);
+    if (newSave.pilotLevel > prevLevel) {
+      console.log(`PILOT LEVEL UP! ${prevLevel} → ${newSave.pilotLevel}`);
+    }
+
     // Check side quest completion
     const questData: QuestCheckData = {
       world: gameState.currentWorld,
@@ -235,26 +285,61 @@ export default function Game() {
     const questResult = checkQuestCompletion(newSave, questData);
     newSave = questResult.newSave;
 
+    // Flush pending bestiary kills
+    let updatedBestiary = newSave.bestiary;
+    if (gameState?.pendingBestiaryKills?.length) {
+      for (const kill of gameState.pendingBestiaryKills) {
+        updatedBestiary = recordKill(updatedBestiary, kill.type, kill.classId, {
+          world: gameState.currentWorld,
+          planetId: gameState.planetId,
+        });
+      }
+    }
+    newSave = { ...newSave, bestiary: updatedBestiary };
+
+    // Award multi-phase completion rewards (deduplicated per material)
+    const multiPhaseData = getMultiPhaseLevelData(gameState.currentWorld, gameState.currentLevel);
+    if (multiPhaseData?.completionRewards && gameState.currentPhase >= gameState.totalPhases - 1) {
+      for (const matId of multiPhaseData.completionRewards) {
+        if (!newSave.materials.includes(matId)) {
+          newSave = { ...newSave, materials: [...newSave.materials, matId] };
+        }
+      }
+    }
+
     saveSave(newSave);
     setSaveData(newSave);
 
     const maxLevels = getWorldLevelCount(gameState.currentWorld);
     const nextLv = gameState.currentLevel + 1;
 
+    // Carry forward state across levels in the same world
+    const carryForward = (newState: GameState) => {
+      setGameState({
+        ...newState,
+        score: gameState.score,
+        lives: gameState.lives,
+        kills: gameState.kills,
+        deaths: gameState.deaths,
+        maxCombo: gameState.maxCombo,
+        devInvincible: gameState.devInvincible,
+        activePowerUps: gameState.activePowerUps,
+        player: { ...newState.player, weaponLevel: gameState.player.weaponLevel },
+      });
+    };
+
     if (nextLv <= maxLevels) {
       // Next level in same world
-      setGameState(createGameState(gameState.currentWorld, nextLv, saveData.upgrades, saveData.unlockedEnhancements));
+      carryForward(createGameState(gameState.currentWorld, nextLv, newSave.upgrades, newSave.unlockedEnhancements, newSave.pilotLevel, newSave.allocatedSkills));
     } else {
       // World complete — try advancing to next world
       let nextWorld = gameState.currentWorld + 1;
-      // Skip worlds with no levels
       while (nextWorld <= 8 && getWorldLevelCount(nextWorld) === 0) {
         nextWorld++;
       }
       if (nextWorld <= 8 && getWorldLevelCount(nextWorld) > 0) {
-        setGameState(createGameState(nextWorld, 1, saveData.upgrades, saveData.unlockedEnhancements));
+        carryForward(createGameState(nextWorld, 1, newSave.upgrades, newSave.unlockedEnhancements, newSave.pilotLevel, newSave.allocatedSkills));
       } else {
-        // All worlds complete — play ending sequence
         startEnding();
       }
     }
@@ -389,6 +474,11 @@ export default function Game() {
             keysRef.current.shoot = true;
           } else if (gameState?.screen === GameScreen.BRIEFING) {
             setGameState((prev) => prev ? { ...prev, briefingTimer: 0 } : null);
+          } else if (gameState?.screen === GameScreen.PHASE_TRANSITION) {
+            // Only allow skip after 1s minimum
+            if (gameState.phaseTransitionTimer < 120) {
+              setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
+            }
           } else if (gameState?.screen === GameScreen.GAME_OVER) {
             returnToCockpit();
           } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
@@ -546,6 +636,10 @@ export default function Game() {
         }
       } else if (gameState?.screen === GameScreen.BRIEFING) {
         setGameState((prev) => prev ? { ...prev, briefingTimer: 0 } : null);
+      } else if (gameState?.screen === GameScreen.PHASE_TRANSITION) {
+        if (gameState.phaseTransitionTimer < 120) {
+          setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
+        }
       } else if (gameState?.screen === GameScreen.GAME_OVER) {
         returnToCockpit();
       } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
@@ -717,6 +811,19 @@ export default function Game() {
         setSaveData(action.save);
       }
 
+      if (action.type === "allocate-skill") {
+        const result = allocateNode(action.nodeId, saveData.allocatedSkills, saveData.skillPoints);
+        if (result) {
+          const newSave = {
+            ...saveData,
+            allocatedSkills: result.allocated,
+            skillPoints: result.pointsRemaining,
+          };
+          saveSave(newSave);
+          setSaveData(newSave);
+        }
+      }
+
       drawCockpit(ctx, newState, action.type === "save-updated" && action.save ? action.save : saveData);
       animationFrameRef.current = requestAnimationFrame(cockpitLoop);
     };
@@ -733,7 +840,7 @@ export default function Game() {
   // Game loop
   useEffect(() => {
     if (!gameState || showStartScreen || showCockpit || showMap) return;
-    const activeScreens = [GameScreen.PLAYING, GameScreen.BOSS_FIGHT, GameScreen.BOSS_INTRO, GameScreen.BRIEFING];
+    const activeScreens = [GameScreen.PLAYING, GameScreen.BOSS_FIGHT, GameScreen.BOSS_INTRO, GameScreen.BRIEFING, GameScreen.PHASE_TRANSITION];
     if (!activeScreens.includes(gameState.screen)) return;
 
     const canvas = canvasRef.current;
@@ -752,30 +859,6 @@ export default function Game() {
       // Play audio events
       for (const event of newState.audioEvents) {
         audioRef.current?.play(event);
-      }
-
-      // Save on level auto-advance (non-boss levels)
-      if (gameState.levelCompleteTimer > 0 && newState.levelCompleteTimer <= 0 && newState.currentLevel !== gameState.currentLevel) {
-        const stars =
-          gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8
-            ? 3
-            : gameState.deaths === 0
-              ? 2
-              : 1;
-        let advSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
-        const advQuestData: QuestCheckData = {
-          world: gameState.currentWorld,
-          level: gameState.currentLevel,
-          kills: gameState.kills,
-          totalEnemies: gameState.totalEnemies,
-          deaths: gameState.deaths,
-          frameCount: gameState.frameCount,
-          playerHp: gameState.player.hp,
-          playerMaxHp: gameState.player.maxHp,
-        };
-        advSave = checkQuestCompletion(advSave, advQuestData).newSave;
-        saveSave(advSave);
-        setSaveData(advSave);
       }
 
       setGameState(newState);
@@ -804,6 +887,11 @@ export default function Game() {
             ? 2
             : 1;
       let finalSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
+      const finalPrevLevel = finalSave.pilotLevel;
+      finalSave = recalcPilotLevel(finalSave);
+      if (finalSave.pilotLevel > finalPrevLevel) {
+        console.log(`PILOT LEVEL UP! ${finalPrevLevel} → ${finalSave.pilotLevel}`);
+      }
       const questData: QuestCheckData = {
         world: gameState.currentWorld,
         level: gameState.currentLevel,
@@ -815,6 +903,17 @@ export default function Game() {
         playerMaxHp: gameState.player.maxHp,
       };
       finalSave = checkQuestCompletion(finalSave, questData).newSave;
+      // Flush pending bestiary kills
+      let finalBestiary = finalSave.bestiary;
+      if (gameState?.pendingBestiaryKills?.length) {
+        for (const kill of gameState.pendingBestiaryKills) {
+          finalBestiary = recordKill(finalBestiary, kill.type, kill.classId, {
+            world: gameState.currentWorld,
+            planetId: gameState.planetId,
+          });
+        }
+      }
+      finalSave = { ...finalSave, bestiary: finalBestiary };
       saveSave(finalSave);
       setSaveData(finalSave);
       startEnding();
@@ -969,9 +1068,38 @@ export default function Game() {
             <p className="text-2xl">
               Score: <span className="text-yellow-400 font-bold">{gameState.score}</span>
             </p>
-            <p className="text-gray-400">
-              Kills: {gameState.kills}/{gameState.totalEnemies} &middot; Deaths: {gameState.deaths}
-            </p>
+            {(() => {
+              const killPct = gameState.totalEnemies > 0
+                ? Math.floor((gameState.kills / gameState.totalEnemies) * 100)
+                : 0;
+              const isPerfect = killPct === 100;
+              return (
+                <>
+                  <div className="w-64 mx-auto mt-1">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className={isPerfect ? "text-yellow-300 font-bold" : "text-gray-400"}>
+                        Enemies: {gameState.kills}/{gameState.totalEnemies}
+                      </span>
+                      <span className={isPerfect ? "text-yellow-300 font-bold" : "text-gray-500"}>
+                        {killPct}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${isPerfect ? "bg-yellow-400" : "bg-cyan-500"}`}
+                        style={{ width: `${killPct}%` }}
+                      />
+                    </div>
+                    {isPerfect && (
+                      <p className="text-yellow-300 text-xs mt-1 font-bold tracking-wider animate-pulse">
+                        PERFECT CLEAR! +500 BONUS CREDITS
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-gray-500 text-sm">Deaths: {gameState.deaths}</p>
+                </>
+              );
+            })()}
             {gameState.maxCombo >= 3 && (
               <p className="text-yellow-500">Max Combo: {gameState.maxCombo}x</p>
             )}
@@ -1009,6 +1137,24 @@ export default function Game() {
                 gameState.currentWorld
               )} CREDITS
             </p>
+            {(() => {
+              const mpData = getMultiPhaseLevelData(gameState.currentWorld, gameState.currentLevel);
+              if (!mpData?.completionRewards?.length) return null;
+              if (gameState.currentPhase < gameState.totalPhases - 1) return null;
+              const newMats = mpData.completionRewards.filter(
+                (m) => !saveData.materials.includes(m)
+              );
+              if (newMats.length === 0) return null;
+              return (
+                <div className="mt-2 space-y-1">
+                  {newMats.map((matId) => (
+                    <p key={matId} className="text-sm text-purple-400 font-bold animate-pulse">
+                      + {matId.replace(/-/g, " ").toUpperCase()} (RARE)
+                    </p>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
           <div className="flex gap-4">
             <button
@@ -1049,6 +1195,24 @@ export default function Game() {
             >
               TRY AGAIN
             </button>
+            {gameState.currentPhase > 0 && (
+              <button
+                onClick={() => {
+                  if (!gameState) return;
+                  setGameState(createGameState(
+                    gameState.currentWorld,
+                    gameState.currentLevel,
+                    saveData.upgrades,
+                    saveData.unlockedEnhancements,
+                    saveData.pilotLevel,
+                    saveData.allocatedSkills
+                  ));
+                }}
+                className="px-6 py-4 border-2 border-yellow-600 text-yellow-400 text-lg hover:bg-yellow-600 hover:text-black transition-colors tracking-wider"
+              >
+                RESTART LEVEL
+              </button>
+            )}
             <button
               onClick={returnToCockpit}
               className="px-6 py-4 border-2 border-gray-600 text-gray-400 text-lg hover:bg-gray-600 hover:text-white transition-colors tracking-wider"

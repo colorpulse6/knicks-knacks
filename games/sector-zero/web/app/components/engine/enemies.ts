@@ -4,6 +4,7 @@ import {
   ENEMY_BULLET_SPEED,
   ENEMY_DEFS,
   EnemyType,
+  type EnemyClass,
   type Enemy,
   type EnemyBehavior,
   type Bullet,
@@ -12,12 +13,20 @@ import {
   type FormationType,
 } from "./types";
 import { getSprite, SPRITES } from "./sprites";
+import { DEFAULT_ENEMY_CLASS, ENEMY_CLASS_PROFILES } from "./enemyClasses";
 
 let enemyIdCounter = 0;
 let bulletIdCounter = 10000; // offset from player bullets
 
 /** World-based difficulty scaling for planet expansion */
 let currentDifficultyScale = { hp: 1, speed: 1, fireRate: 1 };
+
+/** Planet-mission class override. When set, 70% of spawns use this class. */
+let currentPlanetClass: EnemyClass | null = null;
+
+export function setPlanetClassOverride(classId: EnemyClass | null): void {
+  currentPlanetClass = classId;
+}
 
 const WORLD_DIFFICULTY: Record<number, { hp: number; speed: number; fireRate: number }> = {
   1: { hp: 1, speed: 1, fireRate: 1 },
@@ -44,12 +53,25 @@ export function createEnemy(
   x: number,
   y: number,
   behavior?: EnemyBehavior,
+  classOverride?: EnemyClass,
 ): Enemy {
   const def = ENEMY_DEFS[type];
   const defaultBehavior = getDefaultBehavior(type);
-  const scaledHp = Math.ceil(def.hp * currentDifficultyScale.hp);
-  const scaledSpeed = def.speed * currentDifficultyScale.speed;
-  const scaledFireRate = Math.max(10, Math.floor(def.fireRate * currentDifficultyScale.fireRate));
+
+  const classId = classOverride
+    ?? (currentPlanetClass && Math.random() < 0.7
+      ? currentPlanetClass
+      : DEFAULT_ENEMY_CLASS[type]);
+  const classProfile = ENEMY_CLASS_PROFILES[classId];
+
+  const scaledHp = Math.max(1, Math.ceil(
+    def.hp * currentDifficultyScale.hp * classProfile.hpMult
+  ));
+  const scaledSpeed = def.speed * currentDifficultyScale.speed * classProfile.speedMult;
+  const scaledFireRate = Math.max(10, Math.floor(
+    def.fireRate * currentDifficultyScale.fireRate * classProfile.fireRateMult
+  ));
+  const scaledScore = Math.floor(def.score * classProfile.scoreMult);
 
   return {
     id: ++enemyIdCounter,
@@ -63,13 +85,16 @@ export function createEnemy(
     speed: scaledSpeed,
     vx: 0,
     vy: scaledSpeed,
-    score: def.score,
+    score: scaledScore,
     fireTimer: Math.floor(Math.random() * scaledFireRate),
     fireRate: scaledFireRate,
     shoots: def.shoots,
     behavior: behavior ?? defaultBehavior,
     behaviorTimer: 0,
     cloaked: type === EnemyType.CLOAKER || type === EnemyType.ECHO,
+    classId,
+    lastHitAffinity: undefined,
+    lastHitTimer: 0,
   };
 }
 
@@ -248,6 +273,13 @@ export function updateEnemy(enemy: Enemy, player: Player): Enemy {
   updated.x += updated.vx;
   updated.y += updated.vy;
 
+  if (updated.lastHitTimer > 0) {
+    updated.lastHitTimer -= 1;
+    if (updated.lastHitTimer === 0) {
+      updated.lastHitAffinity = undefined;
+    }
+  }
+
   return updated;
 }
 
@@ -303,7 +335,7 @@ export function isEnemyOffscreen(enemy: Enemy): boolean {
 
 // ─── Sprite map ──────────────────────────────────────────────────────
 
-const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
+export const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   [EnemyType.SCOUT]: SPRITES.ENEMY_SCOUT,
   [EnemyType.DRONE]: SPRITES.ENEMY_DRONE,
   [EnemyType.GUNNER]: SPRITES.ENEMY_GUNNER,
@@ -333,24 +365,34 @@ export function drawEnemies(
     const spritePath = ENEMY_SPRITE_MAP[enemy.type];
     const sprite = spritePath ? getSprite(spritePath) : null;
 
+    const pad = 4;
+    const dx = enemy.x - pad;
+    const dy = enemy.y - pad;
+    const dw = enemy.width + pad * 2;
+    const dh = enemy.height + pad * 2;
+
     if (sprite) {
-      // Draw the sprite scaled to enemy size
-      // Add some padding so the sprite isn't clipped at exact bounds
-      const pad = 4;
-      ctx.drawImage(
-        sprite,
-        enemy.x - pad,
-        enemy.y - pad,
-        enemy.width + pad * 2,
-        enemy.height + pad * 2
-      );
+      ctx.drawImage(sprite, dx, dy, dw, dh);
     } else {
-      // Fallback colored rectangle
       ctx.fillStyle = "#aa44ff";
       ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
     }
 
-    // HP bar for enemies with > 1 max hp
+    // Class tint overlay (subtle multiply blend)
+    const classProfile = ENEMY_CLASS_PROFILES[enemy.classId];
+    if (classProfile) {
+      const baseAlpha = enemy.cloaked ? 0.15 : 1;
+      ctx.globalCompositeOperation = "multiply";
+      ctx.globalAlpha = baseAlpha * 0.35;
+      ctx.fillStyle = classProfile.tint;
+      ctx.fillRect(dx, dy, dw, dh);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = baseAlpha;
+    }
+
+    ctx.restore();
+
+    // HP bar
     if (enemy.maxHp > 1 && enemy.hp < enemy.maxHp) {
       const barW = enemy.width;
       const barH = 3;
@@ -362,7 +404,21 @@ export function drawEnemies(
       ctx.fillRect(barX, barY, barW * (enemy.hp / enemy.maxHp), barH);
     }
 
-    ctx.restore();
+    // Affinity indicator (arrow above enemy after hit)
+    if (enemy.lastHitAffinity && enemy.lastHitTimer > 0 && enemy.lastHitAffinity !== "neutral") {
+      const arrow = enemy.lastHitAffinity === "effective" ? "\u2B06" : "\u2B07";
+      const color = enemy.lastHitAffinity === "effective" ? "#ffdd44" : "#888899";
+      const alpha = Math.min(1, enemy.lastHitTimer / 60);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(arrow, enemy.x + enemy.width / 2, enemy.y - 10);
+      ctx.restore();
+    }
+
     ctx.globalAlpha = 1;
   }
 }

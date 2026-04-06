@@ -1,4 +1,4 @@
-import { EnemyType, type WaveDefinition, type FormationType } from "./types";
+import { EnemyType, type WaveDefinition, type FormationType, type MultiPhaseLevelData } from "./types";
 
 export interface LevelData {
   world: number;
@@ -1103,4 +1103,50 @@ export function getLevelKey(world: number, level: number): string {
 
 export function getWorldLevelCount(world: number): number {
   return ALL_LEVELS.filter((l) => l.world === world).length;
+}
+
+/**
+ * Get multi-phase level data. Returns null for standard single-phase levels.
+ * Extension point for future multi-phase content.
+ */
+export function getMultiPhaseLevelData(
+  world: number,
+  level: number
+): MultiPhaseLevelData | null {
+  // Test multi-phase level: World 1, Level 3
+  if (world === 1 && level === 3) {
+    const baseLevel = getLevelData(world, level);
+    if (!baseLevel) return null;
+    return {
+      world,
+      level,
+      name: baseLevel.name,
+      briefingText: baseLevel.briefingText,
+      worldIntroText: baseLevel.worldIntroText,
+      phases: [
+        {
+          config: {
+            mode: "shooter",
+            waves: baseLevel.waves,
+            isBoss: false,
+          },
+        },
+        {
+          config: {
+            mode: "shooter",
+            waves: baseLevel.waves.slice(0, 2),
+            isBoss: false,
+            briefingText: "Enemy reinforcements detected. Clear the second wave.",
+          },
+          transitionIn: {
+            cardText: "REINFORCEMENTS INCOMING",
+            cardSubtext: "Phase 2: Clear the second wave",
+            duration: 180,
+          },
+        },
+      ],
+      completionRewards: ["kinetic-core"],
+    };
+  }
+  return null;
 }

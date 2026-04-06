@@ -3,6 +3,7 @@ import {
   BULLET_SPEED,
   type Bullet,
   type Player,
+  type WeaponType,
 } from "./types";
 import { getSprite, SPRITES } from "./sprites";
 
@@ -19,7 +20,8 @@ function createBullet(
   vy: number,
   isPlayer: boolean,
   damage: number = 1,
-  piercing: boolean = false
+  piercing: boolean = false,
+  weaponType?: WeaponType
 ): Bullet {
   return {
     id: ++bulletIdCounter,
@@ -32,12 +34,14 @@ function createBullet(
     damage,
     isPlayer,
     piercing,
+    weaponType,
   };
 }
 
 export function firePlayerWeapon(
   player: Player,
-  weaponLevel: number
+  weaponLevel: number,
+  weaponType: WeaponType = "kinetic"
 ): Bullet[] {
   const cx = player.x + player.width / 2;
   const top = player.y;
@@ -47,52 +51,52 @@ export function firePlayerWeapon(
   switch (weaponLevel) {
     case 1:
       // Single shot
-      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage));
+      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
       break;
 
     case 2:
       // Double shot
-      bullets.push(createBullet(cx - 8, top, 0, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx + 4, top, 0, -BULLET_SPEED, true, damage));
+      bullets.push(createBullet(cx - 8, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx + 4, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
       break;
 
     case 3:
       // Triple spread
-      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx - 8, top, -1.5, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx + 4, top, 1.5, -BULLET_SPEED, true, damage));
+      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx - 8, top, -1.5, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx + 4, top, 1.5, -BULLET_SPEED, true, damage, false, weaponType));
       break;
 
     case 4:
       // Quad spread
-      bullets.push(createBullet(cx - 6, top, -0.5, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx + 2, top, 0.5, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx - 12, top, -2, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx + 8, top, 2, -BULLET_SPEED, true, damage));
+      bullets.push(createBullet(cx - 6, top, -0.5, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx + 2, top, 0.5, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx - 12, top, -2, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx + 8, top, 2, -BULLET_SPEED, true, damage, false, weaponType));
       break;
 
     case 5:
     default:
       // Full spread + center
-      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx - 8, top, -1, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx + 4, top, 1, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx - 14, top, -2.5, -BULLET_SPEED, true, damage));
-      bullets.push(createBullet(cx + 10, top, 2.5, -BULLET_SPEED, true, damage));
+      bullets.push(createBullet(cx - 2, top, 0, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx - 8, top, -1, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx + 4, top, 1, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx - 14, top, -2.5, -BULLET_SPEED, true, damage, false, weaponType));
+      bullets.push(createBullet(cx + 10, top, 2.5, -BULLET_SPEED, true, damage, false, weaponType));
       break;
   }
 
   return bullets;
 }
 
-export function fireSideGunners(player: Player): Bullet[] {
+export function fireSideGunners(player: Player, weaponType: WeaponType = "kinetic"): Bullet[] {
   const leftX = player.x - 16;
   const rightX = player.x + player.width + 8;
   const y = player.y + 8;
 
   return [
-    createBullet(leftX, y, 0, -BULLET_SPEED * 0.8, true),
-    createBullet(rightX, y, 0, -BULLET_SPEED * 0.8, true),
+    createBullet(leftX, y, 0, -BULLET_SPEED * 0.8, true, 1, false, weaponType),
+    createBullet(rightX, y, 0, -BULLET_SPEED * 0.8, true, 1, false, weaponType),
   ];
 }
 

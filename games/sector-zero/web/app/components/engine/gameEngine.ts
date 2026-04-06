@@ -16,6 +16,7 @@ import {
   AudioEvent,
   EnemyType,
   POWER_UP_DURATION,
+  type EnemyClass,
   type GameState,
   type Player,
   type Keys,
@@ -29,8 +30,11 @@ import {
   type PlanetId,
   type ObjectiveState,
   type SpriteExplosion,
+  type SkillNodeId,
   DEFAULT_UPGRADES,
 } from "./types";
+import { bonusHp } from "./pilotLevel";
+import { hasSkill, getSkillEffect } from "./skillTree";
 import { createBackground, updateBackground } from "./background";
 import { updateParticles, createExplosion, createSparks, createEngineTrail, createSpriteExplosion, updateSpriteExplosions } from "./particles";
 import { firePlayerWeapon, fireSideGunners, updateBullets } from "./weapons";
@@ -42,10 +46,14 @@ import {
   spawnFormation,
   resetEnemyIds,
   setDifficultyForWorld,
+  setPlanetClassOverride,
 } from "./enemies";
+import { PLANET_DOMINANT_CLASS, resolveAffinity } from "./enemyClasses";
+import { AFFINITY_MULTIPLIER } from "./weaponTypes";
+import { createAffinityLabel, updateFloatingLabels, resetFloatingLabelIds } from "./floatingLabels";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap, SpatialHash } from "./physics";
-import { getLevelData, getWorldLevelCount } from "./levels";
+import { getLevelData, getWorldLevelCount, getMultiPhaseLevelData } from "./levels";
 import { clamp } from "./physics";
 
 const spatialHash = new SpatialHash();
@@ -56,6 +64,7 @@ import { getPlanetDef } from "./planets";
 import { getPlanetLevelData } from "./planetLevels";
 import { getPlanetDialogTriggers } from "./planetDialog";
 import { createHazardState, updateHazards, type HazardState } from "./hazards";
+import { createCheckpoint, isLastPhase } from "./phases";
 
 // ─── Power-Up Spawning ──────────────────────────────────────────────
 
@@ -116,16 +125,27 @@ const MAX_POWERUPS_ON_SCREEN = 6;
 
 // ─── Create State ────────────────────────────────────────────────────
 
-export function createPlayer(upgrades: ShipUpgrades = DEFAULT_UPGRADES): Player {
+export function createPlayer(
+  upgrades: ShipUpgrades = DEFAULT_UPGRADES,
+  pilotLevel: number = 1,
+  allocatedSkills: SkillNodeId[] = []
+): Player {
+  let maxHp = PLAYER_MAX_HP + upgrades.hullPlating + bonusHp(pilotLevel);
+
+  // Glass Cannon: +30% damage (applied in collision), -1 max HP
+  if (hasSkill(allocatedSkills, "glass-cannon")) {
+    maxHp = Math.max(1, maxHp - 1);
+  }
+
   return {
     x: CANVAS_WIDTH / 2 - PLAYER_WIDTH / 2,
     y: GAME_AREA_HEIGHT - 100,
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
-    hp: PLAYER_MAX_HP + upgrades.hullPlating,
-    maxHp: PLAYER_MAX_HP + upgrades.hullPlating,
+    hp: maxHp,
+    maxHp,
     speed: PLAYER_SPEED + upgrades.engineBoost * 0.5,
-    weaponLevel: 1 + upgrades.weaponCore,
+    weaponLevel: Math.min(5, 1 + upgrades.weaponCore),
     invincibleTimer: 0,
     fireTimer: 0,
     energy: 100,
@@ -137,6 +157,7 @@ export function createPlayer(upgrades: ShipUpgrades = DEFAULT_UPGRADES): Player 
 // Store current upgrades so handlePlayerShooting and updatePowerUps can reference them
 let currentUpgrades: ShipUpgrades = { ...DEFAULT_UPGRADES };
 let currentEnhancements: EnhancementId[] = [];
+let currentAllocatedSkills: SkillNodeId[] = [];
 let currentHazardState: HazardState | null = null;
 let reflectedBulletId = 200000;
 
@@ -148,17 +169,21 @@ export function getHazardState(): HazardState | null {
   return currentHazardState;
 }
 
-export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES, enhancements: EnhancementId[] = []): GameState {
+export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES, enhancements: EnhancementId[] = [], pilotLevel: number = 1, allocatedSkills: SkillNodeId[] = []): GameState {
+  setPlanetClassOverride(null);
   currentUpgrades = { ...upgrades };
   currentEnhancements = [...enhancements];
+  currentAllocatedSkills = [...allocatedSkills];
   currentHazardState = null;
   setDifficultyForWorld(world);
   resetEnemyIds();
+  resetFloatingLabelIds();
   resetBulletIds();
   resetBossBulletIds();
   resetPowerUpIds();
 
   const levelData = getLevelData(world, level);
+  const multiPhaseData = getMultiPhaseLevelData(world, level);
   const waves: Wave[] = (levelData?.waves ?? []).map((def) => ({
     definition: def,
     spawned: false,
@@ -171,7 +196,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
 
   return {
     screen: GameScreen.BRIEFING,
-    player: createPlayer(upgrades),
+    player: createPlayer(upgrades, pilotLevel, allocatedSkills),
     playerBullets: [],
     enemyBullets: [],
     enemies: [],
@@ -180,6 +205,9 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     activePowerUps: [],
     particles: [],
     explosions: [],
+    floatingLabels: [],
+    equippedWeaponType: "kinetic",
+    pendingBestiaryKills: [],
     background: createBackground(),
     score: 0,
     combo: 0,
@@ -208,20 +236,32 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     dialogTriggers: getDialogTriggers(world, level),
     xp: 0,
     hpWarningTriggered: false,
+    pilotLevel,
+    allocatedSkills,
+    currentPhase: 0,
+    totalPhases: multiPhaseData?.phases.length ?? 1,
+    phaseCheckpoint: null,
+    phaseTransitionTimer: 0,
+    phaseTransitionCard: "",
+    phaseTransitionSubtext: "",
   };
 }
 
 export function createPlanetGameState(
   planetId: PlanetId,
   upgrades: ShipUpgrades = DEFAULT_UPGRADES,
-  enhancements: EnhancementId[] = []
+  enhancements: EnhancementId[] = [],
+  pilotLevel: number = 1,
+  allocatedSkills: SkillNodeId[] = []
 ): GameState {
+  setPlanetClassOverride(PLANET_DOMINANT_CLASS[planetId]);
   currentUpgrades = { ...upgrades };
   currentEnhancements = [...enhancements];
 
   const planet = getPlanetDef(planetId);
   setDifficultyForWorld(planet.pairedWorld);
   resetEnemyIds();
+  resetFloatingLabelIds();
   resetBulletIds();
   resetBossBulletIds();
   resetPowerUpIds();
@@ -240,7 +280,7 @@ export function createPlanetGameState(
 
   return {
     screen: GameScreen.BRIEFING,
-    player: createPlayer(upgrades),
+    player: createPlayer(upgrades, pilotLevel, allocatedSkills),
     playerBullets: [],
     enemyBullets: [],
     enemies: [],
@@ -249,6 +289,9 @@ export function createPlanetGameState(
     activePowerUps: [],
     particles: [],
     explosions: [],
+    floatingLabels: [],
+    equippedWeaponType: "kinetic",
+    pendingBestiaryKills: [],
     background: createBackground(),
     score: 0,
     combo: 0,
@@ -277,6 +320,14 @@ export function createPlanetGameState(
     dialogTriggers: getPlanetDialogTriggers(planetId),
     xp: 0,
     hpWarningTriggered: false,
+    pilotLevel,
+    allocatedSkills,
+    currentPhase: 0,
+    totalPhases: 1,
+    phaseCheckpoint: null,
+    phaseTransitionTimer: 0,
+    phaseTransitionCard: "",
+    phaseTransitionSubtext: "",
     planetId,
     objective,
     escort,
@@ -306,6 +357,19 @@ export function updateGame(
   // Boss fight: full gameplay + boss logic
   if (state.screen === GameScreen.BOSS_FIGHT) {
     return updateBossFight(state, keys, touchX, touchY);
+  }
+
+  // Phase transition screen: countdown then go directly to PLAYING
+  if (state.screen === GameScreen.PHASE_TRANSITION) {
+    let s = { ...state, frameCount: state.frameCount + 1, audioEvents: [] as AudioEvent[] };
+    s.phaseTransitionTimer -= 1;
+    s.background = updateBackground(s.background);
+    if (s.phaseTransitionTimer <= 0) {
+      // Skip briefing for Phase 2+ — go directly to PLAYING
+      s.screen = GameScreen.PLAYING;
+      s.waveDelay = 120; // 2s pause before first wave spawns
+    }
+    return s;
   }
 
   if (state.screen !== GameScreen.PLAYING) return state;
@@ -392,6 +456,7 @@ export function updateGame(
 
   // Update particles & explosions
   s.particles = updateParticles(s.particles);
+  s.floatingLabels = updateFloatingLabels(s.floatingLabels);
   s.explosions = updateSpriteExplosions(s.explosions);
 
   // Engine trail
@@ -464,45 +529,47 @@ export function updateGame(
     }
   }
 
-  // Level complete timer countdown — auto-advance to next level
+  // Level complete timer countdown — show results screen
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      if (s.planetId) {
-        // Planet mission — show LEVEL_COMPLETE screen (Game.tsx handles rewards)
-        s.screen = GameScreen.LEVEL_COMPLETE;
-      } else {
-        // Auto-advance to next level
-        const nextLv = s.currentLevel + 1;
-        const nextWorld = s.currentWorld;
-        const nextLevelData = getLevelData(nextWorld, nextLv);
-        if (nextLevelData) {
-          // Carry over score, kills, etc. into the new level state
-          const carryScore = s.score;
-          const carryLives = s.lives;
-          const carryWeapon = s.player.weaponLevel;
-          const carryKills = s.kills;
-          const carryDeaths = s.deaths;
-          const carryMaxCombo = s.maxCombo;
-          const carryInvincible = s.devInvincible;
-          const carryPowerUps = s.activePowerUps;
-
-          const newState = createGameState(nextWorld, nextLv, currentUpgrades, currentEnhancements);
-          return {
-            ...newState,
-            score: carryScore,
-            lives: carryLives,
-            kills: carryKills,
-            deaths: carryDeaths,
-            maxCombo: carryMaxCombo,
-            devInvincible: carryInvincible,
-            activePowerUps: carryPowerUps,
-            player: { ...newState.player, weaponLevel: carryWeapon },
-          };
-        } else {
-          // No more levels — show the full LEVEL_COMPLETE screen
-          s.screen = GameScreen.LEVEL_COMPLETE;
+      if (!isLastPhase(s)) {
+        s.screen = GameScreen.PHASE_TRANSITION;
+        s.phaseTransitionTimer = 180;
+        s.currentPhase += 1;
+        s.phaseCheckpoint = createCheckpoint(s);
+        s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
+        s.phaseTransitionSubtext = "Preparing next phase...";
+        // Load next phase's waves
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        if (nextPhaseData?.transitionIn) {
+          s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
+          s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
+          s.phaseTransitionTimer = nextPhaseData.transitionIn.duration;
         }
+        if (nextPhaseData?.config.waves) {
+          const newWaves = nextPhaseData.config.waves.map((def) => ({
+            definition: def,
+            spawned: false,
+            enemiesRemaining: def.enemies.reduce((sum, e) => sum + e.count, 0),
+          }));
+          s.waves = newWaves;
+          s.currentWave = 0;
+          s.totalWaves = newWaves.length;
+          s.waveDelay = 120;
+          s.totalEnemies += newWaves.reduce((sum, w) => sum + w.enemiesRemaining, 0);
+          // Clear battlefield
+          s.enemies = [];
+          s.enemyBullets = [];
+          s.playerBullets = [];
+          s.particles = [];
+          s.explosions = [];
+          s.floatingLabels = [];
+          s.boss = null;
+        }
+      } else {
+        s.screen = GameScreen.LEVEL_COMPLETE;
       }
     }
   }
@@ -539,6 +606,7 @@ function updateBossIntroScreen(state: GameState): GameState {
   let s = { ...state, frameCount: state.frameCount + 1, audioEvents: [] as AudioEvent[] };
   s.background = updateBackground(s.background);
   s.particles = updateParticles(s.particles);
+  s.floatingLabels = updateFloatingLabels(s.floatingLabels);
   s.bossIntroTimer -= 1;
 
   // Fire boss_intro dialog on first frame
@@ -618,6 +686,7 @@ function updateBossFight(
 
   s = updatePowerUps(s);
   s.particles = updateParticles(s.particles);
+  s.floatingLabels = updateFloatingLabels(s.floatingLabels);
 
   if (s.frameCount % 2 === 0) {
     s.particles = [
@@ -678,16 +747,53 @@ function updateBossFight(
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      // Check if this is the final level in the game
-      const maxLevels = getWorldLevelCount(s.currentWorld);
-      const isLastLevelInWorld = s.currentLevel >= maxLevels;
-      let isFinalLevel = false;
-      if (isLastLevelInWorld) {
-        let nw = s.currentWorld + 1;
-        while (nw <= 8 && getWorldLevelCount(nw) === 0) nw++;
-        isFinalLevel = nw > 8;
+      if (!isLastPhase(s)) {
+        s.screen = GameScreen.PHASE_TRANSITION;
+        s.phaseTransitionTimer = 180;
+        s.currentPhase += 1;
+        s.phaseCheckpoint = createCheckpoint(s);
+        s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
+        s.phaseTransitionSubtext = "Preparing next phase...";
+        // Load next phase's waves
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        if (nextPhaseData?.transitionIn) {
+          s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
+          s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
+          s.phaseTransitionTimer = nextPhaseData.transitionIn.duration;
+        }
+        if (nextPhaseData?.config.waves) {
+          const newWaves = nextPhaseData.config.waves.map((def) => ({
+            definition: def,
+            spawned: false,
+            enemiesRemaining: def.enemies.reduce((sum, e) => sum + e.count, 0),
+          }));
+          s.waves = newWaves;
+          s.currentWave = 0;
+          s.totalWaves = newWaves.length;
+          s.waveDelay = 120;
+          s.totalEnemies += newWaves.reduce((sum, w) => sum + w.enemiesRemaining, 0);
+          // Clear battlefield
+          s.enemies = [];
+          s.enemyBullets = [];
+          s.playerBullets = [];
+          s.particles = [];
+          s.explosions = [];
+          s.floatingLabels = [];
+          s.boss = null;
+        }
+      } else {
+        // Check if this is the final level in the game
+        const maxLevels = getWorldLevelCount(s.currentWorld);
+        const isLastLevelInWorld = s.currentLevel >= maxLevels;
+        let isFinalLevel = false;
+        if (isLastLevelInWorld) {
+          let nw = s.currentWorld + 1;
+          while (nw <= 8 && getWorldLevelCount(nw) === 0) nw++;
+          isFinalLevel = nw > 8;
+        }
+        s.screen = isFinalLevel ? GameScreen.ENDING : GameScreen.LEVEL_COMPLETE;
       }
-      s.screen = isFinalLevel ? GameScreen.ENDING : GameScreen.LEVEL_COMPLETE;
     }
   }
 
@@ -727,6 +833,7 @@ function handleBossCollisions(state: GameState): GameState {
         // Mouth open — any hit on the boss deals damage
         if (!bullet.piercing) destroyedBullets.add(bullet.id);
 
+        // TODO(affinity): bosses don't yet have classId — add boss class assignment in future plan
         bossHp = Math.max(0, bossHp - bullet.damage);
         audioEvents.push(AudioEvent.BOSS_HIT);
         newParticles = [
@@ -862,17 +969,20 @@ function handlePlayerShooting(state: GameState, keys: Keys): GameState {
 
   const hasRapidFire = state.activePowerUps.some((p) => p.type === PowerUpType.RAPID_FIRE);
   const baseRate = PLAYER_FIRE_RATE - currentUpgrades.fireControl;
-  const fireRate = hasRapidFire ? Math.floor(baseRate / 2) : baseRate;
+  const rapidRate = hasRapidFire ? Math.floor(baseRate / 2) : baseRate;
+  const fireRateMod = hasSkill(state.allocatedSkills, "adrenaline") ? (1 - getSkillEffect(state.allocatedSkills, "adrenaline")) : 1;
+  const fireRate = Math.max(2, Math.floor(rapidRate * fireRateMod));
 
   const newBullets = firePlayerWeapon(
     state.player,
-    state.player.weaponLevel
+    state.player.weaponLevel,
+    state.equippedWeaponType
   );
 
   // Side gunners
   const hasSideGunners = state.activePowerUps.some((p) => p.type === PowerUpType.SIDE_GUNNERS);
   if (hasSideGunners && state.frameCount % 3 === 0) {
-    const gunnerBullets = fireSideGunners(state.player);
+    const gunnerBullets = fireSideGunners(state.player, state.equippedWeaponType);
 
     // Homing gunners enhancement: slightly track nearest enemy
     if (hasEnhancement("homing-gunners") && state.enemies.length > 0) {
@@ -1016,10 +1126,51 @@ function handleCollisions(state: GameState): GameState {
           destroyedBullets.add(bullet.id);
         }
 
-        const newHp = enemy.hp - bullet.damage;
+        // Compute affinity-adjusted damage
+        let finalDamage = bullet.damage;
+        if (bullet.isPlayer && bullet.weaponType) {
+          const affinity = resolveAffinity(bullet.weaponType, enemy.classId);
+          finalDamage = bullet.damage * AFFINITY_MULTIPLIER[affinity];
+
+          // Mark enemy for affinity indicator
+          enemy.lastHitAffinity = affinity;
+          enemy.lastHitTimer = 120;
+
+          // Spawn floating label for non-neutral hits
+          const label = createAffinityLabel(
+            enemy.x + enemy.width / 2,
+            enemy.y - 4,
+            affinity
+          );
+          if (label) {
+            s.floatingLabels = [...s.floatingLabels, label];
+          }
+
+          // Sharpshooter: +20% damage on Effective hits
+          if (affinity === "effective" && hasSkill(s.allocatedSkills, "sharpshooter")) {
+            finalDamage *= 1 + getSkillEffect(s.allocatedSkills, "sharpshooter");
+          }
+
+          // Berserker: +5% damage per missing HP
+          if (hasSkill(s.allocatedSkills, "berserker")) {
+            const missingHp = s.player.maxHp - s.player.hp;
+            finalDamage *= 1 + getSkillEffect(s.allocatedSkills, "berserker") * missingHp;
+          }
+
+          // Glass Cannon: +30% damage (HP penalty already applied in createPlayer)
+          if (hasSkill(s.allocatedSkills, "glass-cannon")) {
+            finalDamage *= 1 + getSkillEffect(s.allocatedSkills, "glass-cannon");
+          }
+        }
+
+        const newHp = enemy.hp - finalDamage;
 
         if (newHp <= 0) {
           destroyedEnemies.add(enemy.id);
+          s.pendingBestiaryKills = [
+            ...s.pendingBestiaryKills,
+            { type: enemy.type, classId: enemy.classId },
+          ];
           audioEvents.push(AudioEvent.ENEMY_DESTROY);
 
           // Explosion particles + sprite explosion
@@ -1193,7 +1344,7 @@ function playerHit(
 
     if (newLives > 0) {
       // Respawn
-      const newPlayer = createPlayer(currentUpgrades);
+      const newPlayer = createPlayer(currentUpgrades, state.pilotLevel, state.allocatedSkills);
       newPlayer.invincibleTimer = PLAYER_INVINCIBLE_FRAMES * 2;
       newPlayer.weaponLevel = Math.max(1, player.weaponLevel - 1);
 
@@ -1276,6 +1427,7 @@ function activateBomb(state: GameState): GameState {
 
   // Destroy all non-boss enemies on screen
   const bombExplosions: SpriteExplosion[] = [];
+  const bombKills: Array<{ type: EnemyType; classId: EnemyClass }> = [];
   for (const enemy of enemies) {
     const ecx = enemy.x + enemy.width / 2;
     const ecy = enemy.y + enemy.height / 2;
@@ -1293,6 +1445,7 @@ function activateBomb(state: GameState): GameState {
     comboTimer = COMBO_WINDOW;
     maxCombo = Math.max(maxCombo, combo);
     kills += 1;
+    bombKills.push({ type: enemy.type, classId: enemy.classId });
   }
   enemies = [];
 
@@ -1338,6 +1491,7 @@ function activateBomb(state: GameState): GameState {
     bombCooldown: BOMB_COOLDOWN,
     screenShake: Math.max(state.screenShake, 10),
     audioEvents,
+    pendingBestiaryKills: [...state.pendingBestiaryKills, ...bombKills],
     // Incendiary bombs enhancement: leave 3-second damage zone
     incendiaryTimer: hasEnhancement("incendiary-bombs") ? 180 : (state.incendiaryTimer ?? 0),
   };
@@ -1424,6 +1578,10 @@ function updatePowerUps(state: GameState): GameState {
         // Resonance field enhancement: +25% all power-up durations
         if (hasEnhancement("resonance-field")) {
           dur = Math.floor(dur * 1.25);
+        }
+        // Overcharge skill: weapon power-ups last 50% longer
+        if (hasSkill(currentAllocatedSkills, "overcharge")) {
+          dur = Math.floor(dur * (1 + getSkillEffect(currentAllocatedSkills, "overcharge")));
         }
         const existing = activePowerUps.findIndex((a) => a.type === pu.type);
 

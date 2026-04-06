@@ -6,8 +6,11 @@ import {
   type PlanetId,
   type SaveData,
   type ShipUpgrades,
+  type WeaponType,
 } from "./types";
 import { unlockCodexEntries } from "./codex";
+import { calcPilotLevel, creditBonus, skillPointsAtLevel } from "./pilotLevel";
+import { getNode } from "./skillTree";
 export type { SaveData };
 
 const SAVE_KEY = "sector-zero-save";
@@ -30,6 +33,11 @@ const defaultSave: SaveData = {
   consumableInventory: {},
   equippedConsumables: [],
   unlockedEnhancements: [],
+  bestiary: {},
+  equippedWeaponType: "kinetic",
+  pilotLevel: 1,
+  skillPoints: 0,
+  allocatedSkills: [],
 };
 
 /** Migrate old saves that lack new fields */
@@ -53,6 +61,28 @@ function migrateSave(raw: Record<string, unknown>): SaveData {
     consumableInventory: (raw.consumableInventory as Partial<Record<ConsumableId, number>>) ?? {},
     equippedConsumables: (raw.equippedConsumables as ConsumableId[]) ?? [],
     unlockedEnhancements: (raw.unlockedEnhancements as EnhancementId[]) ?? [],
+    bestiary: (raw.bestiary as SaveData["bestiary"]) ?? {},
+    equippedWeaponType: (raw.equippedWeaponType as WeaponType | undefined) ?? "kinetic",
+    pilotLevel: (raw.pilotLevel as number) ?? 1,
+    skillPoints: (raw.skillPoints as number) ?? 0,
+    allocatedSkills: (raw.allocatedSkills as SaveData["allocatedSkills"]) ?? [],
+  };
+}
+
+/** Recalculate pilot level and available skill points from total XP.
+ *  Called on load to ensure save data is consistent. */
+export function recalcPilotLevel(save: SaveData): SaveData {
+  const level = calcPilotLevel(save.xp);
+  const totalPoints = skillPointsAtLevel(level);
+  let spentPoints = 0;
+  for (const id of save.allocatedSkills) {
+    const node = getNode(id);
+    spentPoints += node?.cost ?? 1;
+  }
+  return {
+    ...save,
+    pilotLevel: level,
+    skillPoints: Math.max(0, totalPoints - spentPoints),
   };
 }
 
@@ -62,7 +92,7 @@ export function loadSave(): SaveData {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return unlockCodexEntries({ ...defaultSave });
     const parsed = JSON.parse(raw);
-    return unlockCodexEntries(migrateSave(parsed));
+    return recalcPilotLevel(unlockCodexEntries(migrateSave(parsed)));
   } catch {
     return unlockCodexEntries({ ...defaultSave });
   }
@@ -78,12 +108,14 @@ export function saveSave(data: SaveData): void {
 export function calculateCreditsEarned(
   score: number,
   stars: number,
-  world: number
+  world: number,
+  pilotLevel: number = 1
 ): number {
   const baseCredits = Math.floor(score / 10);
   const starBonus = stars * 50;
   const worldMultiplier = 1 + (world - 1) * 0.2;
-  return Math.floor((baseCredits + starBonus) * worldMultiplier);
+  const pilotMultiplier = 1 + creditBonus(pilotLevel);
+  return Math.floor((baseCredits + starBonus) * worldMultiplier * pilotMultiplier);
 }
 
 // ─── Level Results ──────────────────────────────────────────────────
@@ -116,7 +148,7 @@ export function updateLevelResult(
   }
 
   // Award credits
-  const creditsEarned = calculateCreditsEarned(score, stars, world);
+  const creditsEarned = calculateCreditsEarned(score, stars, world, save.pilotLevel);
 
   const updated: SaveData = {
     ...save,

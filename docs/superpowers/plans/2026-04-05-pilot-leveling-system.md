@@ -126,20 +126,18 @@ import type { PilotMilestone } from "./types";
 export const MAX_PILOT_LEVEL = 30;
 
 /**
- * XP required to reach each level (1-indexed: XP_CURVE[1] = XP for level 1).
+ * CUMULATIVE XP required to reach each level (1-indexed: XP_CURVE[1] = 0 for level 1).
+ * Each entry is the TOTAL XP needed, not the increment for that level.
  * Exponential curve: early levels ~1 mission (500-2000 XP), later levels 5-8 missions.
- * Level 1 requires 0 (everyone starts at level 1).
+ * NOTE: When extending past MAX_PILOT_LEVEL, re-validate the curve produces reasonable values.
  */
 const XP_CURVE: number[] = [0]; // index 0 unused
-for (let lv = 1; lv <= MAX_PILOT_LEVEL; lv++) {
-  if (lv === 1) {
-    XP_CURVE.push(0); // Level 1 is free
-  } else {
-    // Quadratic-exponential blend: grows faster at higher levels
-    const base = 800 * (lv - 1);
-    const exp = Math.floor(50 * Math.pow(lv, 1.8));
-    XP_CURVE.push(base + exp);
-  }
+XP_CURVE.push(0); // Level 1 is free (0 cumulative XP)
+for (let lv = 2; lv <= MAX_PILOT_LEVEL; lv++) {
+  // Per-level increment grows with level
+  const increment = 800 * (lv - 1) + Math.floor(50 * Math.pow(lv, 1.8));
+  // Cumulative: add to previous level's total
+  XP_CURVE.push(XP_CURVE[lv - 1] + increment);
 }
 
 /** Get the cumulative XP required to reach a given level. */
@@ -325,13 +323,13 @@ export const COMBAT_TREE: SkillNode[] = [
     id: "adrenaline",
     tree: "combat",
     name: "Adrenaline Rush",
-    description: "+15% fire rate for 5s after killing an enemy",
+    description: "+10% fire rate (permanent)",
     cost: 1,
     isCapstone: false,
     prerequisites: ["overcharge"],
     icon: "\u2764",  // heart
     color: "#ff4488",
-    effectValue: 0.15,
+    effectValue: 0.1,
   },
   {
     id: "signature-weapon",
@@ -505,31 +503,13 @@ Add to the return object:
 
 - [ ] **Step 5: Add recalcPilotLevel function**
 
-After `migrateSave`, add a function that recalculates pilot level from XP (called on load to ensure consistency):
+Add `import { getNode } from "./skillTree";` to the imports at the top of save.ts.
+
+After `migrateSave`, add:
 
 ```typescript
 /** Recalculate pilot level and available skill points from total XP.
  *  Called on load to ensure save data is consistent. */
-export function recalcPilotLevel(save: SaveData): SaveData {
-  const level = calcPilotLevel(save.xp);
-  const totalPoints = skillPointsAtLevel(level);
-  const spentPoints = save.allocatedSkills.reduce((sum, id) => {
-    // Import getNode at top if needed, or just count 1 per regular + 2 per capstone
-    return sum + 1; // Simplified: each allocation costs at least 1
-  }, 0);
-  return {
-    ...save,
-    pilotLevel: level,
-    skillPoints: Math.max(0, totalPoints - spentPoints),
-  };
-}
-```
-
-Wait — we need `getNode` to get accurate costs. Better approach: pass cost calculation inline.
-
-```typescript
-import { getNode } from "./skillTree";
-
 export function recalcPilotLevel(save: SaveData): SaveData {
   const level = calcPilotLevel(save.xp);
   const totalPoints = skillPointsAtLevel(level);
@@ -619,13 +599,19 @@ const maxHp = PLAYER_MAX_HP + upgrades.hullPlating + bonusHp(pilotLevel);
 
 - [ ] **Step 4: Thread pilot level through call sites**
 
-Find all calls to `createPlayer(`:
+Find ALL calls to `createPlayer(`:
 
 ```bash
 cd games/sector-zero/web && grep -n "createPlayer(" app/components/engine/gameEngine.ts
 ```
 
-Each call needs the pilot level. In `createGameState` and `createPlanetGameState`, the `save` parameter has `save.pilotLevel`. In the respawn path (inside handleCollisions/playerHit), use `s.pilotLevel` or pass through from the stored save.
+Expected call sites (3-4 hits):
+1. Inside `createGameState` — use `save.pilotLevel` and `save.allocatedSkills`
+2. Inside `createPlanetGameState` — use `save.pilotLevel` and `save.allocatedSkills`  
+3. Inside `playerHit` (respawn path, ~line 1195) — use `s.pilotLevel` and `s.allocatedSkills`
+4. Possibly a wave-transition respawn — same as #3
+
+Read each hit's surrounding 5 lines to confirm which save/state variable to use. Factory functions have a `save` param; the respawn path uses `s` (the current GameState).
 
 **Simplest approach:** Store `pilotLevel` in GameState (it's already there implicitly via the save data). But GameState doesn't have it yet. Add it:
 
@@ -667,7 +653,29 @@ function createPlayer(
 ): Player {
 ```
 
-- [ ] **Step 6: Verify build**
+- [ ] **Step 6: Apply Adrenaline Rush fire rate bonus**
+
+In `createPlayer`, find where `fireTimer` or fire rate is initialized. The player has a `fireTimer` field set to 0 and uses `PLAYER_FIRE_RATE` as the cooldown. Apply a reduction:
+
+```bash
+cd games/sector-zero/web && grep -n "PLAYER_FIRE_RATE\|fireTimer" app/components/engine/gameEngine.ts | head -10
+```
+
+The fire rate is likely applied in the game loop's fire check (not in createPlayer). Find where `fireTimer` is compared against `PLAYER_FIRE_RATE`:
+
+```bash
+cd games/sector-zero/web && grep -n "fireTimer.*PLAYER_FIRE_RATE\|PLAYER_FIRE_RATE.*fireTimer" app/components/engine/gameEngine.ts | head -5
+```
+
+At that comparison, apply the Adrenaline modifier:
+
+```typescript
+const fireRateMod = hasSkill(s.allocatedSkills, "adrenaline") ? (1 - getSkillEffect(s.allocatedSkills, "adrenaline")) : 1;
+const effectiveFireRate = Math.max(2, Math.floor(PLAYER_FIRE_RATE * fireRateMod));
+// Then compare: if (player.fireTimer >= effectiveFireRate)
+```
+
+- [ ] **Step 7: Verify build**
 
 ```bash
 cd games/sector-zero/web && yarn build 2>&1 | tail -20
@@ -675,11 +683,11 @@ cd games/sector-zero/web && yarn build 2>&1 | tail -20
 
 Expected: `✓ Compiled successfully`
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
-git commit -m "feat(sector-zero): apply pilot level HP bonus and glass cannon in createPlayer"
+git commit -m "feat(sector-zero): apply pilot level HP bonus, glass cannon, and adrenaline in gameplay"
 ```
 
 ---
@@ -983,9 +991,25 @@ Add a hotspot entry. Read existing hotspot positions first:
 cd games/sector-zero/web && grep -A3 "id:" app/components/engine/cockpit.ts | head -40
 ```
 
-Add the new hotspot at a free position. Suggestion: near the armory (since both relate to upgrades).
+Add the new hotspot as index 6. Position it below the armory (both relate to upgrades):
 
-Update `NAV_GRAPH` to include the new hotspot index.
+```typescript
+{ id: "pilot", name: "PILOT", x: 190, y: 720, w: 100, h: 60, description: "Level & skills" },
+```
+
+Update `NAV_GRAPH` — add the new index 6 and update armory (1) to navigate down to it:
+
+```typescript
+const NAV_GRAPH: Record<number, [number, number, number, number]> = {
+  0: [2, 1, 2, 3],    // starmap: up→crew, down→armory, left→crew, right→missions
+  1: [0, 6, -1, -1],  // armory: up→starmap, down→PILOT (was -1)
+  2: [4, 0, -1, 3],   // crew: up→codex, down→starmap, right→missions
+  3: [5, 0, 2, -1],   // missions: up→bestiary, down→starmap, left→crew
+  4: [-1, 2, -1, 5],  // codex: down→crew, right→bestiary
+  5: [-1, 3, 4, -1],  // bestiary: down→missions, left→codex
+  6: [1, -1, -1, -1],  // pilot: up→armory
+};
+```
 
 - [ ] **Step 5: Add updatePilot input handler**
 
@@ -1443,4 +1467,6 @@ After Task 14, the game has:
 - ✅ Free respec (data supports it, UI is future polish)
 - ✅ Save migration with recalc on load
 
-**Out of scope (future plans):** Engineering tree, Piloting tree, levels 31-50, Adrenaline Rush implementation (needs kill-event timer system), respec UI button, level-up animation/notification overlay.
+**Out of scope (future plans):** Engineering tree, Piloting tree, levels 31-50, respec UI button, level-up animation/notification overlay.
+
+**Note on material drop bonus:** The `+1% material drops/level` passive is displayed on the Pilot screen but NOT wired to gameplay in MVP. Materials are currently awarded as fixed rewards on planet completion (not random drops), so there's no drop-rate system to modify yet. The bonus will be applied when a material-drop system is introduced in Reward Economy Stage 1.

@@ -9,7 +9,7 @@ import {
   type WeaponType,
 } from "./types";
 import { unlockCodexEntries } from "./codex";
-import { calcPilotLevel, skillPointsAtLevel } from "./pilotLevel";
+import { calcPilotLevel, creditBonus, skillPointsAtLevel } from "./pilotLevel";
 import { getNode } from "./skillTree";
 export type { SaveData };
 
@@ -108,12 +108,14 @@ export function saveSave(data: SaveData): void {
 export function calculateCreditsEarned(
   score: number,
   stars: number,
-  world: number
+  world: number,
+  pilotLevel: number = 1
 ): number {
   const baseCredits = Math.floor(score / 10);
   const starBonus = stars * 50;
   const worldMultiplier = 1 + (world - 1) * 0.2;
-  return Math.floor((baseCredits + starBonus) * worldMultiplier);
+  const pilotMultiplier = 1 + creditBonus(pilotLevel);
+  return Math.floor((baseCredits + starBonus) * worldMultiplier * pilotMultiplier);
 }
 
 // ─── Level Results ──────────────────────────────────────────────────
@@ -146,7 +148,7 @@ export function updateLevelResult(
   }
 
   // Award credits
-  const creditsEarned = calculateCreditsEarned(score, stars, world);
+  const creditsEarned = calculateCreditsEarned(score, stars, world, save.pilotLevel);
 
   const updated: SaveData = {
     ...save,

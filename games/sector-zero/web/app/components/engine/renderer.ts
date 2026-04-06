@@ -25,6 +25,7 @@ import {
 } from "./starMap";
 import { PLANET_DEFS } from "./planets";
 import { drawPhaseTransition } from "./phaseTransition";
+import { drawGroundGame } from "./groundRenderer";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -66,6 +67,13 @@ export function drawGame(
   if (state.screen === GameScreen.BOSS_INTRO) {
     drawBossIntro(ctx, state);
     drawDashboard(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // Ground-run mode has its own renderer
+  if (state.currentMode === "ground-run") {
+    drawGroundGame(ctx, state);
     ctx.restore();
     return;
   }

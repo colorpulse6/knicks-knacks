@@ -58,6 +58,8 @@ import { clamp } from "./physics";
 
 const spatialHash = new SpatialHash();
 import { createBossForWorld, updateBossForWorld, isBossDefeated, resetBossBulletIds } from "./bosses";
+import { updateGroundEngine } from "./groundEngine";
+import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./groundLevel";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
 import { createObjectiveState, createEscortEntity, createDefendStructure, updateObjective } from "./objectives";
 import { getPlanetDef } from "./planets";
@@ -376,6 +378,18 @@ export function updateGame(
 
   if (state.screen !== GameScreen.PLAYING) return state;
 
+  // ── Ground-run mode dispatch ──
+  if (state.currentMode === "ground-run") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateGroundEngine(s, keys);
+    s.particles = updateParticles(s.particles);
+    s.explosions = updateSpriteExplosions(s.explosions);
+    s.floatingLabels = updateFloatingLabels(s.floatingLabels);
+    s.background = updateBackground(s.background);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
   let s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
 
   // Update background
@@ -570,6 +584,15 @@ export function updateGame(
           s.explosions = [];
           s.floatingLabels = [];
           s.boss = null;
+        }
+        // Initialize ground-run state if entering ground-run mode
+        if (nextPhaseData?.config.mode === "ground-run") {
+          const groundState = createTestGroundState();
+          const spawn = getGroundSpawn(groundState.tileMap);
+          s.groundState = groundState;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else {
+          s.groundState = undefined;
         }
       } else {
         s.screen = GameScreen.LEVEL_COMPLETE;
@@ -785,6 +808,15 @@ function updateBossFight(
           s.explosions = [];
           s.floatingLabels = [];
           s.boss = null;
+        }
+        // Initialize ground-run state if entering ground-run mode
+        if (nextPhaseData?.config.mode === "ground-run") {
+          const groundState = createTestGroundState();
+          const spawn = getGroundSpawn(groundState.tileMap);
+          s.groundState = groundState;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else {
+          s.groundState = undefined;
         }
       } else {
         // Check if this is the final level in the game

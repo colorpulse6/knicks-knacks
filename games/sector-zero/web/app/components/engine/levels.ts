@@ -1131,16 +1131,17 @@ export function getMultiPhaseLevelData(
             isBoss: false,
           },
         },
+        // PHASE 2: Ground deployment
         {
           config: {
-            mode: "shooter",
-            waves: baseLevel.waves.slice(0, 2),
+            mode: "ground-run",
+            waves: [],
             isBoss: false,
-            briefingText: "Enemy reinforcements detected. Clear the second wave.",
+            briefingText: "Deploy to the surface. Reach the extraction point.",
           },
           transitionIn: {
-            cardText: "REINFORCEMENTS INCOMING",
-            cardSubtext: "Phase 2: Clear the second wave",
+            cardText: "GROUND DEPLOYMENT",
+            cardSubtext: "Phase 2: Reach the extraction point",
             duration: 180,
           },
         },

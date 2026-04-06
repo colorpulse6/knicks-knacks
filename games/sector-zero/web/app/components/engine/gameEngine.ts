@@ -64,6 +64,7 @@ import { getPlanetDef } from "./planets";
 import { getPlanetLevelData } from "./planetLevels";
 import { getPlanetDialogTriggers } from "./planetDialog";
 import { createHazardState, updateHazards, type HazardState } from "./hazards";
+import { createCheckpoint, isLastPhase } from "./phases";
 
 // ─── Power-Up Spawning ──────────────────────────────────────────────
 
@@ -357,6 +358,19 @@ export function updateGame(
     return updateBossFight(state, keys, touchX, touchY);
   }
 
+  // Phase transition screen: countdown then go directly to PLAYING
+  if (state.screen === GameScreen.PHASE_TRANSITION) {
+    let s = { ...state, frameCount: state.frameCount + 1, audioEvents: [] as AudioEvent[] };
+    s.phaseTransitionTimer -= 1;
+    s.background = updateBackground(s.background);
+    if (s.phaseTransitionTimer <= 0) {
+      // Skip briefing for Phase 2+ — go directly to PLAYING
+      s.screen = GameScreen.PLAYING;
+      s.waveDelay = 120; // 2s pause before first wave spawns
+    }
+    return s;
+  }
+
   if (state.screen !== GameScreen.PLAYING) return state;
 
   let s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
@@ -518,8 +532,16 @@ export function updateGame(
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      // Always show LEVEL_COMPLETE screen — player chooses NEXT LEVEL or HUB
-      s.screen = GameScreen.LEVEL_COMPLETE;
+      if (!isLastPhase(s)) {
+        s.screen = GameScreen.PHASE_TRANSITION;
+        s.phaseTransitionTimer = 180;
+        s.currentPhase += 1;
+        s.phaseCheckpoint = createCheckpoint(s);
+        s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
+        s.phaseTransitionSubtext = "Preparing next phase...";
+      } else {
+        s.screen = GameScreen.LEVEL_COMPLETE;
+      }
     }
   }
 
@@ -696,16 +718,25 @@ function updateBossFight(
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      // Check if this is the final level in the game
-      const maxLevels = getWorldLevelCount(s.currentWorld);
-      const isLastLevelInWorld = s.currentLevel >= maxLevels;
-      let isFinalLevel = false;
-      if (isLastLevelInWorld) {
-        let nw = s.currentWorld + 1;
-        while (nw <= 8 && getWorldLevelCount(nw) === 0) nw++;
-        isFinalLevel = nw > 8;
+      if (!isLastPhase(s)) {
+        s.screen = GameScreen.PHASE_TRANSITION;
+        s.phaseTransitionTimer = 180;
+        s.currentPhase += 1;
+        s.phaseCheckpoint = createCheckpoint(s);
+        s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
+        s.phaseTransitionSubtext = "Preparing next phase...";
+      } else {
+        // Check if this is the final level in the game
+        const maxLevels = getWorldLevelCount(s.currentWorld);
+        const isLastLevelInWorld = s.currentLevel >= maxLevels;
+        let isFinalLevel = false;
+        if (isLastLevelInWorld) {
+          let nw = s.currentWorld + 1;
+          while (nw <= 8 && getWorldLevelCount(nw) === 0) nw++;
+          isFinalLevel = nw > 8;
+        }
+        s.screen = isFinalLevel ? GameScreen.ENDING : GameScreen.LEVEL_COMPLETE;
       }
-      s.screen = isFinalLevel ? GameScreen.ENDING : GameScreen.LEVEL_COMPLETE;
     }
   }
 

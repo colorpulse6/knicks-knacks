@@ -258,8 +258,9 @@ function drawGroundPlayer(
     let frameCol = 0;
     let frameRow = 0;
 
-    // Determine animation state from input keys
-    const isMoving = state.player.bankDir !== 0; // bankDir is repurposed: nonzero = moving
+    // Detect movement from playerFacingRight changes or velocity
+    // bankDir is set by groundEngine: -1=left, 1=right, 0=idle
+    const isMoving = player.bankDir !== 0;
 
     if (!gs.playerOnGround) {
       // Jumping / falling → row 1, col 1 (jump frame)
@@ -270,25 +271,26 @@ function drawGroundPlayer(
       frameRow = 1;
       frameCol = 2;
     } else if (isMoving) {
-      // Running → row 0, cycle through 4 frames
+      // Running → row 0, cycle through 4 frames (slower: /12 instead of /8)
       frameRow = 0;
-      frameCol = Math.floor(state.frameCount / 8) % 4;
+      frameCol = Math.floor(state.frameCount / 12) % 4;
     } else {
       // Idle → row 1, col 0
       frameRow = 1;
       frameCol = 0;
     }
 
-    // Crop to content center
-    const cropX = frameW * 0.1;
-    const cropY = frameH * 0.1;
-    const cropW = frameW * 0.8;
-    const cropH = frameH * 0.8;
+    // Crop — the sprite has a gray/white background border we need to skip
+    const cropX = frameW * 0.12;
+    const cropY = frameH * 0.05;
+    const cropW = frameW * 0.76;
+    const cropH = frameH * 0.85;
 
-    const drawW = player.width + 20;
-    const drawH = player.height + 20;
-    const drawX = sx - 10;
-    const drawY = sy - 16;
+    // Draw larger than hitbox, offset upward so feet align with ground
+    const drawW = player.width + 24;
+    const drawH = player.height + 28;
+    const drawX = sx - 12;
+    const drawY = sy - 24;
 
     ctx.save();
     // Flip if facing left

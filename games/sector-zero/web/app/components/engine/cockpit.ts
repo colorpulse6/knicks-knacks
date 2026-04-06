@@ -1,4 +1,4 @@
-import { type Keys, type SaveData, type PlanetId, AudioEvent } from "./types";
+import { type Keys, type SaveData, type PlanetId, type SpecialMissionId, AudioEvent } from "./types";
 import { UPGRADE_DEFS, getUpgradeCost, canPurchase } from "./upgrades";
 import { purchaseUpgrade } from "./save";
 import { CREW, getAvailableConversations, markConversationViewed } from "./crewDialog";
@@ -8,6 +8,7 @@ import { getAvailableQuests, isQuestActive, isQuestCompleted, acceptQuest, aband
 import { PLANET_DEFS, isPlanetUnlocked, isPlanetCompleted } from "./planets";
 import { getTreeNodes, canAllocate } from "./skillTree";
 import type { SkillNodeId } from "./types";
+import { getAvailableSpecialMissions, isSpecialMissionCompleted } from "./specialMissions";
 
 // ─── Cockpit Screen Types ───────────────────────────────────────────
 
@@ -26,7 +27,7 @@ export interface CockpitHubState {
   crewDialogLine: number;
   crewDialogActive: boolean;
   missionSelected: number;
-  /** 0 = Side Quests tab, 1 = Planet Missions tab */
+  /** 0 = Side Quests tab, 1 = Special Missions tab, 2 = Planet Missions tab */
   missionTab: number;
   codexCategory: number;
   codexSelected: number;
@@ -106,6 +107,7 @@ export type CockpitAction =
   | { type: "back" }
   | { type: "save-updated"; save: SaveData }
   | { type: "launch-planet"; planetId: PlanetId }
+  | { type: "launch-special-mission"; missionId: SpecialMissionId }
   | { type: "allocate-skill"; nodeId: SkillNodeId };
 
 // ─── Input Handling ─────────────────────────────────────────────────
@@ -362,8 +364,8 @@ function updateMissions(
   save: SaveData
 ): { newState: CockpitHubState; action: CockpitAction } {
   // Tab switching: left/right at top level switches tabs
-  if (justPressed.right && s.missionTab < 1) {
-    s.missionTab = 1;
+  if (justPressed.right && s.missionTab < 2) {
+    s.missionTab += 1;
     s.missionSelected = 0;
     s.audioEvents.push(AudioEvent.COCKPIT_NAV);
     return { newState: s, action: { type: "none" } };
@@ -388,6 +390,9 @@ function updateMissions(
   if (s.missionTab === 0) {
     // ── Side Quests tab ──
     return updateMissionsQuests(s, justPressed, save);
+  } else if (s.missionTab === 1) {
+    // ── Special Missions tab ──
+    return updateMissionsSpecial(s, justPressed, save);
   } else {
     // ── Planet Missions tab ──
     return updateMissionsPlanets(s, justPressed, save);
@@ -466,6 +471,35 @@ function updateMissionsPlanets(
     }
     // Can't launch — locked or already completed
     s.audioEvents.push(AudioEvent.UPGRADE_DENIED);
+  }
+
+  return { newState: s, action: { type: "none" } };
+}
+
+function updateMissionsSpecial(
+  s: CockpitHubState,
+  justPressed: Record<string, boolean>,
+  save: SaveData
+): { newState: CockpitHubState; action: CockpitAction } {
+  const missions = getAvailableSpecialMissions(save);
+
+  const prevMission = s.missionSelected;
+  if (justPressed.up && s.missionSelected > 0) {
+    s.missionSelected -= 1;
+  }
+  if (justPressed.down && missions.length > 0) {
+    s.missionSelected = Math.min(missions.length - 1, s.missionSelected + 1);
+  }
+  if (s.missionSelected !== prevMission) {
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+  }
+
+  if (justPressed.shoot && missions.length > 0) {
+    const mission = missions[s.missionSelected];
+    if (mission) {
+      s.audioEvents.push(AudioEvent.COCKPIT_OPEN);
+      return { newState: s, action: { type: "launch-special-mission", missionId: mission.id } };
+    }
   }
 
   return { newState: s, action: { type: "none" } };

@@ -6,6 +6,8 @@ import {
   type PlanetId,
   type SaveData,
   type ShipUpgrades,
+  type SpecialMissionId,
+  type StoryItemId,
   type WeaponType,
 } from "./types";
 import { unlockCodexEntries } from "./codex";
@@ -29,6 +31,9 @@ const defaultSave: SaveData = {
   completedQuests: [],
   activeQuests: [],
   completedPlanets: [],
+  unlockedSpecialMissions: [],
+  completedSpecialMissions: [],
+  storyItems: [],
   materials: [],
   consumableInventory: {},
   equippedConsumables: [],
@@ -57,6 +62,9 @@ function migrateSave(raw: Record<string, unknown>): SaveData {
     completedQuests: (raw.completedQuests as string[]) ?? [],
     activeQuests: (raw.activeQuests as string[]) ?? [],
     completedPlanets: (raw.completedPlanets as PlanetId[]) ?? [],
+    unlockedSpecialMissions: (raw.unlockedSpecialMissions as SpecialMissionId[]) ?? [],
+    completedSpecialMissions: (raw.completedSpecialMissions as SpecialMissionId[]) ?? [],
+    storyItems: (raw.storyItems as StoryItemId[]) ?? [],
     materials: (raw.materials as MaterialId[]) ?? [],
     consumableInventory: (raw.consumableInventory as Partial<Record<ConsumableId, number>>) ?? {},
     equippedConsumables: (raw.equippedConsumables as ConsumableId[]) ?? [],
@@ -101,6 +109,30 @@ export function loadSave(): SaveData {
 export function saveSave(data: SaveData): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+}
+
+export function unlockSpecialMission(save: SaveData, missionId: SpecialMissionId): SaveData {
+  if (save.unlockedSpecialMissions.includes(missionId)) return save;
+  return {
+    ...save,
+    unlockedSpecialMissions: [...save.unlockedSpecialMissions, missionId],
+  };
+}
+
+export function completeSpecialMission(save: SaveData, missionId: SpecialMissionId): SaveData {
+  if (save.completedSpecialMissions.includes(missionId)) return save;
+  return {
+    ...save,
+    completedSpecialMissions: [...save.completedSpecialMissions, missionId],
+  };
+}
+
+export function addStoryItem(save: SaveData, itemId: StoryItemId): SaveData {
+  if (save.storyItems.includes(itemId)) return save;
+  return {
+    ...save,
+    storyItems: [...save.storyItems, itemId],
+  };
 }
 
 // ─── Credits Economy ────────────────────────────────────────────────
@@ -212,4 +244,24 @@ export function getPlayerName(): string {
   } catch {
     return "Guest";
   }
+}
+
+export function __runSaveSelfTests(): void {
+  const migrated = recalcPilotLevel(unlockCodexEntries(migrateSave({})));
+  console.assert(Array.isArray(migrated.unlockedSpecialMissions), "Special mission unlocks should migrate to an array");
+  console.assert(Array.isArray(migrated.completedSpecialMissions), "Completed special missions should migrate to an array");
+  console.assert(Array.isArray(migrated.storyItems), "Story items should migrate to an array");
+
+  const unlocked = unlockSpecialMission(migrated, "kepler-black-box");
+  console.assert(unlocked.unlockedSpecialMissions.includes("kepler-black-box"), "Special mission should unlock once");
+
+  const completed = completeSpecialMission(unlocked, "kepler-black-box");
+  console.assert(completed.completedSpecialMissions.includes("kepler-black-box"), "Special mission should complete once");
+
+  const withItem = addStoryItem(completed, "kepler-black-box");
+  console.assert(withItem.storyItems.includes("kepler-black-box"), "Story item should persist once");
+}
+
+if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
+  __runSaveSelfTests();
 }

@@ -418,6 +418,8 @@ export interface Keys {
   right: boolean;
   up: boolean;
   down: boolean;
+  strafeLeft: boolean;
+  strafeRight: boolean;
   shoot: boolean;
   bomb: boolean;
   jump: boolean;  // Ground-run: Space=jump, Z/Shift=shoot
@@ -518,6 +520,8 @@ export interface GameState {
   boardingState?: BoardingState;
   /** First-person raycaster state (only populated when currentMode === "first-person") */
   firstPersonState?: FirstPersonState;
+  /** Ship turret mode state (only populated when currentMode === "turret") */
+  turretState?: TurretState;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -666,6 +670,10 @@ export type PlanetId =
   | "luminos"
   | "bastion";
 
+export type SpecialMissionId = "kepler-black-box";
+
+export type StoryItemId = "kepler-black-box";
+
 // ─── Multi-Phase Levels ─────────────────────────────────────────────
 export type GameMode = "shooter" | "ground-run" | "boarding" | "first-person" | "turret" | "base-defense" | "mech-duel";
 
@@ -796,6 +804,40 @@ export interface BoardingState {
   goalReached: boolean;
 }
 
+// ─── Ship Turret (Star Wars Gunner) ─────────────────────────────────
+
+export interface TurretEnemy {
+  id: number;
+  x: number;           // Screen-space X (0-1 normalized, 0.5 = center)
+  y: number;           // Screen-space Y (0-1 normalized, 0.5 = center)
+  z: number;           // Depth (1 = far, 0 = at camera). Determines apparent size.
+  vx: number;          // Drift velocity X per frame
+  vy: number;          // Drift velocity Y per frame
+  speed: number;       // Approach speed (z decreases by this per frame)
+  hp: number;
+  maxHp: number;
+  type: "fighter" | "bomber" | "drone";
+  classId: EnemyClass;
+  score: number;
+}
+
+export interface TurretState {
+  crosshairX: number;  // 0-1 normalized screen position
+  crosshairY: number;
+  enemies: TurretEnemy[];
+  shipHp: number;      // Dropship HP (enemies reaching z=0 deal damage)
+  shipMaxHp: number;
+  wave: number;
+  totalWaves: number;
+  waveTimer: number;    // Frames until next wave spawns
+  spawnTimer: number;   // Frames until next enemy in current wave
+  enemiesRemaining: number; // In current wave
+  killCount: number;
+  targetKills: number;  // Win condition: total kills needed (0 = wave-based)
+  completed: boolean;
+  fireCooldown: number;
+}
+
 // ─── First-Person (Raycaster) ───────────────────────────────────────
 
 export interface FPEnemy {
@@ -824,6 +866,12 @@ export interface FirstPersonState {
   moveSpeed: number;
   rotSpeed: number;
   goalReached: boolean;
+  objectivePickup?: {
+    x: number;
+    y: number;
+    label: string;
+  };
+  objectiveCollected?: boolean;
   enemies: FPEnemy[];
   gunFireTimer: number;   // Frames since last shot (for muzzle flash)
   gunCooldown: number;    // Frames until can fire again
@@ -872,6 +920,9 @@ export interface SaveData {
   activeQuests: string[];
   // Planet mission data
   completedPlanets: PlanetId[];
+  unlockedSpecialMissions: SpecialMissionId[];
+  completedSpecialMissions: SpecialMissionId[];
+  storyItems: StoryItemId[];
   materials: MaterialId[];
   consumableInventory: Partial<Record<ConsumableId, number>>;
   equippedConsumables: ConsumableId[];

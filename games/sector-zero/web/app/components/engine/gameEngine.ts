@@ -28,6 +28,7 @@ import {
   type ShipUpgrades,
   type EnhancementId,
   type PlanetId,
+  type SpecialMissionId,
   type ObjectiveState,
   type SpriteExplosion,
   type SkillNodeId,
@@ -63,6 +64,7 @@ import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./gro
 import { updateBoardingEngine } from "./boardingEngine";
 import { createBoardingState, getBoardingSpawn } from "./boardingLevel";
 import { updateFirstPerson } from "./firstPersonEngine";
+import { updateTurretEngine, createTurretState } from "./turretEngine";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
 import { createObjectiveState, createEscortEntity, createDefendStructure, updateObjective } from "./objectives";
 import { getPlanetDef } from "./planets";
@@ -70,6 +72,7 @@ import { getPlanetLevelData } from "./planetLevels";
 import { getPlanetDialogTriggers } from "./planetDialog";
 import { createHazardState, updateHazards, type HazardState } from "./hazards";
 import { createCheckpoint, isLastPhase } from "./phases";
+import { createKeplerBlackBoxFirstPersonState } from "./keplerBlackBoxMission";
 
 // ─── Power-Up Spawning ──────────────────────────────────────────────
 
@@ -343,6 +346,86 @@ export function createPlanetGameState(
   };
 }
 
+export function createSpecialMissionGameState(
+  missionId: SpecialMissionId,
+  blackBoxRecovered: boolean,
+  upgrades: ShipUpgrades = DEFAULT_UPGRADES,
+  enhancements: EnhancementId[] = [],
+  pilotLevel: number = 1,
+  allocatedSkills: SkillNodeId[] = []
+): GameState {
+  currentUpgrades = { ...upgrades };
+  currentEnhancements = [...enhancements];
+  currentAllocatedSkills = [...allocatedSkills];
+  currentHazardState = null;
+  setPlanetClassOverride(null);
+  setDifficultyForWorld(4);
+  resetEnemyIds();
+  resetFloatingLabelIds();
+  resetBulletIds();
+  resetBossBulletIds();
+  resetPowerUpIds();
+
+  const firstPersonState =
+    missionId === "kepler-black-box"
+      ? createKeplerBlackBoxFirstPersonState(blackBoxRecovered)
+      : createKeplerBlackBoxFirstPersonState(blackBoxRecovered);
+
+  return {
+    screen: GameScreen.BRIEFING,
+    player: createPlayer(upgrades, pilotLevel, allocatedSkills),
+    playerBullets: [],
+    enemyBullets: [],
+    enemies: [],
+    boss: null,
+    powerUps: [],
+    activePowerUps: [],
+    particles: [],
+    explosions: [],
+    floatingLabels: [],
+    equippedWeaponType: "kinetic",
+    pendingBestiaryKills: [],
+    background: createBackground(),
+    score: 0,
+    combo: 0,
+    comboTimer: 0,
+    maxCombo: 0,
+    lives: 3,
+    bombs: 2 + upgrades.munitionsBay,
+    bombCooldown: 0,
+    currentWorld: 4,
+    currentLevel: 2,
+    currentWave: 0,
+    totalWaves: 0,
+    waves: [],
+    waveDelay: 0,
+    kills: 0,
+    totalEnemies: firstPersonState.enemies.length,
+    deaths: 0,
+    frameCount: 0,
+    screenShake: 0,
+    audioEvents: [],
+    bossIntroTimer: 0,
+    briefingTimer: 360,
+    levelCompleteTimer: 0,
+    devInvincible: false,
+    dialog: createDialogState(),
+    dialogTriggers: [],
+    xp: 0,
+    hpWarningTriggered: false,
+    pilotLevel,
+    allocatedSkills,
+    currentPhase: 0,
+    currentMode: "first-person",
+    totalPhases: 1,
+    phaseCheckpoint: null,
+    phaseTransitionTimer: 0,
+    phaseTransitionCard: "",
+    phaseTransitionSubtext: "",
+    firstPersonState,
+  };
+}
+
 // ─── Update ──────────────────────────────────────────────────────────
 
 export function updateGame(
@@ -408,6 +491,17 @@ export function updateGame(
   if (state.currentMode === "first-person") {
     const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
     updateFirstPerson(s, keys);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
+  // ── Ship turret mode dispatch ──
+  if (state.currentMode === "turret") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateTurretEngine(s, keys);
+    s.particles = updateParticles(s.particles);
+    s.explosions = updateSpriteExplosions(s.explosions);
+    s.floatingLabels = updateFloatingLabels(s.floatingLabels);
     if (s.screenShake > 0) s.screenShake *= 0.9;
     return s;
   }
@@ -647,10 +741,16 @@ export function updateGame(
           };
           s.groundState = undefined;
           s.boardingState = undefined;
+        } else if (nextPhaseData?.config.mode === "turret") {
+          s.turretState = createTurretState();
+          s.groundState = undefined;
+          s.boardingState = undefined;
+          s.firstPersonState = undefined;
         } else {
           s.groundState = undefined;
           s.boardingState = undefined;
           s.firstPersonState = undefined;
+          s.turretState = undefined;
         }
       } else {
         s.screen = GameScreen.LEVEL_COMPLETE;
@@ -907,10 +1007,16 @@ function updateBossFight(
           };
           s.groundState = undefined;
           s.boardingState = undefined;
+        } else if (nextPhaseData?.config.mode === "turret") {
+          s.turretState = createTurretState();
+          s.groundState = undefined;
+          s.boardingState = undefined;
+          s.firstPersonState = undefined;
         } else {
           s.groundState = undefined;
           s.boardingState = undefined;
           s.firstPersonState = undefined;
+          s.turretState = undefined;
         }
       } else {
         // Check if this is the final level in the game

@@ -19,6 +19,9 @@ const ENEMY_CONTACT_RANGE = 0.5; // tiles — melee damage
 const ENEMY_CONTACT_DAMAGE = 1;
 const SENTRY_FIRE_RANGE = 8;
 const SENTRY_FIRE_RATE = 120;
+const OBJECTIVE_PICKUP_RANGE = 0.55;
+
+type FacingVector = Pick<FirstPersonState, "dirX" | "dirY" | "planeX" | "planeY">;
 
 // ─── Wall collision ─────────────────────────────────────────────────
 
@@ -50,6 +53,37 @@ function hasLOS(map: BoardingMap, x1: number, y1: number, x2: number, y2: number
   return true;
 }
 
+function rotateView(view: FacingVector, angle: number): FacingVector {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  return {
+    dirX: view.dirX * cos - view.dirY * sin,
+    dirY: view.dirX * sin + view.dirY * cos,
+    planeX: view.planeX * cos - view.planeY * sin,
+    planeY: view.planeX * sin + view.planeY * cos,
+  };
+}
+
+function moveWithCollision(
+  map: BoardingMap,
+  posX: number,
+  posY: number,
+  deltaX: number,
+  deltaY: number
+): { posX: number; posY: number } {
+  let nextX = posX;
+  let nextY = posY;
+
+  const candidateX = posX + deltaX;
+  const candidateY = posY + deltaY;
+
+  if (isWalkable(map, candidateX + COLLISION_RADIUS * Math.sign(deltaX), posY)) nextX = candidateX;
+  if (isWalkable(map, nextX, candidateY + COLLISION_RADIUS * Math.sign(deltaY))) nextY = candidateY;
+
+  return { posX: nextX, posY: nextY };
+}
+
 // ─── Main Update ────────────────────────────────────────────────────
 
 export function updateFirstPerson(gs: GameState, keys: Keys): void {
@@ -60,34 +94,24 @@ export function updateFirstPerson(gs: GameState, keys: Keys): void {
 
   // ── Rotation ──
   if (keys.left) {
-    const oldDirX = dirX;
-    dirX = dirX * Math.cos(ROT_SPEED) - dirY * Math.sin(ROT_SPEED);
-    dirY = oldDirX * Math.sin(ROT_SPEED) + dirY * Math.cos(ROT_SPEED);
-    const oldPlaneX = planeX;
-    planeX = planeX * Math.cos(ROT_SPEED) - planeY * Math.sin(ROT_SPEED);
-    planeY = oldPlaneX * Math.sin(ROT_SPEED) + planeY * Math.cos(ROT_SPEED);
+    ({ dirX, dirY, planeX, planeY } = rotateView({ dirX, dirY, planeX, planeY }, -ROT_SPEED));
   }
   if (keys.right) {
-    const oldDirX = dirX;
-    dirX = dirX * Math.cos(-ROT_SPEED) - dirY * Math.sin(-ROT_SPEED);
-    dirY = oldDirX * Math.sin(-ROT_SPEED) + dirY * Math.cos(-ROT_SPEED);
-    const oldPlaneX = planeX;
-    planeX = planeX * Math.cos(-ROT_SPEED) - planeY * Math.sin(-ROT_SPEED);
-    planeY = oldPlaneX * Math.sin(-ROT_SPEED) + planeY * Math.cos(-ROT_SPEED);
+    ({ dirX, dirY, planeX, planeY } = rotateView({ dirX, dirY, planeX, planeY }, ROT_SPEED));
   }
 
   // ── Movement ──
   if (keys.up) {
-    const newX = posX + dirX * MOVE_SPEED;
-    const newY = posY + dirY * MOVE_SPEED;
-    if (isWalkable(fp.map, newX + COLLISION_RADIUS * Math.sign(dirX), posY)) posX = newX;
-    if (isWalkable(fp.map, posX, newY + COLLISION_RADIUS * Math.sign(dirY))) posY = newY;
+    ({ posX, posY } = moveWithCollision(fp.map, posX, posY, dirX * MOVE_SPEED, dirY * MOVE_SPEED));
   }
   if (keys.down) {
-    const newX = posX - dirX * MOVE_SPEED;
-    const newY = posY - dirY * MOVE_SPEED;
-    if (isWalkable(fp.map, newX - COLLISION_RADIUS * Math.sign(dirX), posY)) posX = newX;
-    if (isWalkable(fp.map, posX, newY - COLLISION_RADIUS * Math.sign(dirY))) posY = newY;
+    ({ posX, posY } = moveWithCollision(fp.map, posX, posY, -dirX * MOVE_SPEED, -dirY * MOVE_SPEED));
+  }
+  if (keys.strafeLeft) {
+    ({ posX, posY } = moveWithCollision(fp.map, posX, posY, dirY * MOVE_SPEED, -dirX * MOVE_SPEED));
+  }
+  if (keys.strafeRight) {
+    ({ posX, posY } = moveWithCollision(fp.map, posX, posY, -dirY * MOVE_SPEED, dirX * MOVE_SPEED));
   }
 
   fp.posX = posX;
@@ -272,6 +296,19 @@ export function updateFirstPerson(gs: GameState, keys: Keys): void {
   // ── Invincibility ──
   if (gs.player.invincibleTimer > 0) gs.player.invincibleTimer--;
 
+  // ── Objective pickup ──
+  if (fp.objectivePickup && !fp.objectiveCollected) {
+    const pickupDX = fp.objectivePickup.x - posX;
+    const pickupDY = fp.objectivePickup.y - posY;
+    if (Math.sqrt(pickupDX * pickupDX + pickupDY * pickupDY) <= OBJECTIVE_PICKUP_RANGE) {
+      fp.objectiveCollected = true;
+      fp.objectivePickup = undefined;
+      fp.goalReached = true;
+      gs.xp += 250;
+      gs.audioEvents.push(AudioEvent.POWER_UP_COLLECT);
+    }
+  }
+
   // ── Goal check ──
   const goalCol = Math.floor(posX);
   const goalRow = Math.floor(posY);
@@ -288,4 +325,73 @@ export function updateFirstPerson(gs: GameState, keys: Keys): void {
   }
 
   gs.player.bankDir = (keys.up || keys.down) ? 1 : 0;
+}
+
+export function __runFirstPersonSelfTests(): void {
+  const turnedLeft = rotateView({ dirX: 1, dirY: 0, planeX: 0, planeY: 0.66 }, -ROT_SPEED);
+  console.assert(turnedLeft.dirY < 0, "Left turn should rotate toward negative Y");
+
+  const turnedRight = rotateView({ dirX: 1, dirY: 0, planeX: 0, planeY: 0.66 }, ROT_SPEED);
+  console.assert(turnedRight.dirY > 0, "Right turn should rotate toward positive Y");
+
+  const testMap: BoardingMap = {
+    width: 5,
+    height: 5,
+    tileSize: 32,
+    tiles: [
+      ["wall", "wall", "wall", "wall", "wall"],
+      ["wall", "floor", "floor", "floor", "wall"],
+      ["wall", "floor", "floor", "floor", "wall"],
+      ["wall", "floor", "floor", "floor", "wall"],
+      ["wall", "wall", "wall", "wall", "wall"],
+    ],
+  };
+
+  const strafeLeft = moveWithCollision(testMap, 2.5, 2.5, 0, -MOVE_SPEED);
+  console.assert(strafeLeft.posY < 2.5, "Strafe left should move perpendicular to facing");
+
+  const strafeRight = moveWithCollision(testMap, 2.5, 2.5, 0, MOVE_SPEED);
+  console.assert(strafeRight.posY > 2.5, "Strafe right should move perpendicular to facing");
+
+  const objectiveState = {
+    map: testMap,
+    posX: 2.5,
+    posY: 2.5,
+    dirX: 1,
+    dirY: 0,
+    planeX: 0,
+    planeY: 0.66,
+    moveSpeed: MOVE_SPEED,
+    rotSpeed: ROT_SPEED,
+    goalReached: false,
+    objectivePickup: { x: 2.6, y: 2.5, label: "TEST" },
+    objectiveCollected: false,
+    enemies: [],
+    gunFireTimer: 0,
+    gunCooldown: 0,
+  };
+  const objectiveGame = {
+    firstPersonState: objectiveState,
+    levelCompleteTimer: 0,
+    player: { invincibleTimer: 0, bankDir: 0 },
+    xp: 0,
+    audioEvents: [],
+  } as unknown as GameState;
+  updateFirstPerson(objectiveGame, {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    strafeLeft: false,
+    strafeRight: false,
+    shoot: false,
+    bomb: false,
+    jump: false,
+  });
+  console.assert(objectiveState.objectiveCollected, "Objective pickup should collect when player is within range");
+  console.assert(objectiveState.goalReached, "Objective pickup should mark the mission complete");
+}
+
+if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
+  __runFirstPersonSelfTests();
 }

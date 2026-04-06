@@ -28,6 +28,7 @@ import { drawPhaseTransition } from "./phaseTransition";
 import { drawGroundGame } from "./groundRenderer";
 import { drawBoardingGame } from "./boardingRenderer";
 import { drawFirstPerson } from "./firstPersonRenderer";
+import { drawTurretGame } from "./turretRenderer";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -90,6 +91,13 @@ export function drawGame(
   // First-person raycaster mode
   if (state.currentMode === "first-person") {
     drawFirstPerson(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // Ship turret mode
+  if (state.currentMode === "turret") {
+    drawTurretGame(ctx, state);
     ctx.restore();
     return;
   }

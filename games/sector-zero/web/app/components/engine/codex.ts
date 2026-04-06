@@ -249,6 +249,15 @@ export const CODEX_ENTRIES: CodexEntry[] = [
     unlockAfter: "2-2",
   },
   {
+    id: "personal-reyes-kepler-black-box",
+    category: "personal",
+    title: "Reyes: Kepler Black Box",
+    speaker: "REYES",
+    speakerColor: "#ff8844",
+    text: "LT. REYES — RECORDER TRANSCRIPT\n\nI know that registry prefix. Kepler civilian, third wave. Same family line as my grandmother's ship.\n\nThe recorder doesn't sound like a battle log. It sounds like a pilgrimage. Course corrections, signal echoes, crew notes about hearing voices in the dark.\n\nThey weren't lost. They were led here.\n\nIf Command knew these ships were redirected into Sector Zero, then everything we've been told about the Kepler dead was a lie.\n\nI'm keeping the black box on the bridge. I want it where I can see it.",
+    unlockAfter: "4-99",
+  },
+  {
     id: "personal-voss-1",
     category: "personal",
     title: "Voss: The Eye",
@@ -329,6 +338,14 @@ export function unlockCodexEntries(save: SaveData): SaveData {
   return {
     ...save,
     unlockedCodex: [...save.unlockedCodex, ...newIds],
+  };
+}
+
+export function unlockCodexEntry(save: SaveData, entryId: string): SaveData {
+  if (save.unlockedCodex.includes(entryId)) return save;
+  return {
+    ...save,
+    unlockedCodex: [...save.unlockedCodex, entryId],
   };
 }
 

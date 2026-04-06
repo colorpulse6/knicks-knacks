@@ -53,6 +53,11 @@ function drawMiniMap(
     }
   }
 
+  if (fp.objectivePickup) {
+    ctx.fillStyle = "#ffaa44";
+    ctx.fillRect(mx + fp.objectivePickup.x * scale - 1, my + fp.objectivePickup.y * scale - 1, scale, scale);
+  }
+
   // Player position + direction
   const px = mx + fp.posX * scale;
   const py = my + fp.posY * scale;
@@ -101,6 +106,42 @@ function drawCompass(ctx: CanvasRenderingContext2D, fp: FirstPersonState): void 
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillText(dirs[idx], CANVAS_WIDTH / 2, 8);
+}
+
+function drawObjectiveBillboard(
+  ctx: CanvasRenderingContext2D,
+  fp: FirstPersonState
+): void {
+  if (!fp.objectivePickup) return;
+
+  const dx = fp.objectivePickup.x - fp.posX;
+  const dy = fp.objectivePickup.y - fp.posY;
+  const invDet = 1.0 / (fp.planeX * fp.dirY - fp.dirX * fp.planeY);
+  const transformX = invDet * (fp.dirY * dx - fp.dirX * dy);
+  const transformY = invDet * (-fp.planeY * dx + fp.planeX * dy);
+
+  if (transformY <= 0.1) return;
+
+  const screenX = Math.floor((CANVAS_WIDTH / 2) * (1 + transformX / transformY));
+  const size = Math.max(18, Math.floor(GAME_AREA_HEIGHT / transformY) * 0.3);
+  const drawX = Math.floor(screenX - size / 2);
+  const drawY = Math.floor(GAME_AREA_HEIGHT / 2 - size * 0.6);
+
+  ctx.save();
+  ctx.shadowColor = "#ffaa44";
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "rgba(255, 168, 68, 0.9)";
+  ctx.fillRect(drawX, drawY, size, size);
+  ctx.strokeStyle = "#fff1b3";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(drawX, drawY, size, size);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#fff1b3";
+  ctx.font = "bold 9px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(fp.objectivePickup.label, screenX, Math.max(14, drawY - 6));
+  ctx.restore();
 }
 
 // ─── Enemy Billboards (Doom-style sprites in 3D space) ──────────────
@@ -411,6 +452,9 @@ export function drawFirstPerson(
   // ── Enemy billboards ──
   drawEnemyBillboards(ctx, fp, hits, state.frameCount);
 
+  // ── Objective marker ──
+  drawObjectiveBillboard(ctx, fp);
+
   // ── Gun HUD ──
   drawGunHUD(ctx, fp, state.frameCount);
 
@@ -454,7 +498,7 @@ export function drawFirstPerson(
   ctx.fillStyle = "#44668844";
   ctx.font = "9px monospace";
   ctx.textAlign = "center";
-  ctx.fillText("← → TURN   ↑ ↓ MOVE", CANVAS_WIDTH / 2, GAME_AREA_HEIGHT - 8);
+  ctx.fillText("← → TURN   ↑ ↓ / W S MOVE   A D STRAFE", CANVAS_WIDTH / 2, GAME_AREA_HEIGHT - 8);
 
   ctx.restore();
 

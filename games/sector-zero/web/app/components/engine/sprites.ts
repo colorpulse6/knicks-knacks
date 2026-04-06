@@ -252,6 +252,14 @@ export const SPRITES = {
   BOARDING_ENEMY_GRUNT_ATTACK: "/sprites/boarding/enemy-grunt-attack.png",
   BOARDING_TILES: "/sprites/boarding/tiles.png",
   FP_GUN_SHEET: "/sprites/boarding/gun-sheet.png",
+
+  // Ship Turret
+  TURRET_CROSSHAIR: "/sprites/turret/crosshair.png",
+  TURRET_ENEMY_FIGHTER: "/sprites/turret/enemy-fighter.png",
+  TURRET_ENEMY_BOMBER: "/sprites/turret/enemy-bomber.png",
+  TURRET_ENEMY_DRONE: "/sprites/turret/enemy-drone.png",
+  TURRET_COCKPIT_FRAME: "/sprites/turret/cockpit-frame.png",
+  TURRET_BG: "/sprites/turret/bg-space.png",
   FP_ENEMY_FRONT: "/sprites/boarding/enemy-fp-front.png",
   FP_ENEMY_FLINCH: "/sprites/boarding/enemy-fp-flinch.png",
   FP_ENEMY_DEATH: "/sprites/boarding/enemy-fp-death.png",

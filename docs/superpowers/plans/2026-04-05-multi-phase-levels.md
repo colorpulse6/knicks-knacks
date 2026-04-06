@@ -467,8 +467,10 @@ if (s.screen === GameScreen.PHASE_TRANSITION) {
   s.phaseTransitionTimer -= 1;
   s.background = updateBackground(s.background);
   if (s.phaseTransitionTimer <= 0) {
-    s.screen = GameScreen.BRIEFING;
-    s.briefingTimer = 300;  // 5s briefing for next phase
+    // Skip briefing for Phase 2+ — go directly to PLAYING
+    // (Briefing screen would show stale Phase 1 text; the transition card already served as the briefing)
+    s.screen = GameScreen.PLAYING;
+    s.waveDelay = 120;  // 2s pause before first wave spawns
   }
   return s;
 }
@@ -482,7 +484,16 @@ Find where `levelCompleteTimer` expires and `LEVEL_COMPLETE` is set. This is now
 cd games/sector-zero/web && grep -n "levelCompleteTimer.*<= 0\|s.screen = GameScreen.LEVEL_COMPLETE" app/components/engine/gameEngine.ts | head -5
 ```
 
-Replace the simple `s.screen = GameScreen.LEVEL_COMPLETE` with phase-aware logic:
+There are **TWO** `levelCompleteTimer` countdown blocks in the game engine:
+1. The normal level block (~line 506) — already simplified in the earlier "level complete between levels" commit
+2. The boss defeat block (~line 684-697) — handles final-level-of-game detection (`GameScreen.ENDING`)
+
+Find BOTH with:
+```bash
+cd games/sector-zero/web && grep -n "s.screen = GameScreen.LEVEL_COMPLETE\|s.screen = GameScreen.ENDING" app/components/engine/gameEngine.ts | head -10
+```
+
+Replace BOTH blocks with the same phase-aware logic:
 
 ```typescript
 if (s.levelCompleteTimer > 0) {
@@ -493,18 +504,19 @@ if (s.levelCompleteTimer > 0) {
       s.screen = GameScreen.PHASE_TRANSITION;
       s.phaseTransitionTimer = 180;  // 3s transition
       s.currentPhase += 1;
-      // Snapshot checkpoint for the new phase
       s.phaseCheckpoint = createCheckpoint(s);
-      // Card text will be set by phase data (for now, generic)
       s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
       s.phaseTransitionSubtext = "Preparing next phase...";
     } else {
-      // Final phase complete — show results
+      // Final phase complete — show results (or ENDING if final boss)
+      // Preserve existing final-level detection for boss levels
       s.screen = GameScreen.LEVEL_COMPLETE;
     }
   }
 }
 ```
+
+**For the boss block specifically:** the existing code checks whether this is the final level in the game and sets `GameScreen.ENDING`. Wrap that logic inside the `isLastPhase` else-branch. The `ENDING` check should ONLY run when we're on the last phase AND the last level. Read the existing boss block's final-level detection code and keep it inside the else branch.
 
 - [ ] **Step 5: Verify build**
 

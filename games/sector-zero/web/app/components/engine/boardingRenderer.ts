@@ -33,6 +33,11 @@ function drawTileMap(
   camY: number,
   frameCount: number
 ): void {
+  const tileSheet = getSprite(SPRITES.BOARDING_TILES);
+  // Tile sheet: 1536×1024, 3 tiles: floor(0), wall(1), door(2)
+  const sheetFrameW = tileSheet ? tileSheet.width / 3 : 0;
+  const sheetFrameH = tileSheet ? tileSheet.height : 0;
+
   const firstCol = Math.max(0, Math.floor(camX / T));
   const lastCol = Math.min(map.width - 1, Math.ceil((camX + CANVAS_WIDTH) / T));
   const firstRow = Math.max(0, Math.floor(camY / T));
@@ -46,27 +51,27 @@ function drawTileMap(
       const sx = col * T - camX;
       const sy = row * T - camY;
 
-      if (tile === "wall") {
+      if ((tile === "wall") && tileSheet) {
+        ctx.drawImage(tileSheet, sheetFrameW, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
+      } else if ((tile === "floor" || tile === "spawn") && tileSheet) {
+        ctx.drawImage(tileSheet, 0, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
+      } else if (tile === "door" && tileSheet) {
+        ctx.drawImage(tileSheet, sheetFrameW * 2, 0, sheetFrameW, sheetFrameH, sx, sy, T, T);
+      } else if (tile === "wall") {
         ctx.fillStyle = "#2a2a3a";
         ctx.fillRect(sx, sy, T, T);
-        // Inner edge highlights
         ctx.fillStyle = "#3a3a4e";
         ctx.fillRect(sx, sy, T, 1);
         ctx.fillRect(sx, sy, 1, T);
-        ctx.fillStyle = "#1a1a28";
-        ctx.fillRect(sx + T - 1, sy, 1, T);
-        ctx.fillRect(sx, sy + T - 1, T, 1);
       } else if (tile === "floor" || tile === "spawn") {
         ctx.fillStyle = "#12121e";
         ctx.fillRect(sx, sy, T, T);
-        // Subtle grid lines
         ctx.strokeStyle = "#1a1a28";
         ctx.lineWidth = 0.5;
         ctx.strokeRect(sx, sy, T, T);
       } else if (tile === "door") {
         ctx.fillStyle = "#12121e";
         ctx.fillRect(sx, sy, T, T);
-        // Door indicator — green strip
         ctx.fillStyle = "#22664433";
         ctx.fillRect(sx + 2, sy + 2, T - 4, T - 4);
         ctx.fillStyle = "#44cc66";
@@ -101,47 +106,43 @@ function drawEnemies(
   camY: number,
   frameCount: number
 ): void {
+  const gruntIdle = getSprite(SPRITES.BOARDING_ENEMY_GRUNT_IDLE);
+  const gruntAttack = getSprite(SPRITES.BOARDING_ENEMY_GRUNT_ATTACK);
+
   for (const e of enemies) {
     const sx = e.x - camX;
     const sy = e.y - camY;
     if (sx + e.width < -20 || sx > CANVAS_WIDTH + 20) continue;
     if (sy + e.height < -20 || sy > GAME_AREA_HEIGHT + 20) continue;
 
-    // Color by type
-    const color = e.type === "sentry" ? "#cc4444"
-      : e.type === "charger" ? "#4488ff"
-      : "#44aa44";
+    const drawSize = e.width + 16;
+    const drawX = sx + e.width / 2 - drawSize / 2;
+    const drawY = sy + e.height / 2 - drawSize / 2;
 
-    const drawW = e.width + 8;
-    const drawH = e.height + 8;
-    const drawX = sx - 4;
-    const drawY = sy - 4;
+    // Pick sprite based on type and aggro state
+    const sprite = e.isAggro ? gruntAttack : gruntIdle;
 
-    // Body
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(sx + e.width / 2, sy + e.height / 2, e.width / 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Aggro indicator
-    if (e.isAggro) {
-      ctx.strokeStyle = "#ff000066";
-      ctx.lineWidth = 1;
+    if (sprite) {
+      ctx.drawImage(sprite, drawX, drawY, drawSize, drawSize);
+    } else {
+      // Fallback colored circle
+      const color = e.type === "sentry" ? "#cc4444"
+        : e.type === "charger" ? "#4488ff"
+        : "#44aa44";
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(sx + e.width / 2, sy + e.height / 2, e.width / 2 + 3, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.arc(sx + e.width / 2, sy + e.height / 2, e.width / 2, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Facing direction indicator
-    const dir = facingVec(e.facing);
-    ctx.fillStyle = "#ffffff88";
-    ctx.beginPath();
-    ctx.arc(
-      sx + e.width / 2 + dir.x * 8,
-      sy + e.height / 2 + dir.y * 8,
-      3, 0, Math.PI * 2
-    );
-    ctx.fill();
+    // Aggro indicator ring
+    if (e.isAggro) {
+      ctx.strokeStyle = "#ff000044";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sx + e.width / 2, sy + e.height / 2, drawSize / 2 + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // HP bar
     if (e.hp < e.maxHp) {
@@ -179,27 +180,42 @@ function drawPlayer(
   const sx = player.x - bs.cameraX;
   const sy = player.y - bs.cameraY;
 
-  // Player circle (PoC — will be replaced with directional sprites)
-  ctx.fillStyle = "#44aaff";
-  ctx.beginPath();
-  ctx.arc(sx + 12, sy + 12, 12, 0, Math.PI * 2);
-  ctx.fill();
+  // Pick directional sprite
+  const spriteMap: Record<string, string> = {
+    up: SPRITES.BOARDING_PLAYER_UP,
+    down: SPRITES.BOARDING_PLAYER_DOWN,
+    left: SPRITES.BOARDING_PLAYER_LEFT,
+    right: SPRITES.BOARDING_PLAYER_RIGHT,
+  };
+  const sprite = getSprite(spriteMap[bs.playerFacing]);
 
-  // Facing indicator
-  const dir = facingVec(bs.playerFacing);
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(sx + 12 + dir.x * 8, sy + 12 + dir.y * 8, 3, 0, Math.PI * 2);
-  ctx.fill();
+  const drawSize = 36;
+  const drawX = sx + 12 - drawSize / 2;
+  const drawY = sy + 12 - drawSize / 2;
 
   // Dash trail
   if (bs.dashTimer > 0) {
+    const dir = facingVec(bs.playerFacing);
     ctx.globalAlpha = 0.3;
-    ctx.fillStyle = "#44ccff";
-    ctx.beginPath();
-    ctx.arc(sx + 12 - dir.x * 16, sy + 12 - dir.y * 16, 10, 0, Math.PI * 2);
-    ctx.fill();
+    if (sprite) {
+      ctx.drawImage(sprite, drawX - dir.x * 18, drawY - dir.y * 18, drawSize, drawSize);
+    }
     ctx.globalAlpha = 1;
+  }
+
+  if (sprite) {
+    ctx.drawImage(sprite, drawX, drawY, drawSize, drawSize);
+  } else {
+    // Fallback circle
+    ctx.fillStyle = "#44aaff";
+    ctx.beginPath();
+    ctx.arc(sx + 12, sy + 12, 12, 0, Math.PI * 2);
+    ctx.fill();
+    const dir = facingVec(bs.playerFacing);
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(sx + 12 + dir.x * 8, sy + 12 + dir.y * 8, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 

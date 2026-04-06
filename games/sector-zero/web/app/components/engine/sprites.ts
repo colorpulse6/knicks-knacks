@@ -226,6 +226,15 @@ export const SPRITES = {
   ESCORT_SHIP: "/sprites/ships/escort-ship.png",
   DEFEND_STRUCTURE: "/sprites/effects/defend-structure.png",
   COLLECTIBLE_ORB: "/sprites/effects/collectible-orb.png",
+
+  // Ground Run-and-Gun
+  GROUND_PLAYER: "/sprites/ground/player-infantry.png",
+  GROUND_ENEMY_TURRET: "/sprites/ground/enemy-turret.png",
+  GROUND_ENEMY_PATROL: "/sprites/ground/enemy-patrol.png",
+  GROUND_ENEMY_JUMPER: "/sprites/ground/enemy-jumper.png",
+  GROUND_TILES: "/sprites/ground/tiles.png",
+  GROUND_BG_FAR: "/sprites/ground/bg-surface-far.png",
+  GROUND_BG_MID: "/sprites/ground/bg-surface-mid.png",
 };
 
 export async function preloadAll(): Promise<void> {

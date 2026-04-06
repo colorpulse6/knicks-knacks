@@ -156,6 +156,7 @@ export function createPlayer(
 // Store current upgrades so handlePlayerShooting and updatePowerUps can reference them
 let currentUpgrades: ShipUpgrades = { ...DEFAULT_UPGRADES };
 let currentEnhancements: EnhancementId[] = [];
+let currentAllocatedSkills: SkillNodeId[] = [];
 let currentHazardState: HazardState | null = null;
 let reflectedBulletId = 200000;
 
@@ -171,6 +172,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
   setPlanetClassOverride(null);
   currentUpgrades = { ...upgrades };
   currentEnhancements = [...enhancements];
+  currentAllocatedSkills = [...allocatedSkills];
   currentHazardState = null;
   setDifficultyForWorld(world);
   resetEnemyIds();
@@ -1077,6 +1079,22 @@ function handleCollisions(state: GameState): GameState {
           if (label) {
             s.floatingLabels = [...s.floatingLabels, label];
           }
+
+          // Sharpshooter: +20% damage on Effective hits
+          if (affinity === "effective" && hasSkill(s.allocatedSkills, "sharpshooter")) {
+            finalDamage *= 1 + getSkillEffect(s.allocatedSkills, "sharpshooter");
+          }
+
+          // Berserker: +5% damage per missing HP
+          if (hasSkill(s.allocatedSkills, "berserker")) {
+            const missingHp = s.player.maxHp - s.player.hp;
+            finalDamage *= 1 + getSkillEffect(s.allocatedSkills, "berserker") * missingHp;
+          }
+
+          // Glass Cannon: +30% damage (HP penalty already applied in createPlayer)
+          if (hasSkill(s.allocatedSkills, "glass-cannon")) {
+            finalDamage *= 1 + getSkillEffect(s.allocatedSkills, "glass-cannon");
+          }
         }
 
         const newHp = enemy.hp - finalDamage;
@@ -1494,6 +1512,10 @@ function updatePowerUps(state: GameState): GameState {
         // Resonance field enhancement: +25% all power-up durations
         if (hasEnhancement("resonance-field")) {
           dur = Math.floor(dur * 1.25);
+        }
+        // Overcharge skill: weapon power-ups last 50% longer
+        if (hasSkill(currentAllocatedSkills, "overcharge")) {
+          dur = Math.floor(dur * (1 + getSkillEffect(currentAllocatedSkills, "overcharge")));
         }
         const existing = activePowerUps.findIndex((a) => a.type === pu.type);
 

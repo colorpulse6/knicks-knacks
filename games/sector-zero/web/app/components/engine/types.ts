@@ -821,10 +821,22 @@ export interface TurretEnemy {
   score: number;
 }
 
+export interface TurretBolt {
+  id: number;
+  x: number;           // Screen-space normalized (0-1)
+  y: number;
+  z: number;           // Depth — starts at 0 (camera), flies outward toward 1
+  targetX: number;     // Where it's heading
+  targetY: number;
+  speed: number;
+  life: number;        // Frames remaining
+}
+
 export interface TurretState {
   crosshairX: number;  // 0-1 normalized screen position
   crosshairY: number;
   enemies: TurretEnemy[];
+  bolts: TurretBolt[];
   shipHp: number;      // Dropship HP (enemies reaching z=0 deal damage)
   shipMaxHp: number;
   wave: number;

@@ -77,8 +77,11 @@ export function createTurretState(): TurretState {
     targetKills: 0,
     completed: false,
     fireCooldown: 0,
+    bolts: [],
   };
 }
+
+let boltIdCounter = 0;
 
 // ─── Main Update ────────────────────────────────────────────────────
 
@@ -101,6 +104,18 @@ export function updateTurretEngine(gs: GameState, keys: Keys): void {
     ts.fireCooldown = FIRE_COOLDOWN;
     gs.audioEvents.push(AudioEvent.PLAYER_SHOOT);
     gs.screenShake = 1;
+
+    // Spawn visible laser bolt from center toward crosshair
+    ts.bolts.push({
+      id: ++boltIdCounter,
+      x: 0.5,
+      y: 0.5,
+      z: 0,
+      targetX: ts.crosshairX,
+      targetY: ts.crosshairY,
+      speed: 0.08,
+      life: 20,
+    });
 
     // Find closest enemy near crosshair
     let bestEnemy: TurretEnemy | null = null;
@@ -196,6 +211,22 @@ export function updateTurretEngine(gs: GameState, keys: Keys): void {
     }
   }
   ts.enemies = alive;
+
+  // ── Update bolts ──
+  ts.bolts = ts.bolts
+    .map((b) => {
+      const dx = b.targetX - 0.5;
+      const dy = b.targetY - 0.5;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      return {
+        ...b,
+        x: b.x + (dx / len) * b.speed * 0.5,
+        y: b.y + (dy / len) * b.speed * 0.5,
+        z: b.z + b.speed,
+        life: b.life - 1,
+      };
+    })
+    .filter((b) => b.life > 0 && b.z < 1.5);
 
   // ── Wave spawning ──
   if (ts.wave < ts.totalWaves) {

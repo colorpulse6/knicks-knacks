@@ -76,9 +76,11 @@ function drawEnemies(
     const screenX = projX * CANVAS_WIDTH;
     const screenY = projY * GAME_AREA_HEIGHT;
 
-    // Size scales inversely with depth
+    // Clip: skip enemies fully outside viewport
     const baseSize = e.type === "bomber" ? 60 : e.type === "fighter" ? 40 : 25;
     const size = baseSize / e.z;
+    if (screenX + size / 2 < 0 || screenX - size / 2 > CANVAS_WIDTH) continue;
+    if (screenY + size / 2 < 0 || screenY - size / 2 > GAME_AREA_HEIGHT) continue;
 
     // Pick sprite
     let sprite: HTMLImageElement | null = null;
@@ -157,6 +159,54 @@ function drawEnemies(
       ctx.fillStyle = e.hp / e.maxHp > 0.5 ? "#44ff44" : "#ff4444";
       ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
     }
+  }
+}
+
+// ─── Laser Bolts ────────────────────────────────────────────────────
+
+function drawBolts(
+  ctx: CanvasRenderingContext2D,
+  ts: TurretState
+): void {
+  for (const b of ts.bolts) {
+    // Project bolt position based on its depth
+    const depth = Math.max(0.1, b.z);
+    const screenX = (0.5 + (b.x - 0.5) / Math.max(0.3, depth)) * CANVAS_WIDTH;
+    const screenY = (0.5 + (b.y - 0.5) / Math.max(0.3, depth)) * GAME_AREA_HEIGHT;
+
+    // Bolt gets smaller as it flies away
+    const boltSize = Math.max(2, 8 - b.z * 6);
+    const alpha = Math.min(1, b.life / 10);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Glow
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#44ffaa";
+
+    // Bolt trail
+    const trailLen = 12 - b.z * 8;
+    const dx = b.targetX - 0.5;
+    const dy = b.targetY - 0.5;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const trailX = screenX - (dx / len) * trailLen;
+    const trailY = screenY - (dy / len) * trailLen;
+
+    ctx.strokeStyle = "#44ffaa";
+    ctx.lineWidth = boltSize;
+    ctx.beginPath();
+    ctx.moveTo(trailX, trailY);
+    ctx.lineTo(screenX, screenY);
+    ctx.stroke();
+
+    // Bright head
+    ctx.fillStyle = "#aaffdd";
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, boltSize * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 }
 
@@ -350,6 +400,9 @@ export function drawTurretGame(
 
   // Enemies
   drawEnemies(ctx, ts.enemies, state.frameCount);
+
+  // Laser bolts
+  drawBolts(ctx, ts);
 
   // Explosions + labels
   drawSpriteExplosions(ctx, state.explosions);

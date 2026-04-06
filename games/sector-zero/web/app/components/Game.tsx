@@ -522,6 +522,7 @@ export default function Game() {
             spawnTimer: 0, enemiesRemaining: 0,
             killCount: 0, targetKills: 0,
             completed: false, fireCooldown: 0,
+            bolts: [],
           },
           briefingTimer: 0,
           devInvincible: gameState?.devInvincible ?? false,

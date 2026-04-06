@@ -44,7 +44,6 @@ export function drawGame(
 
   // Phase transition screen
   if (state.screen === GameScreen.PHASE_TRANSITION) {
-    console.log("[PHASE RENDER] card:", state.phaseTransitionCard, "timer:", state.phaseTransitionTimer);
     drawPhaseTransition(
       ctx,
       state.phaseTransitionCard,

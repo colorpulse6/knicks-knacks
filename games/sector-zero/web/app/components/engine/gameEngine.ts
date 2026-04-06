@@ -534,7 +534,6 @@ export function updateGame(
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
       if (!isLastPhase(s)) {
-        console.log("[PHASE] Non-boss level → transition. phase:", s.currentPhase, "/", s.totalPhases);
         s.screen = GameScreen.PHASE_TRANSITION;
         s.phaseTransitionTimer = 180;
         s.currentPhase += 1;

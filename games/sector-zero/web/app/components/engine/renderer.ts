@@ -24,6 +24,7 @@ import {
   isLevelUnlocked,
 } from "./starMap";
 import { PLANET_DEFS } from "./planets";
+import { drawPhaseTransition } from "./phaseTransition";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -40,6 +41,19 @@ export function drawGame(
 
   // Background
   drawBackground(ctx, state.background, state.currentWorld, state.planetId);
+
+  // Phase transition screen
+  if (state.screen === GameScreen.PHASE_TRANSITION) {
+    drawPhaseTransition(
+      ctx,
+      state.phaseTransitionCard,
+      state.phaseTransitionSubtext,
+      state.phaseTransitionTimer,
+      180
+    );
+    ctx.restore();
+    return;
+  }
 
   // Briefing screen (overlay on background)
   if (state.screen === GameScreen.BRIEFING) {

@@ -9,6 +9,8 @@ import {
   type WeaponType,
 } from "./types";
 import { unlockCodexEntries } from "./codex";
+import { calcPilotLevel, skillPointsAtLevel } from "./pilotLevel";
+import { getNode } from "./skillTree";
 export type { SaveData };
 
 const SAVE_KEY = "sector-zero-save";
@@ -67,13 +69,30 @@ function migrateSave(raw: Record<string, unknown>): SaveData {
   };
 }
 
+/** Recalculate pilot level and available skill points from total XP.
+ *  Called on load to ensure save data is consistent. */
+export function recalcPilotLevel(save: SaveData): SaveData {
+  const level = calcPilotLevel(save.xp);
+  const totalPoints = skillPointsAtLevel(level);
+  let spentPoints = 0;
+  for (const id of save.allocatedSkills) {
+    const node = getNode(id);
+    spentPoints += node?.cost ?? 1;
+  }
+  return {
+    ...save,
+    pilotLevel: level,
+    skillPoints: Math.max(0, totalPoints - spentPoints),
+  };
+}
+
 export function loadSave(): SaveData {
   if (typeof window === "undefined") return { ...defaultSave };
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return unlockCodexEntries({ ...defaultSave });
     const parsed = JSON.parse(raw);
-    return unlockCodexEntries(migrateSave(parsed));
+    return recalcPilotLevel(unlockCodexEntries(migrateSave(parsed)));
   } catch {
     return unlockCodexEntries({ ...defaultSave });
   }

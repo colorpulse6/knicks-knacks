@@ -35,6 +35,7 @@ import {
   createStarMapState,
   updateStarMap,
   resetStarMapKeys,
+  getWorldNodes,
 } from "./engine/starMap";
 import {
   type CockpitHubState,
@@ -1286,6 +1287,54 @@ export default function Game() {
         }}
         onMouseLeave={() => {
           mouseRef.current.down = false;
+        }}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const scaleX = CANVAS_WIDTH / rect.width;
+          const scaleY = CANVAS_HEIGHT / rect.height;
+          const cx = (e.clientX - rect.left) * scaleX;
+          const cy = (e.clientY - rect.top) * scaleY;
+
+          // Cockpit hub — click on hotspots
+          if (showCockpit && cockpitState.screen === "hub") {
+            for (let i = 0; i < COCKPIT_HOTSPOTS.length; i++) {
+              const h = COCKPIT_HOTSPOTS[i];
+              if (cx >= h.x && cx <= h.x + h.w && cy >= h.y && cy <= h.y + h.h) {
+                setCockpitState((prev) => ({
+                  ...prev,
+                  screen: h.id,
+                  selectedHotspot: i,
+                }));
+                break;
+              }
+            }
+          }
+
+          // Cockpit sub-screens — click near top-left to go back
+          if (showCockpit && cockpitState.screen !== "hub") {
+            if (cx < 60 && cy < 50) {
+              setCockpitState((prev) => ({ ...prev, screen: "hub" }));
+            }
+          }
+
+          // Star map — click on world nodes to select
+          if (showMap && starMapState) {
+            const worldNodes = getWorldNodes(saveData);
+            for (const node of worldNodes) {
+              if (!node.unlocked) continue;
+              const dx = cx - node.x;
+              const dy = cy - node.y;
+              if (dx * dx + dy * dy < 30 * 30) {
+                if (starMapState.selectedWorld === node.world && !starMapState.expanded) {
+                  // Double-click to expand
+                  setStarMapState((prev) => prev ? { ...prev, expanded: true, selectedLevel: 1 } : prev);
+                } else {
+                  setStarMapState((prev) => prev ? { ...prev, selectedWorld: node.world, expanded: false } : prev);
+                }
+                break;
+              }
+            }
+          }
         }}
       />
 

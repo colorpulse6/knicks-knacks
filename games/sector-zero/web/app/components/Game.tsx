@@ -50,6 +50,7 @@ import {
   getCreditsFrameCount,
   type EndingChoice,
 } from "./engine/ending";
+import { restoreCheckpoint } from "./engine/phases";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -195,6 +196,29 @@ export default function Game() {
     audio.switchMusic("game");
     if (gameState) {
       updateSectorZeroProfile(gameState.score);
+    }
+    // If we have a checkpoint (multi-phase, not phase 1), restart from checkpoint
+    if (gameState?.phaseCheckpoint && gameState.currentPhase > 0) {
+      const restored = restoreCheckpoint(gameState, gameState.phaseCheckpoint);
+      setGameState({
+        ...gameState,
+        ...restored,
+        screen: GameScreen.PLAYING,
+        enemies: [],
+        boss: null,
+        playerBullets: [],
+        enemyBullets: [],
+        particles: [],
+        explosions: [],
+        floatingLabels: [],
+        pendingBestiaryKills: [],
+        currentWave: 0,
+        waveDelay: 120,
+        levelCompleteTimer: 0,
+        screenShake: 0,
+        bombCooldown: 0,
+      } as GameState);
+      return;
     }
     if (activePlanetId) {
       setGameState(createPlanetGameState(activePlanetId, saveData.upgrades, saveData.unlockedEnhancements));
@@ -440,6 +464,8 @@ export default function Game() {
             keysRef.current.shoot = true;
           } else if (gameState?.screen === GameScreen.BRIEFING) {
             setGameState((prev) => prev ? { ...prev, briefingTimer: 0 } : null);
+          } else if (gameState?.screen === GameScreen.PHASE_TRANSITION) {
+            setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
           } else if (gameState?.screen === GameScreen.GAME_OVER) {
             returnToCockpit();
           } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
@@ -597,6 +623,8 @@ export default function Game() {
         }
       } else if (gameState?.screen === GameScreen.BRIEFING) {
         setGameState((prev) => prev ? { ...prev, briefingTimer: 0 } : null);
+      } else if (gameState?.screen === GameScreen.PHASE_TRANSITION) {
+        setGameState((prev) => prev ? { ...prev, phaseTransitionTimer: 0 } : prev);
       } else if (gameState?.screen === GameScreen.GAME_OVER) {
         returnToCockpit();
       } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
@@ -1134,6 +1162,24 @@ export default function Game() {
             >
               TRY AGAIN
             </button>
+            {gameState.currentPhase > 0 && (
+              <button
+                onClick={() => {
+                  if (!gameState) return;
+                  setGameState(createGameState(
+                    gameState.currentWorld,
+                    gameState.currentLevel,
+                    saveData.upgrades,
+                    saveData.unlockedEnhancements,
+                    saveData.pilotLevel,
+                    saveData.allocatedSkills
+                  ));
+                }}
+                className="px-6 py-4 border-2 border-yellow-600 text-yellow-400 text-lg hover:bg-yellow-600 hover:text-black transition-colors tracking-wider"
+              >
+                RESTART LEVEL
+              </button>
+            )}
             <button
               onClick={returnToCockpit}
               className="px-6 py-4 border-2 border-gray-600 text-gray-400 text-lg hover:bg-gray-600 hover:text-white transition-colors tracking-wider"

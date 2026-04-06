@@ -18,6 +18,7 @@ import {
   loadSave,
   saveSave,
   updateLevelResult,
+  recalcPilotLevel,
   calculateCreditsEarned,
   getPlayerName,
   updateSectorZeroProfile,
@@ -232,6 +233,11 @@ export default function Game() {
           ? 2
           : 1;
     let newSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
+    const prevLevel = newSave.pilotLevel;
+    newSave = recalcPilotLevel(newSave);
+    if (newSave.pilotLevel > prevLevel) {
+      console.log(`PILOT LEVEL UP! ${prevLevel} → ${newSave.pilotLevel}`);
+    }
 
     // Check side quest completion
     const questData: QuestCheckData = {
@@ -787,6 +793,11 @@ export default function Game() {
               ? 2
               : 1;
         let advSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
+        const advPrevLevel = advSave.pilotLevel;
+        advSave = recalcPilotLevel(advSave);
+        if (advSave.pilotLevel > advPrevLevel) {
+          console.log(`PILOT LEVEL UP! ${advPrevLevel} → ${advSave.pilotLevel}`);
+        }
         const advQuestData: QuestCheckData = {
           world: gameState.currentWorld,
           level: gameState.currentLevel,
@@ -839,6 +850,11 @@ export default function Game() {
             ? 2
             : 1;
       let finalSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
+      const finalPrevLevel = finalSave.pilotLevel;
+      finalSave = recalcPilotLevel(finalSave);
+      if (finalSave.pilotLevel > finalPrevLevel) {
+        console.log(`PILOT LEVEL UP! ${finalPrevLevel} → ${finalSave.pilotLevel}`);
+      }
       const questData: QuestCheckData = {
         world: gameState.currentWorld,
         level: gameState.currentLevel,

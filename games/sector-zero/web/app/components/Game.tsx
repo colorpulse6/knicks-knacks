@@ -234,6 +234,13 @@ export default function Game() {
           ? 2
           : 1;
     let newSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
+
+    // Perfect clear bonus: 100% enemies killed
+    const isPerfectClear = gameState.totalEnemies > 0 && gameState.kills >= gameState.totalEnemies;
+    if (isPerfectClear) {
+      newSave = { ...newSave, credits: newSave.credits + 500 };
+    }
+
     const prevLevel = newSave.pilotLevel;
     newSave = recalcPilotLevel(newSave);
     if (newSave.pilotLevel > prevLevel) {
@@ -272,20 +279,33 @@ export default function Game() {
     const maxLevels = getWorldLevelCount(gameState.currentWorld);
     const nextLv = gameState.currentLevel + 1;
 
+    // Carry forward state across levels in the same world
+    const carryForward = (newState: GameState) => {
+      setGameState({
+        ...newState,
+        score: gameState.score,
+        lives: gameState.lives,
+        kills: gameState.kills,
+        deaths: gameState.deaths,
+        maxCombo: gameState.maxCombo,
+        devInvincible: gameState.devInvincible,
+        activePowerUps: gameState.activePowerUps,
+        player: { ...newState.player, weaponLevel: gameState.player.weaponLevel },
+      });
+    };
+
     if (nextLv <= maxLevels) {
       // Next level in same world
-      setGameState(createGameState(gameState.currentWorld, nextLv, saveData.upgrades, saveData.unlockedEnhancements));
+      carryForward(createGameState(gameState.currentWorld, nextLv, newSave.upgrades, newSave.unlockedEnhancements, newSave.pilotLevel, newSave.allocatedSkills));
     } else {
       // World complete — try advancing to next world
       let nextWorld = gameState.currentWorld + 1;
-      // Skip worlds with no levels
       while (nextWorld <= 8 && getWorldLevelCount(nextWorld) === 0) {
         nextWorld++;
       }
       if (nextWorld <= 8 && getWorldLevelCount(nextWorld) > 0) {
-        setGameState(createGameState(nextWorld, 1, saveData.upgrades, saveData.unlockedEnhancements));
+        carryForward(createGameState(nextWorld, 1, newSave.upgrades, newSave.unlockedEnhancements, newSave.pilotLevel, newSave.allocatedSkills));
       } else {
-        // All worlds complete — play ending sequence
         startEnding();
       }
     }
@@ -798,46 +818,6 @@ export default function Game() {
         audioRef.current?.play(event);
       }
 
-      // Save on level auto-advance (non-boss levels)
-      if (gameState.levelCompleteTimer > 0 && newState.levelCompleteTimer <= 0 && newState.currentLevel !== gameState.currentLevel) {
-        const stars =
-          gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8
-            ? 3
-            : gameState.deaths === 0
-              ? 2
-              : 1;
-        let advSave = updateLevelResult(saveData, gameState.currentWorld, gameState.currentLevel, gameState.score, stars, gameState.xp);
-        const advPrevLevel = advSave.pilotLevel;
-        advSave = recalcPilotLevel(advSave);
-        if (advSave.pilotLevel > advPrevLevel) {
-          console.log(`PILOT LEVEL UP! ${advPrevLevel} → ${advSave.pilotLevel}`);
-        }
-        const advQuestData: QuestCheckData = {
-          world: gameState.currentWorld,
-          level: gameState.currentLevel,
-          kills: gameState.kills,
-          totalEnemies: gameState.totalEnemies,
-          deaths: gameState.deaths,
-          frameCount: gameState.frameCount,
-          playerHp: gameState.player.hp,
-          playerMaxHp: gameState.player.maxHp,
-        };
-        advSave = checkQuestCompletion(advSave, advQuestData).newSave;
-        // Flush pending bestiary kills
-        let advBestiary = advSave.bestiary;
-        if (gameState?.pendingBestiaryKills?.length) {
-          for (const kill of gameState.pendingBestiaryKills) {
-            advBestiary = recordKill(advBestiary, kill.type, kill.classId, {
-              world: gameState.currentWorld,
-              planetId: gameState.planetId,
-            });
-          }
-        }
-        advSave = { ...advSave, bestiary: advBestiary };
-        saveSave(advSave);
-        setSaveData(advSave);
-      }
-
       setGameState(newState);
       drawGame(ctx, newState);
 
@@ -1045,9 +1025,38 @@ export default function Game() {
             <p className="text-2xl">
               Score: <span className="text-yellow-400 font-bold">{gameState.score}</span>
             </p>
-            <p className="text-gray-400">
-              Kills: {gameState.kills}/{gameState.totalEnemies} &middot; Deaths: {gameState.deaths}
-            </p>
+            {(() => {
+              const killPct = gameState.totalEnemies > 0
+                ? Math.floor((gameState.kills / gameState.totalEnemies) * 100)
+                : 0;
+              const isPerfect = killPct === 100;
+              return (
+                <>
+                  <div className="w-64 mx-auto mt-1">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className={isPerfect ? "text-yellow-300 font-bold" : "text-gray-400"}>
+                        Enemies: {gameState.kills}/{gameState.totalEnemies}
+                      </span>
+                      <span className={isPerfect ? "text-yellow-300 font-bold" : "text-gray-500"}>
+                        {killPct}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${isPerfect ? "bg-yellow-400" : "bg-cyan-500"}`}
+                        style={{ width: `${killPct}%` }}
+                      />
+                    </div>
+                    {isPerfect && (
+                      <p className="text-yellow-300 text-xs mt-1 font-bold tracking-wider animate-pulse">
+                        PERFECT CLEAR! +500 BONUS CREDITS
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-gray-500 text-sm">Deaths: {gameState.deaths}</p>
+                </>
+              );
+            })()}
             {gameState.maxCombo >= 3 && (
               <p className="text-yellow-500">Max Combo: {gameState.maxCombo}x</p>
             )}

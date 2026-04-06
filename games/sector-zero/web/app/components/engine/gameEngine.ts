@@ -502,46 +502,12 @@ export function updateGame(
     }
   }
 
-  // Level complete timer countdown — auto-advance to next level
+  // Level complete timer countdown — show results screen
   if (s.levelCompleteTimer > 0) {
     s.levelCompleteTimer -= 1;
     if (s.levelCompleteTimer <= 0) {
-      if (s.planetId) {
-        // Planet mission — show LEVEL_COMPLETE screen (Game.tsx handles rewards)
-        s.screen = GameScreen.LEVEL_COMPLETE;
-      } else {
-        // Auto-advance to next level
-        const nextLv = s.currentLevel + 1;
-        const nextWorld = s.currentWorld;
-        const nextLevelData = getLevelData(nextWorld, nextLv);
-        if (nextLevelData) {
-          // Carry over score, kills, etc. into the new level state
-          const carryScore = s.score;
-          const carryLives = s.lives;
-          const carryWeapon = s.player.weaponLevel;
-          const carryKills = s.kills;
-          const carryDeaths = s.deaths;
-          const carryMaxCombo = s.maxCombo;
-          const carryInvincible = s.devInvincible;
-          const carryPowerUps = s.activePowerUps;
-
-          const newState = createGameState(nextWorld, nextLv, currentUpgrades, currentEnhancements, s.pilotLevel, s.allocatedSkills);
-          return {
-            ...newState,
-            score: carryScore,
-            lives: carryLives,
-            kills: carryKills,
-            deaths: carryDeaths,
-            maxCombo: carryMaxCombo,
-            devInvincible: carryInvincible,
-            activePowerUps: carryPowerUps,
-            player: { ...newState.player, weaponLevel: carryWeapon },
-          };
-        } else {
-          // No more levels — show the full LEVEL_COMPLETE screen
-          s.screen = GameScreen.LEVEL_COMPLETE;
-        }
-      }
+      // Always show LEVEL_COMPLETE screen — player chooses NEXT LEVEL or HUB
+      s.screen = GameScreen.LEVEL_COMPLETE;
     }
   }
 

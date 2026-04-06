@@ -3,12 +3,13 @@ import { UPGRADE_DEFS, getUpgradeCost, canPurchase } from "./upgrades";
 import { purchaseUpgrade } from "./save";
 import { CREW, getAvailableConversations, markConversationViewed } from "./crewDialog";
 import { CODEX_CATEGORIES, getEntriesForCategory, markCodexRead } from "./codex";
+import { getBestiaryList } from "./bestiary";
 import { getAvailableQuests, isQuestActive, isQuestCompleted, acceptQuest, abandonQuest } from "./sideQuests";
 import { PLANET_DEFS, isPlanetUnlocked, isPlanetCompleted } from "./planets";
 
 // ─── Cockpit Screen Types ───────────────────────────────────────────
 
-export type CockpitScreen = "hub" | "starmap" | "armory" | "crew" | "missions" | "codex";
+export type CockpitScreen = "hub" | "starmap" | "armory" | "crew" | "missions" | "codex" | "bestiary";
 
 export interface CockpitHubState {
   screen: CockpitScreen;
@@ -28,6 +29,7 @@ export interface CockpitHubState {
   codexCategory: number;
   codexSelected: number;
   codexReading: boolean;
+  bestiarySelected: number;
 }
 
 // ─── Hotspot Definitions ────────────────────────────────────────────
@@ -48,6 +50,7 @@ export const COCKPIT_HOTSPOTS: Hotspot[] = [
   { id: "crew",     name: "CREW QUARTERS",   x: 40,  y: 280, w: 130, h: 80, description: "Talk to crew" },
   { id: "missions", name: "MISSION BOARD",   x: 310, y: 280, w: 130, h: 80, description: "Side quests" },
   { id: "codex",    name: "SHIP'S LOG",      x: 40,  y: 110, w: 120, h: 70, description: "Intel & research" },
+  { id: "bestiary", name: "BESTIARY",         x: 310, y: 110, w: 120, h: 70, description: "Enemy database" },
 ];
 
 // ─── Navigation Graph (which hotspot each arrow goes to) ────────────
@@ -56,8 +59,9 @@ const NAV_GRAPH: Record<number, [number, number, number, number]> = {
   0: [2, 1, 2, 3],    // starmap: up→crew(L), down→armory, left→crew, right→missions
   1: [0, -1, -1, -1],  // armory: up→starmap
   2: [4, 0, -1, 3],   // crew: up→codex, down→starmap, right→missions
-  3: [4, 0, 2, -1],   // missions: up→codex, down→starmap, left→crew
-  4: [-1, 2, -1, 3],  // codex: down→crew, right→missions
+  3: [5, 0, 2, -1],   // missions: up→bestiary, down→starmap, left→crew
+  4: [-1, 2, -1, 5],  // codex: down→crew, right→bestiary
+  5: [-1, 3, 4, -1],  // bestiary: down→missions, left→codex
 };
 
 // Transition duration in frames
@@ -82,6 +86,7 @@ export function createCockpitState(): CockpitHubState {
     codexCategory: 0,
     codexSelected: 0,
     codexReading: false,
+    bestiarySelected: 0,
   };
 }
 
@@ -165,6 +170,11 @@ export function updateCockpit(
   // ── Codex screen ──
   if (s.screen === "codex") {
     return updateCodex(s, justPressed, save);
+  }
+
+  // ── Bestiary screen ──
+  if (s.screen === "bestiary") {
+    return updateBestiary(s, justPressed, save);
   }
 
   // ── Missions screen ──
@@ -510,6 +520,38 @@ function updateCodex(
   }
 
   // ── Back to hub (left at first category) ──
+  if (justPressed.left) {
+    s.screen = "hub";
+    s.transitionTimer = TRANSITION_FRAMES;
+    s.audioEvents.push(AudioEvent.COCKPIT_BACK);
+    return { newState: s, action: { type: "none" } };
+  }
+
+  return { newState: s, action: { type: "none" } };
+}
+
+// ─── Bestiary Input ───────────────────────────────────────────────────
+
+function updateBestiary(
+  s: CockpitHubState,
+  justPressed: Record<string, boolean>,
+  save: SaveData
+): { newState: CockpitHubState; action: CockpitAction } {
+  const entries = getBestiaryList(save.bestiary);
+
+  // Navigate entry list
+  const prevSelected = s.bestiarySelected;
+  if (justPressed.up && s.bestiarySelected > 0) {
+    s.bestiarySelected -= 1;
+  }
+  if (justPressed.down && entries.length > 0) {
+    s.bestiarySelected = Math.min(entries.length - 1, s.bestiarySelected + 1);
+  }
+  if (s.bestiarySelected !== prevSelected) {
+    s.audioEvents.push(AudioEvent.COCKPIT_NAV);
+  }
+
+  // Back to hub
   if (justPressed.left) {
     s.screen = "hub";
     s.transitionTimer = TRANSITION_FRAMES;

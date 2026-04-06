@@ -46,7 +46,7 @@ import {
 } from "./enemies";
 import { PLANET_DOMINANT_CLASS, resolveAffinity } from "./enemyClasses";
 import { AFFINITY_MULTIPLIER } from "./weaponTypes";
-import { createAffinityLabel } from "./floatingLabels";
+import { createAffinityLabel, updateFloatingLabels, resetFloatingLabelIds } from "./floatingLabels";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap, SpatialHash } from "./physics";
 import { getLevelData, getWorldLevelCount } from "./levels";
@@ -159,6 +159,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
   currentHazardState = null;
   setDifficultyForWorld(world);
   resetEnemyIds();
+  resetFloatingLabelIds();
   resetBulletIds();
   resetBossBulletIds();
   resetPowerUpIds();
@@ -231,6 +232,7 @@ export function createPlanetGameState(
   const planet = getPlanetDef(planetId);
   setDifficultyForWorld(planet.pairedWorld);
   resetEnemyIds();
+  resetFloatingLabelIds();
   resetBulletIds();
   resetBossBulletIds();
   resetPowerUpIds();
@@ -404,6 +406,7 @@ export function updateGame(
 
   // Update particles & explosions
   s.particles = updateParticles(s.particles);
+  s.floatingLabels = updateFloatingLabels(s.floatingLabels);
   s.explosions = updateSpriteExplosions(s.explosions);
 
   // Engine trail
@@ -551,6 +554,7 @@ function updateBossIntroScreen(state: GameState): GameState {
   let s = { ...state, frameCount: state.frameCount + 1, audioEvents: [] as AudioEvent[] };
   s.background = updateBackground(s.background);
   s.particles = updateParticles(s.particles);
+  s.floatingLabels = updateFloatingLabels(s.floatingLabels);
   s.bossIntroTimer -= 1;
 
   // Fire boss_intro dialog on first frame
@@ -630,6 +634,7 @@ function updateBossFight(
 
   s = updatePowerUps(s);
   s.particles = updateParticles(s.particles);
+  s.floatingLabels = updateFloatingLabels(s.floatingLabels);
 
   if (s.frameCount % 2 === 0) {
     s.particles = [

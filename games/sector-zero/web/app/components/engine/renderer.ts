@@ -10,6 +10,7 @@ import {
 } from "./types";
 import { drawBackground } from "./background";
 import { drawParticles, drawSpriteExplosions } from "./particles";
+import { drawFloatingLabels } from "./floatingLabels";
 import { drawPlayerBullets, drawEnemyBullets } from "./weapons";
 import { drawEnemies } from "./enemies";
 import { getSprite, SPRITES } from "./sprites";
@@ -72,6 +73,7 @@ export function drawGame(
   drawSideGunners(ctx, state);
   drawParticles(ctx, state.particles);
   drawSpriteExplosions(ctx, state.explosions);
+  drawFloatingLabels(ctx, state.floatingLabels);
 
   // Wave indicator (only during normal play, not boss)
   if (state.screen === GameScreen.PLAYING && state.waveDelay > 30 && state.currentWave > 0 && !state.boss) {

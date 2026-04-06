@@ -15,6 +15,7 @@ export enum GameScreen {
   PAUSED = "PAUSED",
   BOSS_INTRO = "BOSS_INTRO",
   BOSS_FIGHT = "BOSS_FIGHT",
+  PHASE_TRANSITION = "PHASE_TRANSITION",
   LEVEL_COMPLETE = "LEVEL_COMPLETE",
   GAME_OVER = "GAME_OVER",
   ENDING = "ENDING",
@@ -502,6 +503,13 @@ export interface GameState {
   pendingBestiaryKills: Array<{ type: EnemyType; classId: EnemyClass }>;
   pilotLevel: number;
   allocatedSkills: SkillNodeId[];
+  // Multi-phase tracking
+  currentPhase: number;
+  totalPhases: number;
+  phaseCheckpoint: CheckpointState | null;
+  phaseTransitionTimer: number;
+  phaseTransitionCard: string;
+  phaseTransitionSubtext: string;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -652,6 +660,52 @@ export type PlanetId =
   | "genesis"
   | "luminos"
   | "bastion";
+
+// ─── Multi-Phase Levels ─────────────────────────────────────────────
+export type GameMode = "shooter" | "ground-run" | "boarding" | "turret" | "base-defense" | "mech-duel";
+
+export interface PhaseConfig {
+  mode: GameMode;
+  waves: WaveDefinition[];
+  isBoss?: boolean;
+  briefingText?: string;
+  objectiveType?: ObjectiveType;
+  objectiveTarget?: number;
+}
+
+export interface TransitionSequence {
+  dialogLine?: string;
+  dialogSpeaker?: string;
+  cardText: string;
+  cardSubtext?: string;
+  duration: number;
+}
+
+export interface PhaseDefinition {
+  config: PhaseConfig;
+  transitionIn?: TransitionSequence;
+}
+
+export interface MultiPhaseLevelData {
+  world: number;
+  level: number;
+  name: string;
+  briefingText: string;
+  worldIntroText?: string;
+  phases: PhaseDefinition[];
+}
+
+export interface CheckpointState {
+  hp: number;
+  maxHp: number;
+  lives: number;
+  weaponLevel: number;
+  score: number;
+  kills: number;
+  deaths: number;
+  maxCombo: number;
+  activePowerUps: ActivePowerUp[];
+}
 
 // ─── Pilot Leveling ─────────────────────────────────────────────────
 export type SkillTreeId = "combat" | "engineering" | "piloting";

@@ -49,6 +49,22 @@ export interface Player {
   bankDir: number;
 }
 
+// ─── Weapon Affinity System ─────────────────────────────────────────
+export type WeaponType = "kinetic" | "energy" | "incendiary" | "cryogenic";
+
+export type AffinityResult = "effective" | "neutral" | "resisted";
+
+// ─── Enemy Classes ──────────────────────────────────────────────────
+export type EnemyClass =
+  | "armored"
+  | "swarm"
+  | "bio-organic"
+  | "tech-drone"
+  | "heavy-mech"
+  | "elemental-fire"
+  | "elemental-ice"
+  | "elemental-cinder";
+
 // ─── Bullets ─────────────────────────────────────────────────────────
 export const BULLET_SPEED = 10;
 export const ENEMY_BULLET_SPEED = 4;
@@ -67,6 +83,7 @@ export interface Bullet {
   isPlayer: boolean;
   piercing: boolean;
   variant?: BulletVariant;
+  weaponType?: WeaponType;
 }
 
 // ─── Enemy Types ─────────────────────────────────────────────────────
@@ -184,6 +201,9 @@ export interface Enemy {
   behavior: EnemyBehavior;
   behaviorTimer: number;
   cloaked: boolean;
+  classId: EnemyClass;
+  lastHitAffinity?: AffinityResult;
+  lastHitTimer: number;
 }
 
 export type EnemyBehavior =
@@ -300,6 +320,18 @@ export interface SpriteExplosion {
   totalFrames: number;
   frameTimer: number;
   frameDelay: number; // ticks per frame
+}
+
+// ─── Floating Labels (damage/affinity indicators) ───────────────────
+export interface FloatingLabel {
+  id: number;
+  x: number;
+  y: number;
+  vy: number;
+  text: string;
+  color: string;
+  life: number;
+  maxLife: number;
 }
 
 // ─── Bosses ──────────────────────────────────────────────────────────
@@ -465,6 +497,9 @@ export interface GameState {
   activePowerUps: ActivePowerUp[];
   particles: Particle[];
   explosions: SpriteExplosion[];
+  floatingLabels: FloatingLabel[];
+  equippedWeaponType: WeaponType;
+  pendingBestiaryKills: Array<{ type: EnemyType; classId: EnemyClass }>;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -616,6 +651,15 @@ export type PlanetId =
   | "luminos"
   | "bastion";
 
+// ─── Bestiary ───────────────────────────────────────────────────────
+export interface BestiaryEntry {
+  enemyType: EnemyType;
+  classId: EnemyClass;
+  killCount: number;
+  firstSeenPlanet?: PlanetId;
+  firstSeenWorld?: number;
+}
+
 // ─── Save Data ───────────────────────────────────────────────────────
 export interface SaveData {
   currentWorld: number;
@@ -637,4 +681,6 @@ export interface SaveData {
   consumableInventory: Partial<Record<ConsumableId, number>>;
   equippedConsumables: ConsumableId[];
   unlockedEnhancements: EnhancementId[];
+  bestiary: Partial<Record<EnemyType, BestiaryEntry>>;
+  equippedWeaponType: WeaponType;
 }

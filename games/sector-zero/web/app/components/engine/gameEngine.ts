@@ -631,6 +631,19 @@ export function updateGame(
             moveSpeed: 0.06,
             rotSpeed: 0.04,
             goalReached: false,
+            enemies: boardingState.enemies.map((e, i) => ({
+              id: i + 1,
+              x: e.x / boardingState.map.tileSize + 0.5,
+              y: e.y / boardingState.map.tileSize + 0.5,
+              hp: e.hp, maxHp: e.maxHp,
+              speed: e.type === "charger" ? 0.03 : 0.015,
+              type: e.type as "grunt" | "charger" | "sentry",
+              aggroRange: e.aggroRange / boardingState.map.tileSize,
+              isAggro: false, deathTimer: 0,
+              fireTimer: e.fireTimer, classId: e.classId,
+            })),
+            gunFireTimer: 0,
+            gunCooldown: 0,
           };
           s.groundState = undefined;
           s.boardingState = undefined;
@@ -878,6 +891,19 @@ function updateBossFight(
             moveSpeed: 0.06,
             rotSpeed: 0.04,
             goalReached: false,
+            enemies: boardingState.enemies.map((e, i) => ({
+              id: i + 1,
+              x: e.x / boardingState.map.tileSize + 0.5,
+              y: e.y / boardingState.map.tileSize + 0.5,
+              hp: e.hp, maxHp: e.maxHp,
+              speed: e.type === "charger" ? 0.03 : 0.015,
+              type: e.type as "grunt" | "charger" | "sentry",
+              aggroRange: e.aggroRange / boardingState.map.tileSize,
+              isAggro: false, deathTimer: 0,
+              fireTimer: e.fireTimer, classId: e.classId,
+            })),
+            gunFireTimer: 0,
+            gunCooldown: 0,
           };
           s.groundState = undefined;
           s.boardingState = undefined;

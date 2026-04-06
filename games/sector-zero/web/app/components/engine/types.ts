@@ -798,17 +798,35 @@ export interface BoardingState {
 
 // ─── First-Person (Raycaster) ───────────────────────────────────────
 
+export interface FPEnemy {
+  id: number;
+  x: number;              // Tile-unit position
+  y: number;
+  hp: number;
+  maxHp: number;
+  speed: number;
+  type: "grunt" | "charger" | "sentry";
+  aggroRange: number;
+  isAggro: boolean;
+  deathTimer: number;     // > 0 means dying animation, 0 = alive, -1 = dead & removed
+  fireTimer: number;
+  classId: EnemyClass;
+}
+
 export interface FirstPersonState {
-  map: BoardingMap;         // Reuse boarding tile map
-  posX: number;             // Player position (world units, not pixels)
+  map: BoardingMap;
+  posX: number;
   posY: number;
-  dirX: number;             // Direction vector
+  dirX: number;
   dirY: number;
-  planeX: number;           // Camera plane (perpendicular to dir, defines FOV)
+  planeX: number;
   planeY: number;
   moveSpeed: number;
   rotSpeed: number;
   goalReached: boolean;
+  enemies: FPEnemy[];
+  gunFireTimer: number;   // Frames since last shot (for muzzle flash)
+  gunCooldown: number;    // Frames until can fire again
 }
 
 // ─── Pilot Leveling ─────────────────────────────────────────────────

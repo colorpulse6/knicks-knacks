@@ -421,6 +421,22 @@ export default function Game() {
             }
           }
         }
+        // Create enemies from boarding state positions (convert pixel → tile coords)
+        const fpEnemies = bs.enemies.map((e, i) => ({
+          id: i + 1,
+          x: e.x / bs.map.tileSize + 0.5,
+          y: e.y / bs.map.tileSize + 0.5,
+          hp: e.hp,
+          maxHp: e.maxHp,
+          speed: e.type === "charger" ? 0.03 : 0.015,
+          type: e.type as "grunt" | "charger" | "sentry",
+          aggroRange: e.aggroRange / bs.map.tileSize,
+          isAggro: false,
+          deathTimer: 0,
+          fireTimer: e.fireTimer,
+          classId: e.classId,
+        }));
+
         setGameState({
           ...baseState,
           screen: GameScreen.PLAYING,
@@ -436,6 +452,9 @@ export default function Game() {
             moveSpeed: 0.06,
             rotSpeed: 0.04,
             goalReached: false,
+            enemies: fpEnemies,
+            gunFireTimer: 0,
+            gunCooldown: 0,
           },
           briefingTimer: 0,
           devInvincible: gameState?.devInvincible ?? false,

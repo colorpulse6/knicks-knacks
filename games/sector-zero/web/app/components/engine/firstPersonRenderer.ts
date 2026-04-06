@@ -103,6 +103,201 @@ function drawCompass(ctx: CanvasRenderingContext2D, fp: FirstPersonState): void 
   ctx.fillText(dirs[idx], CANVAS_WIDTH / 2, 8);
 }
 
+// ─── Enemy Billboards (Doom-style sprites in 3D space) ──────────────
+
+function drawEnemyBillboards(
+  ctx: CanvasRenderingContext2D,
+  fp: FirstPersonState,
+  wallHits: (RayHit | null)[],
+  frameCount: number
+): void {
+  const enemySprite = getSprite(SPRITES.FP_ENEMY_FRONT);
+  const enemyDeathSprite = getSprite(SPRITES.FP_ENEMY_DEATH);
+
+  // Build depth buffer from wall hits
+  const zBuffer: number[] = new Array(CANVAS_WIDTH);
+  for (let x = 0; x < CANVAS_WIDTH; x++) {
+    zBuffer[x] = wallHits[x]?.distance ?? 999;
+  }
+
+  // Sort enemies by distance (farthest first)
+  const sorted = [...fp.enemies]
+    .filter((e) => e.deathTimer >= 0) // exclude fully dead
+    .map((e) => {
+      const dx = e.x - fp.posX;
+      const dy = e.y - fp.posY;
+      return { enemy: e, dist: dx * dx + dy * dy, dx, dy };
+    })
+    .sort((a, b) => b.dist - a.dist);
+
+  for (const { enemy, dx, dy } of sorted) {
+    // Transform enemy position to camera space
+    const invDet = 1.0 / (fp.planeX * fp.dirY - fp.dirX * fp.planeY);
+    const transformX = invDet * (fp.dirY * dx - fp.dirX * dy);
+    const transformY = invDet * (-fp.planeY * dx + fp.planeX * dy); // depth
+
+    if (transformY <= 0.1) continue; // Behind camera
+
+    const spriteScreenX = Math.floor((CANVAS_WIDTH / 2) * (1 + transformX / transformY));
+
+    // Sprite size on screen (based on distance)
+    const spriteHeight = Math.abs(Math.floor(GAME_AREA_HEIGHT / transformY)) * 0.6;
+    const spriteWidth = spriteHeight;
+
+    const drawStartX = Math.floor(spriteScreenX - spriteWidth / 2);
+    const drawStartY = Math.floor(GAME_AREA_HEIGHT / 2 - spriteHeight / 2);
+
+    // Clip to screen and check z-buffer
+    const startX = Math.max(0, drawStartX);
+    const endX = Math.min(CANVAS_WIDTH - 1, drawStartX + Math.floor(spriteWidth));
+
+    // Check if any column of this sprite is in front of the wall
+    let visible = false;
+    for (let x = startX; x <= endX; x++) {
+      if (transformY < zBuffer[x]) {
+        visible = true;
+        break;
+      }
+    }
+    if (!visible) continue;
+
+    // Draw the sprite
+    const isDying = enemy.deathTimer > 0;
+    const sprite = isDying ? enemyDeathSprite : enemySprite;
+
+    if (sprite) {
+      ctx.save();
+      // Only draw columns that are in front of walls
+      ctx.beginPath();
+      for (let x = startX; x <= endX; x++) {
+        if (transformY < zBuffer[x]) {
+          ctx.rect(x, 0, 1, GAME_AREA_HEIGHT);
+        }
+      }
+      ctx.clip();
+
+      if (isDying && enemyDeathSprite) {
+        // Death animation: 3 frames in a strip
+        const deathFrame = Math.min(2, Math.floor((30 - enemy.deathTimer) / 10));
+        const frameW = enemyDeathSprite.width / 3;
+        ctx.globalAlpha = enemy.deathTimer / 30;
+        ctx.drawImage(
+          enemyDeathSprite,
+          deathFrame * frameW, 0, frameW, enemyDeathSprite.height,
+          drawStartX, drawStartY, spriteWidth, spriteHeight
+        );
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.drawImage(sprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
+      }
+
+      ctx.restore();
+    } else {
+      // Fallback: colored billboard rectangle
+      const color = isDying ? "#ff222288" : (enemy.isAggro ? "#ff4444" : "#cc2222");
+      ctx.save();
+      ctx.beginPath();
+      for (let x = startX; x <= endX; x++) {
+        if (transformY < zBuffer[x]) {
+          ctx.rect(x, 0, 1, GAME_AREA_HEIGHT);
+        }
+      }
+      ctx.clip();
+
+      if (isDying) {
+        ctx.globalAlpha = enemy.deathTimer / 30;
+      }
+
+      ctx.fillStyle = color;
+      ctx.fillRect(drawStartX, drawStartY, spriteWidth, spriteHeight);
+
+      // Eyes
+      if (!isDying) {
+        ctx.fillStyle = "#ff0000";
+        const eyeY = drawStartY + spriteHeight * 0.3;
+        ctx.beginPath();
+        ctx.arc(spriteScreenX - spriteWidth * 0.15, eyeY, Math.max(2, spriteWidth * 0.06), 0, Math.PI * 2);
+        ctx.arc(spriteScreenX + spriteWidth * 0.15, eyeY, Math.max(2, spriteWidth * 0.06), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    // HP bar above sprite (only when aggro and not dying)
+    if (enemy.isAggro && !isDying && enemy.hp < enemy.maxHp) {
+      const barW = spriteWidth * 0.6;
+      const barH = 3;
+      const barX = spriteScreenX - barW / 2;
+      const barY = drawStartY - 8;
+      ctx.fillStyle = "#330000";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = enemy.hp / enemy.maxHp > 0.5 ? "#44ff44" : "#ff4444";
+      ctx.fillRect(barX, barY, barW * (enemy.hp / enemy.maxHp), barH);
+    }
+  }
+}
+
+// ─── Gun HUD (bottom center, like Doom) ─────────────────────────────
+
+function drawGunHUD(
+  ctx: CanvasRenderingContext2D,
+  fp: FirstPersonState,
+  frameCount: number
+): void {
+  const gunSprite = getSprite(SPRITES.FP_GUN_SHEET);
+  const isFiring = fp.gunFireTimer > 0;
+
+  // Bob effect when moving
+  const bobX = Math.sin(frameCount * 0.1) * 3;
+  const bobY = Math.abs(Math.cos(frameCount * 0.1)) * 2;
+
+  const gunW = 200;
+  const gunH = 200;
+  const gunX = CANVAS_WIDTH / 2 - gunW / 2 + bobX;
+  const gunY = GAME_AREA_HEIGHT - gunH + 20 + bobY;
+
+  if (gunSprite) {
+    // Gun sheet: 2 frames side-by-side (idle, firing)
+    const frameW = gunSprite.width / 2;
+    const frameH = gunSprite.height;
+    const frameIdx = isFiring ? 1 : 0;
+
+    ctx.drawImage(
+      gunSprite,
+      frameIdx * frameW, 0, frameW, frameH,
+      gunX, gunY, gunW, gunH
+    );
+  } else {
+    // Fallback: simple gun shape
+    ctx.fillStyle = "#2a3a4a";
+    // Gun body
+    ctx.fillRect(gunX + gunW / 2 - 15, gunY + 40, 30, 100);
+    // Barrel
+    ctx.fillStyle = "#3a4a5a";
+    ctx.fillRect(gunX + gunW / 2 - 5, gunY + 10, 10, 40);
+    // Grip
+    ctx.fillStyle = "#1a2a3a";
+    ctx.fillRect(gunX + gunW / 2 - 10, gunY + 120, 20, 40);
+
+    // Muzzle flash
+    if (isFiring) {
+      ctx.fillStyle = "#ffdd44";
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "#ffaa00";
+      ctx.beginPath();
+      ctx.arc(gunX + gunW / 2, gunY + 10, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // Energy cell glow
+    ctx.fillStyle = "#44ccff44";
+    ctx.fillRect(gunX + gunW / 2 - 8, gunY + 60, 16, 20);
+  }
+}
+
 // ─── Main Renderer ──────────────────────────────────────────────────
 
 export function drawFirstPerson(
@@ -208,6 +403,18 @@ export function drawFirstPerson(
         break;
       }
     }
+  }
+
+  // ── Enemy billboards ──
+  drawEnemyBillboards(ctx, fp, hits, state.frameCount);
+
+  // ── Gun HUD ──
+  drawGunHUD(ctx, fp, state.frameCount);
+
+  // ── Damage flash ──
+  if (state.player.invincibleTimer > 50) {
+    ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+    ctx.fillRect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT);
   }
 
   // ── Crosshair ──

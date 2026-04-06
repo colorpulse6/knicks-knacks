@@ -229,7 +229,10 @@ export const SPRITES = {
 
   // Ground Run-and-Gun — Player (individual frames)
   GROUND_PLAYER_IDLE: "/sprites/ground/player-idle.png",
-  GROUND_PLAYER_RUN_SHEET: "/sprites/ground/player-run-sheet.png",
+  GROUND_PLAYER_RUN_1: "/sprites/ground/player-run-1.png",
+  GROUND_PLAYER_RUN_2: "/sprites/ground/player-run-2.png",
+  GROUND_PLAYER_RUN_3: "/sprites/ground/player-run-3.png",
+  GROUND_PLAYER_RUN_4: "/sprites/ground/player-run-4.png",
   GROUND_PLAYER_JUMP: "/sprites/ground/player-jump.png",
   GROUND_PLAYER_SHOOT: "/sprites/ground/player-shoot.png",
   GROUND_PLAYER_HURT: "/sprites/ground/player-hurt.png",

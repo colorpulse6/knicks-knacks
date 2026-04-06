@@ -244,65 +244,51 @@ function drawGroundPlayer(
   const sx = player.x - gs.cameraX;
   const sy = player.y;
 
+  // Pick the right sprite based on animation state
+  const runFrames = [
+    SPRITES.GROUND_PLAYER_RUN_1,
+    SPRITES.GROUND_PLAYER_RUN_2,
+    SPRITES.GROUND_PLAYER_RUN_3,
+    SPRITES.GROUND_PLAYER_RUN_4,
+  ];
+
+  let spritePath: string;
+  const isMoving = player.bankDir !== 0;
+
+  if (player.invincibleTimer > 0 && player.hp <= 0) {
+    spritePath = SPRITES.GROUND_PLAYER_HURT;
+  } else if (!gs.playerOnGround) {
+    spritePath = SPRITES.GROUND_PLAYER_JUMP;
+  } else if (player.fireTimer > 8) {
+    spritePath = SPRITES.GROUND_PLAYER_SHOOT;
+  } else if (isMoving) {
+    spritePath = runFrames[Math.floor(state.frameCount / 10) % 4];
+  } else {
+    spritePath = SPRITES.GROUND_PLAYER_IDLE;
+  }
+
+  const sprite = getSprite(spritePath);
+
   // Draw size — anchor feet to ground
   const drawW = 56;
   const drawH = 64;
   const drawX = sx + (player.width - drawW) / 2;
   const drawY = sy + player.height - drawH;
 
-  const isMoving = player.bankDir !== 0;
-
-  // Determine animation state and pick sprite
-  let useRunSheet = false;
-  let runFrameIdx = 0;
-  let singleSprite: HTMLImageElement | null = null;
-
-  if (player.invincibleTimer > 0 && player.hp <= 0) {
-    singleSprite = getSprite(SPRITES.GROUND_PLAYER_HURT);
-  } else if (!gs.playerOnGround) {
-    singleSprite = getSprite(SPRITES.GROUND_PLAYER_JUMP);
-  } else if (player.fireTimer > 8) {
-    singleSprite = getSprite(SPRITES.GROUND_PLAYER_SHOOT);
-  } else if (isMoving) {
-    useRunSheet = true;
-    runFrameIdx = Math.floor(state.frameCount / 10) % 4;
-  } else {
-    singleSprite = getSprite(SPRITES.GROUND_PLAYER_IDLE);
-  }
-
-  ctx.save();
-  if (!gs.playerFacingRight) {
-    ctx.translate(sx + player.width / 2, 0);
-    ctx.scale(-1, 1);
-    ctx.translate(-(sx + player.width / 2), 0);
-  }
-
-  if (useRunSheet) {
-    // Run sheet: 1536×1024, 2 cols × 2 rows = 768×512 per frame
-    // Frame order: TL(0), TR(1), BL(2), BR(3)
-    const sheet = getSprite(SPRITES.GROUND_PLAYER_RUN_SHEET);
-    if (sheet) {
-      const frameW = sheet.width / 2;
-      const frameH = sheet.height / 2;
-      const col = runFrameIdx % 2;
-      const row = Math.floor(runFrameIdx / 2);
-      ctx.drawImage(
-        sheet,
-        col * frameW, row * frameH, frameW, frameH,
-        drawX, drawY, drawW, drawH
-      );
-    } else {
-      ctx.fillStyle = "#3366ff";
-      ctx.fillRect(sx, sy, player.width, player.height);
+  if (sprite) {
+    ctx.save();
+    if (!gs.playerFacingRight) {
+      ctx.translate(sx + player.width / 2, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-(sx + player.width / 2), 0);
     }
-  } else if (singleSprite) {
-    ctx.drawImage(singleSprite, drawX, drawY, drawW, drawH);
+    ctx.drawImage(sprite, drawX, drawY, drawW, drawH);
+    ctx.restore();
   } else {
+    // Fallback rectangle
     ctx.fillStyle = "#3366ff";
     ctx.fillRect(sx, sy, player.width, player.height);
   }
-
-  ctx.restore();
 }
 
 // ─── Level Complete Banner ────────────────────────────────────────────────

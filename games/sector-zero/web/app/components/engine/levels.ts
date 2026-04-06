@@ -1145,6 +1145,7 @@ export function getMultiPhaseLevelData(
           },
         },
       ],
+      completionRewards: ["kinetic-core"],
     };
   }
   return null;

@@ -690,6 +690,8 @@ export interface MultiPhaseLevelData {
   briefingText: string;
   worldIntroText?: string;
   phases: PhaseDefinition[];
+  /** Materials awarded on completing ALL phases. Only awarded once per material. */
+  completionRewards?: MaterialId[];
 }
 
 export interface CheckpointState {

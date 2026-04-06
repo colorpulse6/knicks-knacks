@@ -24,7 +24,7 @@ import {
   updateSectorZeroProfile,
   type SaveData,
 } from "./engine/save";
-import { WORLD_NAMES, getWorldLevelCount } from "./engine/levels";
+import { WORLD_NAMES, getWorldLevelCount, getMultiPhaseLevelData } from "./engine/levels";
 import { preloadAll } from "./engine/sprites";
 import {
   type StarMapState,
@@ -296,6 +296,16 @@ export default function Game() {
       }
     }
     newSave = { ...newSave, bestiary: updatedBestiary };
+
+    // Award multi-phase completion rewards (deduplicated per material)
+    const multiPhaseData = getMultiPhaseLevelData(gameState.currentWorld, gameState.currentLevel);
+    if (multiPhaseData?.completionRewards && gameState.currentPhase >= gameState.totalPhases - 1) {
+      for (const matId of multiPhaseData.completionRewards) {
+        if (!newSave.materials.includes(matId)) {
+          newSave = { ...newSave, materials: [...newSave.materials, matId] };
+        }
+      }
+    }
 
     saveSave(newSave);
     setSaveData(newSave);
@@ -1127,6 +1137,24 @@ export default function Game() {
                 gameState.currentWorld
               )} CREDITS
             </p>
+            {(() => {
+              const mpData = getMultiPhaseLevelData(gameState.currentWorld, gameState.currentLevel);
+              if (!mpData?.completionRewards?.length) return null;
+              if (gameState.currentPhase < gameState.totalPhases - 1) return null;
+              const newMats = mpData.completionRewards.filter(
+                (m) => !saveData.materials.includes(m)
+              );
+              if (newMats.length === 0) return null;
+              return (
+                <div className="mt-2 space-y-1">
+                  {newMats.map((matId) => (
+                    <p key={matId} className="text-sm text-purple-400 font-bold animate-pulse">
+                      + {matId.replace(/-/g, " ").toUpperCase()} (RARE)
+                    </p>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
           <div className="flex gap-4">
             <button

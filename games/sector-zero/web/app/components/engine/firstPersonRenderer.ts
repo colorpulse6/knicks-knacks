@@ -112,6 +112,7 @@ function drawEnemyBillboards(
   frameCount: number
 ): void {
   const enemySprite = getSprite(SPRITES.FP_ENEMY_FRONT);
+  const enemyFlinchSprite = getSprite(SPRITES.FP_ENEMY_FLINCH);
   const enemyDeathSprite = getSprite(SPRITES.FP_ENEMY_DEATH);
 
   // Build depth buffer from wall hits
@@ -177,17 +178,19 @@ function drawEnemyBillboards(
       ctx.clip();
 
       if (isDying && enemyDeathSprite) {
-        // Death animation: 3 frames in a strip
-        const deathFrame = Math.min(2, Math.floor((30 - enemy.deathTimer) / 10));
-        const frameW = enemyDeathSprite.width / 3;
+        // Death: single image, fade out
         ctx.globalAlpha = enemy.deathTimer / 30;
-        ctx.drawImage(
-          enemyDeathSprite,
-          deathFrame * frameW, 0, frameW, enemyDeathSprite.height,
-          drawStartX, drawStartY, spriteWidth, spriteHeight
-        );
+        ctx.drawImage(enemyDeathSprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
         ctx.globalAlpha = 1;
-      } else {
+      } else if (isDying) {
+        // Fallback death fade
+        ctx.globalAlpha = enemy.deathTimer / 30;
+        if (enemySprite) ctx.drawImage(enemySprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
+        ctx.globalAlpha = 1;
+      } else if (enemy.hp < enemy.maxHp && enemyFlinchSprite) {
+        // Flinch: show hurt sprite briefly when damaged
+        ctx.drawImage(enemyFlinchSprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
+      } else if (sprite) {
         ctx.drawImage(sprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
       }
 

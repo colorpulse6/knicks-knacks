@@ -253,6 +253,7 @@ export const SPRITES = {
   BOARDING_TILES: "/sprites/boarding/tiles.png",
   FP_GUN_SHEET: "/sprites/boarding/gun-sheet.png",
   FP_ENEMY_FRONT: "/sprites/boarding/enemy-fp-front.png",
+  FP_ENEMY_FLINCH: "/sprites/boarding/enemy-fp-flinch.png",
   FP_ENEMY_DEATH: "/sprites/boarding/enemy-fp-death.png",
   GROUND_BG_MID: "/sprites/ground/bg-surface-mid.png",
 };

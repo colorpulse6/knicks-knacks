@@ -280,17 +280,18 @@ function drawGroundPlayer(
       frameCol = 0;
     }
 
-    // Crop — the sprite has a gray/white background border we need to skip
-    const cropX = frameW * 0.12;
-    const cropY = frameH * 0.05;
-    const cropW = frameW * 0.76;
-    const cropH = frameH * 0.85;
+    // Each frame is 384×512 in the 1536×1024 sheet (4 cols × 2 rows)
+    // Characters sit in the center ~60% of each frame
+    const cropX = frameW * 0.20;
+    const cropY = frameH * 0.10;
+    const cropW = frameW * 0.60;
+    const cropH = frameH * 0.80;
 
-    // Draw larger than hitbox, offset upward so feet align with ground
-    const drawW = player.width + 24;
-    const drawH = player.height + 28;
-    const drawX = sx - 12;
-    const drawY = sy - 24;
+    // Draw size and position — feet should align with player.y + player.height
+    const drawW = 56;
+    const drawH = 64;
+    const drawX = sx + (player.width - drawW) / 2;
+    const drawY = sy + player.height - drawH;
 
     ctx.save();
     // Flip if facing left

@@ -830,7 +830,7 @@ export default function Game() {
   // Game loop
   useEffect(() => {
     if (!gameState || showStartScreen || showCockpit || showMap) return;
-    const activeScreens = [GameScreen.PLAYING, GameScreen.BOSS_FIGHT, GameScreen.BOSS_INTRO, GameScreen.BRIEFING];
+    const activeScreens = [GameScreen.PLAYING, GameScreen.BOSS_FIGHT, GameScreen.BOSS_INTRO, GameScreen.BRIEFING, GameScreen.PHASE_TRANSITION];
     if (!activeScreens.includes(gameState.screen)) return;
 
     const canvas = canvasRef.current;

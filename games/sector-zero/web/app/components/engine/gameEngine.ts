@@ -44,7 +44,9 @@ import {
   setDifficultyForWorld,
   setPlanetClassOverride,
 } from "./enemies";
-import { PLANET_DOMINANT_CLASS } from "./enemyClasses";
+import { PLANET_DOMINANT_CLASS, resolveAffinity } from "./enemyClasses";
+import { AFFINITY_MULTIPLIER } from "./weaponTypes";
+import { createAffinityLabel } from "./floatingLabels";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap, SpatialHash } from "./physics";
 import { getLevelData, getWorldLevelCount } from "./levels";
@@ -737,6 +739,7 @@ function handleBossCollisions(state: GameState): GameState {
         // Mouth open — any hit on the boss deals damage
         if (!bullet.piercing) destroyedBullets.add(bullet.id);
 
+        // TODO(affinity): bosses don't yet have classId — add boss class assignment in future plan
         bossHp = Math.max(0, bossHp - bullet.damage);
         audioEvents.push(AudioEvent.BOSS_HIT);
         newParticles = [
@@ -1027,7 +1030,28 @@ function handleCollisions(state: GameState): GameState {
           destroyedBullets.add(bullet.id);
         }
 
-        const newHp = enemy.hp - bullet.damage;
+        // Compute affinity-adjusted damage
+        let finalDamage = bullet.damage;
+        if (bullet.isPlayer && bullet.weaponType) {
+          const affinity = resolveAffinity(bullet.weaponType, enemy.classId);
+          finalDamage = bullet.damage * AFFINITY_MULTIPLIER[affinity];
+
+          // Mark enemy for affinity indicator
+          enemy.lastHitAffinity = affinity;
+          enemy.lastHitTimer = 120;
+
+          // Spawn floating label for non-neutral hits
+          const label = createAffinityLabel(
+            enemy.x + enemy.width / 2,
+            enemy.y - 4,
+            affinity
+          );
+          if (label) {
+            s.floatingLabels = [...s.floatingLabels, label];
+          }
+        }
+
+        const newHp = enemy.hp - finalDamage;
 
         if (newHp <= 0) {
           destroyedEnemies.add(enemy.id);

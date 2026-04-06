@@ -228,7 +228,7 @@ export function getTileAt(map: TileMap, worldX: number, worldY: number): TileTyp
   return map.tiles[row][col];
 }
 
-/** Check if a rectangle collides with any solid tile. */
+/** Check if a rectangle collides with any solid tile (NOT platforms — they are one-way). */
 export function collidesWithSolid(
   map: TileMap,
   x: number,
@@ -236,7 +236,6 @@ export function collidesWithSolid(
   width: number,
   height: number
 ): boolean {
-  // Check all tiles the rect overlaps
   const left = Math.floor(x / map.tileSize);
   const right = Math.floor((x + width - 1) / map.tileSize);
   const top = Math.floor(y / map.tileSize);
@@ -245,8 +244,7 @@ export function collidesWithSolid(
   for (let row = top; row <= bottom; row++) {
     for (let col = left; col <= right; col++) {
       if (row < 0 || row >= map.height || col < 0 || col >= map.width) continue;
-      const tile = map.tiles[row][col];
-      if (tile === "solid" || tile === "platform") return true;
+      if (map.tiles[row][col] === "solid") return true;
     }
   }
   return false;
@@ -450,27 +448,30 @@ const TEST_GROUND_MAP = parseMap([
   "########################################",
 ]);
 
+// Enemies placed on ground floor (row 21 is solid, so y = 20*T - height puts them on top)
+const GROUND_Y = 20 * T - 32; // ground floor, adjusted for enemy height
+
 const TEST_GROUND_ENEMIES: Omit<GroundEntity, "id">[] = [
   {
-    x: 12 * T, y: 13 * T, width: 24, height: 32,
+    x: 12 * T, y: GROUND_Y, width: 24, height: 32,
     vx: 0, vy: 0, hp: 2, maxHp: 2,
     type: "turret", onGround: true, facingRight: false,
     fireTimer: 60, classId: "heavy-mech",
   },
   {
-    x: 20 * T, y: 13 * T, width: 24, height: 32,
+    x: 20 * T, y: GROUND_Y, width: 24, height: 32,
     vx: 1, vy: 0, hp: 1, maxHp: 1,
     type: "patrol", onGround: true, facingRight: true,
     fireTimer: 0, classId: "swarm",
   },
   {
-    x: 28 * T, y: 13 * T, width: 24, height: 32,
+    x: 28 * T, y: GROUND_Y, width: 24, height: 32,
     vx: 0, vy: 0, hp: 3, maxHp: 3,
     type: "turret", onGround: true, facingRight: false,
     fireTimer: 90, classId: "armored",
   },
   {
-    x: 35 * T, y: 13 * T, width: 24, height: 32,
+    x: 35 * T, y: GROUND_Y, width: 24, height: 32,
     vx: 2, vy: 0, hp: 2, maxHp: 2,
     type: "jumper", onGround: true, facingRight: false,
     fireTimer: 0, classId: "bio-organic",
@@ -545,15 +546,17 @@ import {
   CANVAS_WIDTH,
   GAME_AREA_HEIGHT,
   BULLET_SPEED,
+  GameScreen,
+  EnemyType,
+  AudioEvent,
   type GameState,
   type Keys,
   type Bullet,
   type GroundState,
   type GroundEntity,
-  AudioEvent,
 } from "./types";
 import { applyGravity, resolveHorizontal, JUMP_VELOCITY, GROUND_TILE_SIZE } from "./groundPhysics";
-import { getGoalPosition } from "./groundLevel";
+import { getGoalPosition, getSpawnPosition } from "./groundLevel";
 import { resolveAffinity } from "./enemyClasses";
 import { AFFINITY_MULTIPLIER } from "./weaponTypes";
 import { createAffinityLabel } from "./floatingLabels";
@@ -641,17 +644,16 @@ export function updateGroundRun(
     switch (e.type) {
       case "patrol": {
         e.x += e.vx * (e.facingRight ? 1 : -1);
-        // Reverse at edges or walls
-        const checkX = e.facingRight ? e.x + e.width : e.x;
+        // Check ground ahead (row below feet) — reverse if no ground
+        const checkX = e.facingRight ? e.x + e.width + 2 : e.x - 2;
         const col = Math.floor(checkX / map.tileSize);
-        const row = Math.floor((e.y + e.height) / map.tileSize);
-        if (col < 0 || col >= map.width || map.tiles[row]?.[col] !== "solid") {
-          // Check if ground ahead is missing — reverse
-          const groundRow = row;
-          const groundCol = e.facingRight ? col : col;
-          if (!map.tiles[groundRow] || map.tiles[groundRow][groundCol] !== "solid") {
-            e.facingRight = !e.facingRight;
-          }
+        const groundRow = Math.floor((e.y + e.height) / map.tileSize); // tile below feet
+        // Reverse if hitting a wall or no ground ahead
+        const wallRow = Math.floor((e.y + e.height / 2) / map.tileSize);
+        const hitsWall = col >= 0 && col < map.width && map.tiles[wallRow]?.[col] === "solid";
+        const noGround = !map.tiles[groundRow]?.[col] || map.tiles[groundRow][col] !== "solid";
+        if (col < 0 || col >= map.width || hitsWall || noGround) {
+          e.facingRight = !e.facingRight;
         }
         break;
       }
@@ -743,9 +745,11 @@ export function updateGroundRun(
               createSpriteExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 48),
             ];
             s.audioEvents.push(AudioEvent.ENEMY_DESTROY);
+            // PoC: ground enemies don't map 1:1 to EnemyType yet.
+            // Use SCOUT as placeholder for bestiary tracking.
             s.pendingBestiaryKills = [
               ...s.pendingBestiaryKills,
-              { type: "SCOUT" as any, classId: enemy.classId },
+              { type: EnemyType.SCOUT, classId: enemy.classId },
             ];
           }
           break;
@@ -769,11 +773,10 @@ export function updateGroundRun(
           s.lives -= 1;
           s.deaths += 1;
           if (s.lives <= 0) {
-            s.screen = "GAME_OVER" as any;
+            s.screen = GameScreen.GAME_OVER;
             s.audioEvents.push(AudioEvent.GAME_OVER);
           } else {
             // Respawn at map start
-            const { getSpawnPosition } = require("./groundLevel");
             const spawn = getSpawnPosition(gs.tileMap);
             player.x = spawn.x;
             player.y = spawn.y;
@@ -819,25 +822,9 @@ export function updateGroundRun(
 }
 ```
 
-**Note about the `require()` call:** This is a workaround for the respawn position. A cleaner approach is to import `getSpawnPosition` at the top level. Replace the `require()` with a top-level import:
+Note: `getSpawnPosition` is already imported at the top of the file via `import { getGoalPosition, getSpawnPosition } from "./groundLevel";`.
 
-```typescript
-import { getGoalPosition, getSpawnPosition } from "./groundLevel";
-```
-
-And use `getSpawnPosition(gs.tileMap)` directly in the respawn block.
-
-- [ ] **Step 2: Fix the require() to use top-level import**
-
-Make sure the import at the top includes `getSpawnPosition`:
-
-```typescript
-import { getGoalPosition, getSpawnPosition } from "./groundLevel";
-```
-
-And remove the `require()` inline call, using `getSpawnPosition(gs.tileMap)` directly.
-
-- [ ] **Step 3: Verify build**
+- [ ] **Step 2: Verify build**
 
 ```bash
 cd games/sector-zero/web && yarn build 2>&1 | tail -20
@@ -1148,42 +1135,17 @@ Hmm, but then the standard shooter update would also run after the if block. Nee
 
 ```typescript
   // ── Ground-run mode dispatch ──
+  // Returns early — ground-run has its own complete update loop.
+  // NOTE: levelCompleteTimer handling is done INSIDE updateGroundRun.
+  // This is intentional duplication to keep mode-specific logic self-contained.
+  // A shared timer helper can be extracted later when more modes exist.
   if (state.currentMode === "ground-run") {
     let s = updateGroundRun(state, keys, touchX, touchY);
     s.particles = updateParticles(s.particles);
     s.explosions = updateSpriteExplosions(s.explosions);
     s.floatingLabels = updateFloatingLabels(s.floatingLabels);
     s.background = updateBackground(s.background);
-
-    // Check game over
-    if (s.lives <= 0 && s.player.hp <= 0) {
-      s.screen = GameScreen.GAME_OVER;
-      s.audioEvents.push(AudioEvent.GAME_OVER);
-    }
-
-    // Level complete timer (reuse existing logic)
-    if (s.levelCompleteTimer > 0) {
-      s.levelCompleteTimer -= 1;
-      if (s.levelCompleteTimer <= 0) {
-        if (!isLastPhase(s)) {
-          const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
-          const nextPhaseData = multiPhase?.phases[s.currentPhase + 1];
-          s.screen = GameScreen.PHASE_TRANSITION;
-          s.phaseTransitionTimer = nextPhaseData?.transitionIn?.duration ?? 180;
-          s.currentPhase += 1;
-          s.currentMode = nextPhaseData?.config.mode ?? "shooter";
-          s.phaseCheckpoint = createCheckpoint(s);
-          s.phaseTransitionCard = nextPhaseData?.transitionIn?.cardText ?? `PHASE ${s.currentPhase + 1}`;
-          s.phaseTransitionSubtext = nextPhaseData?.transitionIn?.cardSubtext ?? "";
-        } else {
-          s.screen = GameScreen.LEVEL_COMPLETE;
-        }
-      }
-    }
-
-    // Screen shake decay
     if (s.screenShake > 0) s.screenShake *= 0.9;
-
     return s;
   }
 ```
@@ -1217,6 +1179,8 @@ Find the PLAYING/BOSS_FIGHT fallthrough rendering (after PHASE_TRANSITION, BRIEF
 
 ```typescript
   // Ground-run mode has its own renderer
+  // Note: drawGroundRun handles its own ctx.save()/restore() internally.
+  // The outer drawGame ctx.restore() at the end handles the initial save.
   if (state.currentMode === "ground-run") {
     drawGroundRun(ctx, state);
     ctx.restore();

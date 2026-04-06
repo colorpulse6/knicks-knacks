@@ -403,6 +403,46 @@ export default function Game() {
         return;
       }
 
+      if (action === "goto-first-person") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const bs = createBoardingState();
+        const baseState = createGameState(1, 3, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        // Find spawn position in tile coordinates (not pixels)
+        let spawnTileX = 2.5;
+        let spawnTileY = 2.5;
+        for (let r = 0; r < bs.map.height; r++) {
+          for (let c = 0; c < bs.map.width; c++) {
+            if (bs.map.tiles[r][c] === "spawn") {
+              spawnTileX = c + 0.5;
+              spawnTileY = r + 0.5;
+            }
+          }
+        }
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "first-person",
+          currentPhase: 1,
+          totalPhases: 2,
+          firstPersonState: {
+            map: bs.map,
+            posX: spawnTileX,
+            posY: spawnTileY,
+            dirX: 1, dirY: 0,
+            planeX: 0, planeY: 0.66,
+            moveSpeed: 0.06,
+            rotSpeed: 0.04,
+            goalReached: false,
+          },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
       if (action === "goto-boarding") {
         ensureAudio();
         setShowStartScreen(false);

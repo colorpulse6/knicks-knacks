@@ -62,6 +62,7 @@ import { updateGroundEngine } from "./groundEngine";
 import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./groundLevel";
 import { updateBoardingEngine } from "./boardingEngine";
 import { createBoardingState, getBoardingSpawn } from "./boardingLevel";
+import { updateFirstPerson } from "./firstPersonEngine";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
 import { createObjectiveState, createEscortEntity, createDefendStructure, updateObjective } from "./objectives";
 import { getPlanetDef } from "./planets";
@@ -403,6 +404,14 @@ export function updateGame(
     return s;
   }
 
+  // ── First-person raycaster mode dispatch ──
+  if (state.currentMode === "first-person") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateFirstPerson(s, keys);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
   let s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
 
   // Update background
@@ -610,10 +619,25 @@ export function updateGame(
           const spawn = getBoardingSpawn(boardingState.map);
           s.boardingState = boardingState;
           s.groundState = undefined;
+          s.firstPersonState = undefined;
           s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "first-person") {
+          const boardingState = createBoardingState();
+          s.firstPersonState = {
+            map: boardingState.map,
+            posX: 2.5, posY: 2.5,
+            dirX: 1, dirY: 0,
+            planeX: 0, planeY: 0.66,
+            moveSpeed: 0.06,
+            rotSpeed: 0.04,
+            goalReached: false,
+          };
+          s.groundState = undefined;
+          s.boardingState = undefined;
         } else {
           s.groundState = undefined;
           s.boardingState = undefined;
+          s.firstPersonState = undefined;
         }
       } else {
         s.screen = GameScreen.LEVEL_COMPLETE;
@@ -842,10 +866,25 @@ function updateBossFight(
           const spawn = getBoardingSpawn(boardingState.map);
           s.boardingState = boardingState;
           s.groundState = undefined;
+          s.firstPersonState = undefined;
           s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "first-person") {
+          const boardingState = createBoardingState();
+          s.firstPersonState = {
+            map: boardingState.map,
+            posX: 2.5, posY: 2.5,
+            dirX: 1, dirY: 0,
+            planeX: 0, planeY: 0.66,
+            moveSpeed: 0.06,
+            rotSpeed: 0.04,
+            goalReached: false,
+          };
+          s.groundState = undefined;
+          s.boardingState = undefined;
         } else {
           s.groundState = undefined;
           s.boardingState = undefined;
+          s.firstPersonState = undefined;
         }
       } else {
         // Check if this is the final level in the game

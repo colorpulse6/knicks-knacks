@@ -516,6 +516,8 @@ export interface GameState {
   groundState?: GroundState;
   /** Ship boarding mode state (only populated when currentMode === "boarding") */
   boardingState?: BoardingState;
+  /** First-person raycaster state (only populated when currentMode === "first-person") */
+  firstPersonState?: FirstPersonState;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -665,7 +667,7 @@ export type PlanetId =
   | "bastion";
 
 // ─── Multi-Phase Levels ─────────────────────────────────────────────
-export type GameMode = "shooter" | "ground-run" | "boarding" | "turret" | "base-defense" | "mech-duel";
+export type GameMode = "shooter" | "ground-run" | "boarding" | "first-person" | "turret" | "base-defense" | "mech-duel";
 
 export interface PhaseConfig {
   mode: GameMode;
@@ -791,6 +793,21 @@ export interface BoardingState {
   playerFacing: FacingDirection;
   dashTimer: number;      // frames remaining on dash (0 = not dashing)
   dashCooldown: number;   // frames until dash available again
+  goalReached: boolean;
+}
+
+// ─── First-Person (Raycaster) ───────────────────────────────────────
+
+export interface FirstPersonState {
+  map: BoardingMap;         // Reuse boarding tile map
+  posX: number;             // Player position (world units, not pixels)
+  posY: number;
+  dirX: number;             // Direction vector
+  dirY: number;
+  planeX: number;           // Camera plane (perpendicular to dir, defines FOV)
+  planeY: number;
+  moveSpeed: number;
+  rotSpeed: number;
   goalReached: boolean;
 }
 

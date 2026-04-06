@@ -27,6 +27,7 @@ import { PLANET_DEFS } from "./planets";
 import { drawPhaseTransition } from "./phaseTransition";
 import { drawGroundGame } from "./groundRenderer";
 import { drawBoardingGame } from "./boardingRenderer";
+import { drawFirstPerson } from "./firstPersonRenderer";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -82,6 +83,13 @@ export function drawGame(
   // Ship boarding mode has its own renderer
   if (state.currentMode === "boarding") {
     drawBoardingGame(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // First-person raycaster mode
+  if (state.currentMode === "first-person") {
+    drawFirstPerson(ctx, state);
     ctx.restore();
     return;
   }

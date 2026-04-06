@@ -378,6 +378,29 @@ export default function Game() {
         return;
       }
 
+      if (action === "goto-ground-run") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        // Create a ground-run state directly (bypass phase system for quick testing)
+        const gs = createTestGroundState();
+        const spawn = getGroundSpawn(gs.tileMap);
+        const baseState = createGameState(1, 3, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "ground-run",
+          currentPhase: 1,
+          totalPhases: 2,
+          groundState: gs,
+          player: { ...baseState.player, x: spawn.x, y: spawn.y },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
       setGameState((prev) => {
         if (!prev) return null;
         switch (action) {

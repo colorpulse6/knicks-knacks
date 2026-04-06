@@ -42,7 +42,9 @@ import {
   spawnFormation,
   resetEnemyIds,
   setDifficultyForWorld,
+  setPlanetClassOverride,
 } from "./enemies";
+import { PLANET_DOMINANT_CLASS } from "./enemyClasses";
 import { resetBulletIds } from "./weapons";
 import { aabbOverlap, SpatialHash } from "./physics";
 import { getLevelData, getWorldLevelCount } from "./levels";
@@ -149,6 +151,7 @@ export function getHazardState(): HazardState | null {
 }
 
 export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES, enhancements: EnhancementId[] = []): GameState {
+  setPlanetClassOverride(null);
   currentUpgrades = { ...upgrades };
   currentEnhancements = [...enhancements];
   currentHazardState = null;
@@ -216,6 +219,7 @@ export function createPlanetGameState(
   upgrades: ShipUpgrades = DEFAULT_UPGRADES,
   enhancements: EnhancementId[] = []
 ): GameState {
+  setPlanetClassOverride(PLANET_DOMINANT_CLASS[planetId]);
   currentUpgrades = { ...upgrades };
   currentEnhancements = [...enhancements];
 
@@ -866,13 +870,14 @@ function handlePlayerShooting(state: GameState, keys: Keys): GameState {
 
   const newBullets = firePlayerWeapon(
     state.player,
-    state.player.weaponLevel
+    state.player.weaponLevel,
+    state.equippedWeaponType
   );
 
   // Side gunners
   const hasSideGunners = state.activePowerUps.some((p) => p.type === PowerUpType.SIDE_GUNNERS);
   if (hasSideGunners && state.frameCount % 3 === 0) {
-    const gunnerBullets = fireSideGunners(state.player);
+    const gunnerBullets = fireSideGunners(state.player, state.equippedWeaponType);
 
     // Homing gunners enhancement: slightly track nearest enemy
     if (hasEnhancement("homing-gunners") && state.enemies.length > 0) {

@@ -60,6 +60,8 @@ const spatialHash = new SpatialHash();
 import { createBossForWorld, updateBossForWorld, isBossDefeated, resetBossBulletIds } from "./bosses";
 import { updateGroundEngine } from "./groundEngine";
 import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./groundLevel";
+import { updateBoardingEngine } from "./boardingEngine";
+import { createBoardingState, getBoardingSpawn } from "./boardingLevel";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
 import { createObjectiveState, createEscortEntity, createDefendStructure, updateObjective } from "./objectives";
 import { getPlanetDef } from "./planets";
@@ -390,6 +392,17 @@ export function updateGame(
     return s;
   }
 
+  // ── Ship boarding mode dispatch ──
+  if (state.currentMode === "boarding") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateBoardingEngine(s, keys);
+    s.particles = updateParticles(s.particles);
+    s.explosions = updateSpriteExplosions(s.explosions);
+    s.floatingLabels = updateFloatingLabels(s.floatingLabels);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
   let s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
 
   // Update background
@@ -585,14 +598,22 @@ export function updateGame(
           s.floatingLabels = [];
           s.boss = null;
         }
-        // Initialize ground-run state if entering ground-run mode
+        // Initialize mode-specific state
         if (nextPhaseData?.config.mode === "ground-run") {
           const groundState = createTestGroundState();
           const spawn = getGroundSpawn(groundState.tileMap);
           s.groundState = groundState;
+          s.boardingState = undefined;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "boarding") {
+          const boardingState = createBoardingState();
+          const spawn = getBoardingSpawn(boardingState.map);
+          s.boardingState = boardingState;
+          s.groundState = undefined;
           s.player = { ...s.player, x: spawn.x, y: spawn.y };
         } else {
           s.groundState = undefined;
+          s.boardingState = undefined;
         }
       } else {
         s.screen = GameScreen.LEVEL_COMPLETE;
@@ -809,14 +830,22 @@ function updateBossFight(
           s.floatingLabels = [];
           s.boss = null;
         }
-        // Initialize ground-run state if entering ground-run mode
+        // Initialize mode-specific state
         if (nextPhaseData?.config.mode === "ground-run") {
           const groundState = createTestGroundState();
           const spawn = getGroundSpawn(groundState.tileMap);
           s.groundState = groundState;
+          s.boardingState = undefined;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "boarding") {
+          const boardingState = createBoardingState();
+          const spawn = getBoardingSpawn(boardingState.map);
+          s.boardingState = boardingState;
+          s.groundState = undefined;
           s.player = { ...s.player, x: spawn.x, y: spawn.y };
         } else {
           s.groundState = undefined;
+          s.boardingState = undefined;
         }
       } else {
         // Check if this is the final level in the game

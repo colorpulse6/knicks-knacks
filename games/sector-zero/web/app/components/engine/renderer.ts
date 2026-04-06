@@ -26,6 +26,7 @@ import {
 import { PLANET_DEFS } from "./planets";
 import { drawPhaseTransition } from "./phaseTransition";
 import { drawGroundGame } from "./groundRenderer";
+import { drawBoardingGame } from "./boardingRenderer";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -74,6 +75,13 @@ export function drawGame(
   // Ground-run mode has its own renderer
   if (state.currentMode === "ground-run") {
     drawGroundGame(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // Ship boarding mode has its own renderer
+  if (state.currentMode === "boarding") {
+    drawBoardingGame(ctx, state);
     ctx.restore();
     return;
   }

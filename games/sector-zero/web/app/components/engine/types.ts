@@ -514,6 +514,8 @@ export interface GameState {
   phaseTransitionSubtext: string;
   /** Ground run-and-gun mode state (only populated when currentMode === "ground-run") */
   groundState?: GroundState;
+  /** Ship boarding mode state (only populated when currentMode === "boarding") */
+  boardingState?: BoardingState;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -746,6 +748,49 @@ export interface GroundState {
   playerOnGround: boolean;
   playerVY: number;
   playerFacingRight: boolean;
+  goalReached: boolean;
+}
+
+// ─── Ship Boarding (Top-Down) ───────────────────────────────────────
+
+export type BoardingTileType = "floor" | "wall" | "door" | "spawn" | "goal" | "empty";
+
+export type FacingDirection = "up" | "down" | "left" | "right";
+
+export interface BoardingEntity {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vx: number;
+  vy: number;
+  hp: number;
+  maxHp: number;
+  type: "grunt" | "charger" | "sentry";
+  facing: FacingDirection;
+  fireTimer: number;
+  classId: EnemyClass;
+  aggroRange: number;    // pixels — starts chasing when player is within range
+  isAggro: boolean;
+}
+
+export interface BoardingMap {
+  width: number;
+  height: number;
+  tileSize: number;
+  tiles: BoardingTileType[][];
+}
+
+export interface BoardingState {
+  map: BoardingMap;
+  cameraX: number;
+  cameraY: number;
+  enemies: BoardingEntity[];
+  bullets: Bullet[];
+  playerFacing: FacingDirection;
+  dashTimer: number;      // frames remaining on dash (0 = not dashing)
+  dashCooldown: number;   // frames until dash available again
   goalReached: boolean;
 }
 

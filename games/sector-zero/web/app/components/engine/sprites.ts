@@ -242,6 +242,15 @@ export const SPRITES = {
   GROUND_ENEMY_FLYER: "/sprites/ground/enemy-flyer.png",
   GROUND_TILES: "/sprites/ground/tiles.png",
   GROUND_BG_FAR: "/sprites/ground/bg-surface-far.png",
+
+  // Ship Boarding
+  BOARDING_PLAYER_UP: "/sprites/boarding/player-up.png",
+  BOARDING_PLAYER_DOWN: "/sprites/boarding/player-down.png",
+  BOARDING_PLAYER_LEFT: "/sprites/boarding/player-left.png",
+  BOARDING_PLAYER_RIGHT: "/sprites/boarding/player-right.png",
+  BOARDING_ENEMY_GRUNT_IDLE: "/sprites/boarding/enemy-grunt-idle.png",
+  BOARDING_ENEMY_GRUNT_ATTACK: "/sprites/boarding/enemy-grunt-attack.png",
+  BOARDING_TILES: "/sprites/boarding/tiles.png",
   GROUND_BG_MID: "/sprites/ground/bg-surface-mid.png",
 };
 

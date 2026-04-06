@@ -52,6 +52,7 @@ import {
 } from "./engine/ending";
 import { restoreCheckpoint } from "./engine/phases";
 import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./engine/groundLevel";
+import { createBoardingState, getBoardingSpawn } from "./engine/boardingLevel";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -395,6 +396,28 @@ export default function Game() {
           currentPhase: 1,
           totalPhases: 2,
           groundState: gs,
+          player: { ...baseState.player, x: spawn.x, y: spawn.y },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
+      if (action === "goto-boarding") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const bs = createBoardingState();
+        const spawn = getBoardingSpawn(bs.map);
+        const baseState = createGameState(1, 3, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "boarding",
+          currentPhase: 1,
+          totalPhases: 2,
+          boardingState: bs,
           player: { ...baseState.player, x: spawn.x, y: spawn.y },
           briefingTimer: 0,
           devInvincible: gameState?.devInvincible ?? false,

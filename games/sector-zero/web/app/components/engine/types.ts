@@ -624,16 +624,13 @@ export interface DefendStructure {
 }
 
 export type MaterialId =
-  | "bio-fiber"
-  | "cryogenic-alloy"
-  | "molten-core"
-  | "ruin-shard"
-  | "abyssal-plating"
-  | "desert-glass"
-  | "phase-crystal"
-  | "genesis-seed"
-  | "neon-circuitry"
-  | "ferro-steel";
+  | "bio-fiber" | "cryogenic-alloy" | "molten-core" | "ruin-shard"
+  | "abyssal-plating" | "desert-glass" | "phase-crystal" | "genesis-seed"
+  | "neon-circuitry" | "ferro-steel"
+  // Rare materials (from multi-phase missions)
+  | "kinetic-core" | "energy-cell" | "ember-shard" | "cryo-essence"
+  // Legendary materials (from boss rare drops + optional phases)
+  | "void-fragment" | "hollow-resonance";
 
 export type ConsumableId =
   | "hull-repair"

@@ -420,6 +420,7 @@ export interface Keys {
   down: boolean;
   shoot: boolean;
   bomb: boolean;
+  jump: boolean;  // Ground-run: Space=jump, Z/Shift=shoot
 }
 
 // ─── Audio Events ────────────────────────────────────────────────────

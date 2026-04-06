@@ -67,8 +67,8 @@ function updatePlayerMovement(
   const newX = resolveHorizontal(map, p.x, p.y, vx, PLAYER_W, PLAYER_H);
   p.x = newX;
 
-  // Jump
-  if (keys.up && ground.playerOnGround) {
+  // Jump (Space / keys.jump — NOT up arrow, which is used for aiming)
+  if (keys.jump && ground.playerOnGround) {
     ground.playerVY = JUMP_VELOCITY;
     ground.playerOnGround = false;
   }
@@ -97,13 +97,35 @@ function updatePlayerShooting(gs: GameState, ground: GroundState, keys: Keys): v
   }
   if (!keys.shoot) return;
 
-  const dirX = ground.playerFacingRight ? 1 : -1;
+  // Determine aim direction from arrow keys
+  // Horizontal: facing direction (or override with left/right while shooting)
+  let aimX = ground.playerFacingRight ? 1 : -1;
+  let aimY = 0;
+
+  if (keys.up && !keys.down) aimY = -1;
+  if (keys.down && !keys.up) aimY = 1;
+  // If ONLY up/down pressed (no horizontal), shoot straight up/down
+  if (keys.up && !keys.left && !keys.right) aimX = 0;
+
+  // Normalize diagonal speed
+  const mag = Math.sqrt(aimX * aimX + aimY * aimY) || 1;
+  const bvx = (aimX / mag) * BULLET_SPEED;
+  const bvy = (aimY / mag) * BULLET_SPEED;
+
+  // Spawn bullet from the direction we're aiming
+  let bulletX = p.x + PLAYER_W / 2 - BULLET_W / 2;
+  let bulletY = p.y + PLAYER_H / 2 - BULLET_H / 2;
+  if (aimX > 0) bulletX = p.x + PLAYER_W;
+  else if (aimX < 0) bulletX = p.x - BULLET_W;
+  if (aimY < 0) bulletY = p.y - BULLET_H;
+  else if (aimY > 0) bulletY = p.y + PLAYER_H;
+
   const bullet: Bullet = {
     id: nextBulletId(),
-    x: ground.playerFacingRight ? p.x + PLAYER_W : p.x - BULLET_W,
-    y: p.y + PLAYER_H / 2 - BULLET_H / 2,
-    vx: dirX * BULLET_SPEED,
-    vy: 0,
+    x: bulletX,
+    y: bulletY,
+    vx: bvx,
+    vy: bvy,
     width: BULLET_W,
     height: BULLET_H,
     damage: PLAYER_BULLET_DAMAGE,

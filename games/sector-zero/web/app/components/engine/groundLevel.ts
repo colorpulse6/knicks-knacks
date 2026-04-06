@@ -24,60 +24,71 @@ function parseMap(lines: string[]): TileMap {
 }
 
 // 40 chars wide × 22 rows tall (~704px, fits in GAME_AREA_HEIGHT of 714)
+// ── Full Ground-Run Level ──────────────────────────────────────────
+// 80 cols × 22 rows. Ground at row 21. Jump height ~3 tiles.
+// 4 sections: Flatlands → Platforms → Trenches → Ascent to Goal
+//
+// Legend: # = solid, = = platform, S = spawn, G = goal, . = empty
 const TEST_GROUND_MAP = parseMap([
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "...................................G....",
-  "..................................====..",
-  "........................................",
-  "..........................====..........",
-  "..S...====........====.................",
-  "........................................",
-  "........................................",
-  "........................................",
-  "########################################",
+  // 80 chars wide
+  "................................................................................",  // 0
+  "................................................................................",  // 1
+  "................................................................................",  // 2
+  "................................................................................",  // 3
+  "................................................................................",  // 4
+  "................................................................................",  // 5
+  "................................................................................",  // 6
+  "................................................................................",  // 7
+  "................................................................................",  // 8
+  "................................................................................",  // 9
+  "..............................................................................G.",  // 10
+  "............................................................................====",  // 11
+  "........................................................................====....",  // 12
+  "....................................................................====........",  // 13
+  ".........................................====.........................====........",  // 14
+  "..................................====.......====...........====..................",  // 15
+  "...........................====..............................................####",  // 16
+  "..S...........====...====...................====.....====..........====...........####",  // 17
+  "..............................................................................####",  // 18
+  ".......................##########.....####......####..........####...............####",  // 19
+  "................................................................................",  // 20
+  "################################################################################",  // 21
 ]);
 
-// Enemies placed on ground floor. Row 21 is solid (top at y=672).
-// Enemy height is 32, so place at 672 - 32 = 640 to sit on top.
-const GROUND_Y = 21 * T - 32;
+// Helper to place an enemy on a specific tile row (feet on top of tile)
+function enemyOnRow(col: number, row: number, type: GroundEntity["type"], hp: number, classId: GroundEntity["classId"], vx: number = 0): Omit<GroundEntity, "id"> {
+  return {
+    x: col * T, y: row * T - 32, width: 24, height: 32,
+    vx, vy: 0, hp, maxHp: hp,
+    type, onGround: true, facingRight: false,
+    fireTimer: type === "turret" ? 60 + Math.floor(Math.random() * 40) : 0,
+    classId,
+  };
+}
 
 const TEST_GROUND_ENEMIES: Omit<GroundEntity, "id">[] = [
-  {
-    x: 12 * T, y: GROUND_Y, width: 24, height: 32,
-    vx: 0, vy: 0, hp: 2, maxHp: 2,
-    type: "turret", onGround: true, facingRight: false,
-    fireTimer: 60, classId: "heavy-mech",
-  },
-  {
-    x: 20 * T, y: GROUND_Y, width: 24, height: 32,
-    vx: 1, vy: 0, hp: 1, maxHp: 1,
-    type: "patrol", onGround: true, facingRight: true,
-    fireTimer: 0, classId: "swarm",
-  },
-  {
-    x: 28 * T, y: GROUND_Y, width: 24, height: 32,
-    vx: 0, vy: 0, hp: 3, maxHp: 3,
-    type: "turret", onGround: true, facingRight: false,
-    fireTimer: 90, classId: "armored",
-  },
-  {
-    x: 35 * T, y: GROUND_Y, width: 24, height: 32,
-    vx: 2, vy: 0, hp: 2, maxHp: 2,
-    type: "jumper", onGround: true, facingRight: false,
-    fireTimer: 0, classId: "bio-organic",
-  },
+  // Section 1: Flatlands (cols 0-20) — intro enemies on ground
+  enemyOnRow(8, 21, "patrol", 1, "swarm", 1),
+  enemyOnRow(12, 21, "patrol", 1, "swarm", 1),
+  enemyOnRow(16, 21, "turret", 2, "heavy-mech"),
+
+  // Section 2: Platforms (cols 20-40) — enemies on platforms and ground
+  enemyOnRow(24, 21, "patrol", 2, "bio-organic", 1),
+  enemyOnRow(28, 16, "turret", 2, "armored"),  // on platform at row 16
+  enemyOnRow(32, 21, "jumper", 2, "bio-organic", 2),
+  enemyOnRow(36, 15, "turret", 3, "heavy-mech"),  // on platform at row 15
+
+  // Section 3: Trenches (cols 40-60) — enemies in and around trenches
+  enemyOnRow(44, 14, "turret", 2, "armored"),  // on platform
+  enemyOnRow(48, 19, "patrol", 2, "swarm", 1),  // on trench floor
+  enemyOnRow(52, 21, "jumper", 3, "bio-organic", 2),
+  enemyOnRow(56, 15, "turret", 3, "heavy-mech"),
+
+  // Section 4: Ascent (cols 60-80) — vertical climb to goal
+  enemyOnRow(62, 21, "patrol", 2, "swarm", 1),
+  enemyOnRow(66, 16, "turret", 3, "armored"),  // on solid at row 16
+  enemyOnRow(70, 13, "turret", 4, "heavy-mech"),  // on platform
+  enemyOnRow(74, 11, "jumper", 3, "bio-organic", 2),  // near goal
 ];
 
 let groundEntityId = 0;

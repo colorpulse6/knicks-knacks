@@ -78,6 +78,7 @@ export default function Game() {
     down: false,
     shoot: false,
     bomb: false,
+    jump: false,
   });
   const touchPosRef = useRef<{ x: number; y: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -487,6 +488,12 @@ export default function Game() {
           break;
         case " ":
           keysRef.current.shoot = true;
+          keysRef.current.jump = true;
+          break;
+        case "z":
+        case "Z":
+        case "Shift":
+          keysRef.current.shoot = true;
           break;
         case "b":
           keysRef.current.bomb = true;
@@ -568,6 +575,12 @@ export default function Game() {
           keysRef.current.down = false;
           break;
         case " ":
+          keysRef.current.shoot = false;
+          keysRef.current.jump = false;
+          break;
+        case "z":
+        case "Z":
+        case "Shift":
           keysRef.current.shoot = false;
           break;
         case "b":

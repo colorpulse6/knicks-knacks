@@ -21,6 +21,13 @@ let bulletIdCounter = 10000; // offset from player bullets
 /** World-based difficulty scaling for planet expansion */
 let currentDifficultyScale = { hp: 1, speed: 1, fireRate: 1 };
 
+/** Planet-mission class override. When set, 70% of spawns use this class. */
+let currentPlanetClass: EnemyClass | null = null;
+
+export function setPlanetClassOverride(classId: EnemyClass | null): void {
+  currentPlanetClass = classId;
+}
+
 const WORLD_DIFFICULTY: Record<number, { hp: number; speed: number; fireRate: number }> = {
   1: { hp: 1, speed: 1, fireRate: 1 },
   2: { hp: 1, speed: 1, fireRate: 1 },
@@ -51,7 +58,10 @@ export function createEnemy(
   const def = ENEMY_DEFS[type];
   const defaultBehavior = getDefaultBehavior(type);
 
-  const classId = classOverride ?? DEFAULT_ENEMY_CLASS[type];
+  const classId = classOverride
+    ?? (currentPlanetClass && Math.random() < 0.7
+      ? currentPlanetClass
+      : DEFAULT_ENEMY_CLASS[type]);
   const classProfile = ENEMY_CLASS_PROFILES[classId];
 
   const scaledHp = Math.max(1, Math.ceil(

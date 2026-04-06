@@ -237,7 +237,7 @@ export interface MaterialDef {
   name: string;
   icon: string;
   color: string;
-  sourcePlanet: PlanetId;
+  sourcePlanet?: PlanetId;  // Optional for rare/legendary materials
   description: string;
 }
 
@@ -252,6 +252,14 @@ export const MATERIAL_DEFS: MaterialDef[] = [
   { id: "genesis-seed", name: "Genesis Seed", icon: "🌱", color: "#66cc33", sourcePlanet: "genesis", description: "Hollow bio-catalyst from Genesis" },
   { id: "neon-circuitry", name: "Neon Circuitry", icon: "⚡", color: "#cc44ff", sourcePlanet: "luminos", description: "Living circuit substrate from Luminos" },
   { id: "ferro-steel", name: "Ferro-Steel", icon: "🛡", color: "#cc6633", sourcePlanet: "bastion", description: "Militarized hull alloy from Bastion" },
+  // ── Rare Materials ──
+  { id: "kinetic-core", name: "Kinetic Core", icon: "◆", color: "#e8e8ee", description: "Dense projectile matrix. Required for prestige weapon upgrades." },
+  { id: "energy-cell", name: "Energy Cell", icon: "◆", color: "#44ccff", description: "Concentrated energy lattice. Powers prestige shield and engine systems." },
+  { id: "ember-shard", name: "Ember Shard", icon: "◆", color: "#ff6a1a", description: "Volatile incendiary fragment. Fuels prestige munitions upgrades." },
+  { id: "cryo-essence", name: "Cryo Essence", icon: "◆", color: "#aaddff", description: "Supercooled crystalline extract. Required for prestige hull reinforcement." },
+  // ── Legendary Materials ──
+  { id: "void-fragment", name: "Void Fragment", icon: "★", color: "#aa44ff", description: "A shard of compressed spacetime from the Void Abyss." },
+  { id: "hollow-resonance", name: "Hollow Resonance", icon: "★", color: "#ff4444", description: "A crystallized echo of the Hollow Mind's signal." },
 ];
 
 // ─── Consumable Definitions ─────────────────────────────────────────

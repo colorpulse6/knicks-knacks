@@ -2136,3 +2136,206 @@ function drawCodexReading(
   ctx.textBaseline = "middle";
   ctx.fillText("[ENTER] or [\u2190] CLOSE", CANVAS_WIDTH / 2, promptY);
 }
+
+// ─── Pilot Screen ───────────────────────────────────────────────────
+
+function drawPilotScreen(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData
+): void {
+  drawSubScreenFrame(ctx, "PILOT", SPRITES.ARMORY_BG);
+
+  const level = save.pilotLevel;
+  const progress = xpProgress(save.xp, level);
+  const nextLevelXp = xpForLevel(level + 1);
+
+  // ── Level display ──
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = "#44ccff";
+  ctx.fillStyle = "#44ccff";
+  ctx.font = "bold 36px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(`${level}`, CANVAS_WIDTH / 2, 48);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#667788";
+  ctx.font = "10px monospace";
+  ctx.fillText("PILOT LEVEL", CANVAS_WIDTH / 2, 42);
+
+  // XP progress bar
+  const barX = 40;
+  const barY = 92;
+  const barW = CANVAS_WIDTH - 80;
+  const barH = 10;
+
+  ctx.fillStyle = "#1a1a2a";
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, barH, 3);
+  ctx.fill();
+
+  if (level < MAX_PILOT_LEVEL) {
+    ctx.fillStyle = "#44ccff";
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW * progress, barH, 3);
+    ctx.fill();
+
+    ctx.fillStyle = "#667788";
+    ctx.font = "8px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      `${save.xp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP`,
+      CANVAS_WIDTH / 2, barY + barH + 6
+    );
+  } else {
+    ctx.fillStyle = "#44ff88";
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 3);
+    ctx.fill();
+
+    ctx.fillStyle = "#44ff88";
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("MAX LEVEL", CANVAS_WIDTH / 2, barY + barH + 6);
+  }
+
+  // ── Passive bonuses ──
+  const bonusY = barY + barH + 22;
+  ctx.fillStyle = "#445566";
+  ctx.font = "bold 9px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("PASSIVE BONUSES", 20, bonusY);
+
+  ctx.font = "9px monospace";
+  ctx.fillStyle = "#aaaaaa";
+  ctx.fillText(`+${bonusHp(level)} Max HP`, 20, bonusY + 14);
+  ctx.fillText(`+${(creditBonus(level) * 100).toFixed(1)}% Credits`, 160, bonusY + 14);
+  ctx.fillText(`+${(materialDropBonus(level) * 100).toFixed(0)}% Drops`, 310, bonusY + 14);
+
+  // ── Skill points ──
+  const spY = bonusY + 34;
+  ctx.fillStyle = "#ffdd44";
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText(`SKILL POINTS: ${save.skillPoints}`, 20, spY);
+  ctx.fillStyle = "#667788";
+  ctx.font = "9px monospace";
+  ctx.fillText(`(${skillPointsAtLevel(level)} total earned)`, 200, spY);
+
+  // ── Combat Skill Tree ──
+  const treeY = spY + 24;
+  ctx.fillStyle = "#ff4444";
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("COMBAT", 20, treeY);
+
+  const nodes = getTreeNodes("combat");
+  const nodeStartY = treeY + 18;
+  const nodeH = 52;
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const y = nodeStartY + i * nodeH;
+    const isSelected = state.pilotTreeSelected === i;
+    const isAllocated = save.allocatedSkills.includes(node.id);
+    const canAlloc = canAllocate(node.id, save.allocatedSkills, save.skillPoints);
+
+    if (isSelected) {
+      const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+      ctx.fillStyle = `rgba(68, 204, 255, ${pulse})`;
+      ctx.beginPath();
+      ctx.roundRect(16, y, CANVAS_WIDTH - 32, nodeH - 4, 4);
+      ctx.fill();
+      ctx.strokeStyle = "#44ccff44";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(16, y, CANVAS_WIDTH - 32, nodeH - 4, 4);
+      ctx.stroke();
+    }
+
+    // Connection line
+    if (i > 0) {
+      ctx.strokeStyle = isAllocated ? node.color + "88" : "#222233";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(36, y - 4);
+      ctx.lineTo(36, y + 4);
+      ctx.stroke();
+    }
+
+    // Icon
+    ctx.fillStyle = isAllocated ? node.color : (canAlloc ? "#667788" : "#333344");
+    ctx.font = "bold 16px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(node.icon, 36, y + nodeH / 2 - 2);
+
+    // Name
+    ctx.fillStyle = isAllocated ? "#ffffff" : (isSelected ? "#cccccc" : "#889999");
+    ctx.font = isAllocated ? "bold 11px monospace" : "11px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(node.name, 56, y + 6);
+
+    // Description
+    ctx.fillStyle = "#667788";
+    ctx.font = "9px monospace";
+    ctx.fillText(node.description, 56, y + 22);
+
+    // Status badge
+    ctx.textAlign = "right";
+    ctx.font = "bold 9px monospace";
+    if (isAllocated) {
+      ctx.fillStyle = "#44ff88";
+      ctx.fillText("ACTIVE", CANVAS_WIDTH - 24, y + 10);
+    } else if (node.isCapstone) {
+      ctx.fillStyle = "#ffdd44";
+      ctx.fillText(`${node.cost} PTS`, CANVAS_WIDTH - 24, y + 10);
+      if (!canAlloc && save.skillPoints >= node.cost) {
+        ctx.fillStyle = "#554422";
+        ctx.font = "8px monospace";
+        ctx.fillText("REQUIRES ALL NODES", CANVAS_WIDTH - 24, y + 24);
+      }
+    } else if (canAlloc) {
+      ctx.fillStyle = "#44ccff";
+      ctx.fillText(`${node.cost} PT`, CANVAS_WIDTH - 24, y + 10);
+    } else {
+      ctx.fillStyle = "#333344";
+      ctx.fillText("LOCKED", CANVAS_WIDTH - 24, y + 10);
+    }
+  }
+
+  // ── Milestones ──
+  const milestonesY = nodeStartY + nodes.length * nodeH + 10;
+  ctx.fillStyle = "#445566";
+  ctx.font = "bold 9px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("MILESTONES", 20, milestonesY);
+
+  const milestones = getMilestones(level);
+  for (let i = 0; i < milestones.length; i++) {
+    const m = milestones[i];
+    const my = milestonesY + 14 + i * 14;
+    ctx.fillStyle = m.unlocked ? "#44ff88" : "#334455";
+    ctx.font = "9px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(`${m.unlocked ? "\u2713" : "\u2022"} Lv ${m.level}: ${m.label}`, 28, my);
+  }
+
+  // ── Bottom bar ──
+  const bottomBarY = CANVAS_HEIGHT - 50;
+  ctx.fillStyle = "rgba(0, 0, 10, 0.7)";
+  ctx.fillRect(0, bottomBarY, CANVAS_WIDTH, 50);
+  ctx.strokeStyle = "#22334488";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, bottomBarY);
+  ctx.lineTo(CANVAS_WIDTH, bottomBarY);
+  ctx.stroke();
+  ctx.fillStyle = "#445566";
+  ctx.font = "9px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("\u2191\u2193 SELECT   ENTER ALLOCATE   \u2190 BACK", CANVAS_WIDTH / 2, bottomBarY + 25);
+}

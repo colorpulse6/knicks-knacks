@@ -30,8 +30,11 @@ import {
   type PlanetId,
   type ObjectiveState,
   type SpriteExplosion,
+  type SkillNodeId,
   DEFAULT_UPGRADES,
 } from "./types";
+import { bonusHp } from "./pilotLevel";
+import { hasSkill, getSkillEffect } from "./skillTree";
 import { createBackground, updateBackground } from "./background";
 import { updateParticles, createExplosion, createSparks, createEngineTrail, createSpriteExplosion, updateSpriteExplosions } from "./particles";
 import { firePlayerWeapon, fireSideGunners, updateBullets } from "./weapons";
@@ -121,14 +124,25 @@ const MAX_POWERUPS_ON_SCREEN = 6;
 
 // ─── Create State ────────────────────────────────────────────────────
 
-export function createPlayer(upgrades: ShipUpgrades = DEFAULT_UPGRADES): Player {
+export function createPlayer(
+  upgrades: ShipUpgrades = DEFAULT_UPGRADES,
+  pilotLevel: number = 1,
+  allocatedSkills: SkillNodeId[] = []
+): Player {
+  let maxHp = PLAYER_MAX_HP + upgrades.hullPlating + bonusHp(pilotLevel);
+
+  // Glass Cannon: +30% damage (applied in collision), -1 max HP
+  if (hasSkill(allocatedSkills, "glass-cannon")) {
+    maxHp = Math.max(1, maxHp - 1);
+  }
+
   return {
     x: CANVAS_WIDTH / 2 - PLAYER_WIDTH / 2,
     y: GAME_AREA_HEIGHT - 100,
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
-    hp: PLAYER_MAX_HP + upgrades.hullPlating,
-    maxHp: PLAYER_MAX_HP + upgrades.hullPlating,
+    hp: maxHp,
+    maxHp,
     speed: PLAYER_SPEED + upgrades.engineBoost * 0.5,
     weaponLevel: 1 + upgrades.weaponCore,
     invincibleTimer: 0,
@@ -153,7 +167,7 @@ export function getHazardState(): HazardState | null {
   return currentHazardState;
 }
 
-export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES, enhancements: EnhancementId[] = []): GameState {
+export function createGameState(world: number, level: number, upgrades: ShipUpgrades = DEFAULT_UPGRADES, enhancements: EnhancementId[] = [], pilotLevel: number = 1, allocatedSkills: SkillNodeId[] = []): GameState {
   setPlanetClassOverride(null);
   currentUpgrades = { ...upgrades };
   currentEnhancements = [...enhancements];
@@ -178,7 +192,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
 
   return {
     screen: GameScreen.BRIEFING,
-    player: createPlayer(upgrades),
+    player: createPlayer(upgrades, pilotLevel, allocatedSkills),
     playerBullets: [],
     enemyBullets: [],
     enemies: [],
@@ -218,15 +232,17 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     dialogTriggers: getDialogTriggers(world, level),
     xp: 0,
     hpWarningTriggered: false,
-    pilotLevel: 1,
-    allocatedSkills: [],
+    pilotLevel,
+    allocatedSkills,
   };
 }
 
 export function createPlanetGameState(
   planetId: PlanetId,
   upgrades: ShipUpgrades = DEFAULT_UPGRADES,
-  enhancements: EnhancementId[] = []
+  enhancements: EnhancementId[] = [],
+  pilotLevel: number = 1,
+  allocatedSkills: SkillNodeId[] = []
 ): GameState {
   setPlanetClassOverride(PLANET_DOMINANT_CLASS[planetId]);
   currentUpgrades = { ...upgrades };
@@ -254,7 +270,7 @@ export function createPlanetGameState(
 
   return {
     screen: GameScreen.BRIEFING,
-    player: createPlayer(upgrades),
+    player: createPlayer(upgrades, pilotLevel, allocatedSkills),
     playerBullets: [],
     enemyBullets: [],
     enemies: [],
@@ -294,8 +310,8 @@ export function createPlanetGameState(
     dialogTriggers: getPlanetDialogTriggers(planetId),
     xp: 0,
     hpWarningTriggered: false,
-    pilotLevel: 1,
-    allocatedSkills: [],
+    pilotLevel,
+    allocatedSkills,
     planetId,
     objective,
     escort,
@@ -507,7 +523,7 @@ export function updateGame(
           const carryInvincible = s.devInvincible;
           const carryPowerUps = s.activePowerUps;
 
-          const newState = createGameState(nextWorld, nextLv, currentUpgrades, currentEnhancements);
+          const newState = createGameState(nextWorld, nextLv, currentUpgrades, currentEnhancements, s.pilotLevel, s.allocatedSkills);
           return {
             ...newState,
             score: carryScore,
@@ -885,7 +901,9 @@ function handlePlayerShooting(state: GameState, keys: Keys): GameState {
 
   const hasRapidFire = state.activePowerUps.some((p) => p.type === PowerUpType.RAPID_FIRE);
   const baseRate = PLAYER_FIRE_RATE - currentUpgrades.fireControl;
-  const fireRate = hasRapidFire ? Math.floor(baseRate / 2) : baseRate;
+  const rapidRate = hasRapidFire ? Math.floor(baseRate / 2) : baseRate;
+  const fireRateMod = hasSkill(state.allocatedSkills, "adrenaline") ? (1 - getSkillEffect(state.allocatedSkills, "adrenaline")) : 1;
+  const fireRate = Math.max(2, Math.floor(rapidRate * fireRateMod));
 
   const newBullets = firePlayerWeapon(
     state.player,
@@ -1242,7 +1260,7 @@ function playerHit(
 
     if (newLives > 0) {
       // Respawn
-      const newPlayer = createPlayer(currentUpgrades);
+      const newPlayer = createPlayer(currentUpgrades, state.pilotLevel, state.allocatedSkills);
       newPlayer.invincibleTimer = PLAYER_INVINCIBLE_FRAMES * 2;
       newPlayer.weaponLevel = Math.max(1, player.weaponLevel - 1);
 

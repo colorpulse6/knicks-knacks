@@ -236,6 +236,12 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     hpWarningTriggered: false,
     pilotLevel,
     allocatedSkills,
+    currentPhase: 0,
+    totalPhases: 1,
+    phaseCheckpoint: null,
+    phaseTransitionTimer: 0,
+    phaseTransitionCard: "",
+    phaseTransitionSubtext: "",
   };
 }
 
@@ -314,6 +320,12 @@ export function createPlanetGameState(
     hpWarningTriggered: false,
     pilotLevel,
     allocatedSkills,
+    currentPhase: 0,
+    totalPhases: 1,
+    phaseCheckpoint: null,
+    phaseTransitionTimer: 0,
+    phaseTransitionCard: "",
+    phaseTransitionSubtext: "",
     planetId,
     objective,
     escort,

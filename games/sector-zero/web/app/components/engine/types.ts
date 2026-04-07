@@ -852,6 +852,44 @@ export interface TurretState {
 
 // ─── First-Person (Raycaster) ───────────────────────────────────────
 
+// ─── First-Person NPCs ──────────────────────────────────────────────
+
+export interface FPDialogLine {
+  speaker: string;
+  text: string;
+  portraitKey?: string;
+}
+
+export interface FPShopItem {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  type: "consumable" | "material" | "upgrade";
+  itemId?: string;  // ConsumableId or MaterialId
+}
+
+export interface FPNPC {
+  id: number;
+  x: number;           // Tile-unit position
+  y: number;
+  name: string;
+  type: "quest" | "merchant" | "lore";
+  dialog: FPDialogLine[];
+  shopItems?: FPShopItem[];  // Only for merchants
+  color: string;       // Fallback color for billboard
+  interacted: boolean; // Has player talked to this NPC this session?
+}
+
+export interface FPDialogState {
+  active: boolean;
+  npcId: number;
+  lines: FPDialogLine[];
+  currentLine: number;
+  shopOpen: boolean;
+  shopItems?: FPShopItem[];
+}
+
 export interface FPEnemy {
   id: number;
   x: number;              // Tile-unit position
@@ -887,6 +925,9 @@ export interface FirstPersonState {
   enemies: FPEnemy[];
   gunFireTimer: number;   // Frames since last shot (for muzzle flash)
   gunCooldown: number;    // Frames until can fire again
+  // RPG layer
+  npcs: FPNPC[];
+  dialogState: FPDialogState | null;
 }
 
 // ─── Pilot Leveling ─────────────────────────────────────────────────

@@ -738,6 +738,8 @@ export function updateGame(
             })),
             gunFireTimer: 0,
             gunCooldown: 0,
+            npcs: [],
+            dialogState: null,
           };
           s.groundState = undefined;
           s.boardingState = undefined;
@@ -1004,6 +1006,8 @@ function updateBossFight(
             })),
             gunFireTimer: 0,
             gunCooldown: 0,
+            npcs: [],
+            dialogState: null,
           };
           s.groundState = undefined;
           s.boardingState = undefined;

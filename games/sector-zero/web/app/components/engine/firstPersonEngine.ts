@@ -121,6 +121,63 @@ export function updateFirstPerson(gs: GameState, keys: Keys): void {
   fp.planeX = planeX;
   fp.planeY = planeY;
 
+  // ── NPC Dialog System ──
+  if (fp.dialogState?.active) {
+    // Dialog is open — shoot key advances dialog
+    if (keys.shoot && fp.gunCooldown <= 0) {
+      fp.gunCooldown = 15; // Debounce
+      const ds = fp.dialogState;
+      if (ds.shopOpen) {
+        // Shop is open — shoot closes it
+        ds.shopOpen = false;
+      } else if (ds.currentLine < ds.lines.length - 1) {
+        ds.currentLine++;
+      } else {
+        // End of dialog — open shop if merchant, otherwise close
+        const npc = fp.npcs.find((n) => n.id === ds.npcId);
+        if (npc?.type === "merchant" && npc.shopItems && !npc.interacted) {
+          ds.shopOpen = true;
+          ds.shopItems = npc.shopItems;
+          npc.interacted = true;
+        } else {
+          fp.dialogState = null;
+          if (npc) npc.interacted = true;
+        }
+      }
+    }
+    if (fp.gunCooldown > 0) fp.gunCooldown--;
+    gs.player.bankDir = 0;
+    return; // Don't process movement/combat while in dialog
+  }
+
+  // ── NPC Interaction (press shoot near NPC) ──
+  if (fp.npcs && keys.shoot && fp.gunCooldown <= 0) {
+    const NPC_INTERACT_RANGE = 2.0;
+    for (const npc of fp.npcs) {
+      const dx = npc.x - posX;
+      const dy = npc.y - posY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < NPC_INTERACT_RANGE) {
+        // Check if roughly facing the NPC
+        const dot = dx * dirX + dy * dirY;
+        if (dot > 0) { // NPC is in front of us
+          fp.dialogState = {
+            active: true,
+            npcId: npc.id,
+            lines: npc.dialog,
+            currentLine: 0,
+            shopOpen: false,
+            shopItems: npc.shopItems,
+          };
+          fp.gunCooldown = 15;
+          gs.audioEvents.push(AudioEvent.DIALOG_ADVANCE);
+          gs.player.bankDir = 0;
+          return; // Skip shooting this frame
+        }
+      }
+    }
+  }
+
   // ── Shooting ──
   if (fp.gunCooldown > 0) fp.gunCooldown--;
   if (fp.gunFireTimer > 0) fp.gunFireTimer--;

@@ -128,6 +128,8 @@ export function createKeplerBlackBoxFirstPersonState(
     enemies: KEPLER_ENEMIES.map((entry) => ({ ...entry })),
     gunFireTimer: 0,
     gunCooldown: 0,
+    npcs: [],
+    dialogState: null,
   };
 }
 

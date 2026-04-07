@@ -505,6 +505,27 @@ export default function Game() {
         return;
       }
 
+      if (action === "goto-exploration") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const { createExplorationState } = require("./engine/explorationLevel");
+        const fpState = createExplorationState();
+        const baseState = createGameState(1, 1, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "first-person",
+          currentPhase: 0,
+          totalPhases: 1,
+          firstPersonState: fpState,
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
       if (action === "goto-turret") {
         ensureAudio();
         setShowStartScreen(false);
@@ -584,6 +605,8 @@ export default function Game() {
             enemies: fpEnemies,
             gunFireTimer: 0,
             gunCooldown: 0,
+            npcs: [],
+            dialogState: null,
           },
           briefingTimer: 0,
           devInvincible: gameState?.devInvincible ?? false,

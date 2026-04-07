@@ -344,6 +344,232 @@ function drawGunHUD(
 
 // ─── Main Renderer ──────────────────────────────────────────────────
 
+// ─── NPC Billboards ─────────────────────────────────────────────────
+
+function drawNPCBillboards(
+  ctx: CanvasRenderingContext2D,
+  fp: FirstPersonState,
+  wallHits: (RayHit | null)[],
+  frameCount: number
+): void {
+  if (!fp.npcs || fp.npcs.length === 0) return;
+
+  const zBuffer: number[] = new Array(CANVAS_WIDTH);
+  for (let x = 0; x < CANVAS_WIDTH; x++) {
+    zBuffer[x] = wallHits[x]?.distance ?? 999;
+  }
+
+  const sorted = [...fp.npcs]
+    .map((npc) => {
+      const dx = npc.x - fp.posX;
+      const dy = npc.y - fp.posY;
+      return { npc, dist: dx * dx + dy * dy, dx, dy };
+    })
+    .sort((a, b) => b.dist - a.dist);
+
+  for (const { npc, dx, dy } of sorted) {
+    const invDet = 1.0 / (fp.planeX * fp.dirY - fp.dirX * fp.planeY);
+    const transformX = invDet * (fp.dirY * dx - fp.dirX * dy);
+    const transformY = invDet * (-fp.planeY * dx + fp.planeX * dy);
+
+    if (transformY <= 0.1) continue;
+
+    const spriteScreenX = Math.floor((CANVAS_WIDTH / 2) * (1 + transformX / transformY));
+    const spriteHeight = Math.abs(Math.floor(GAME_AREA_HEIGHT / transformY)) * 0.5;
+    const spriteWidth = spriteHeight * 0.6;
+
+    const drawStartX = Math.floor(spriteScreenX - spriteWidth / 2);
+    const drawStartY = Math.floor(GAME_AREA_HEIGHT / 2 - spriteHeight / 2);
+
+    const startX = Math.max(0, drawStartX);
+    const endX = Math.min(CANVAS_WIDTH - 1, drawStartX + Math.floor(spriteWidth));
+
+    let visible = false;
+    for (let x = startX; x <= endX; x++) {
+      if (transformY < zBuffer[x]) { visible = true; break; }
+    }
+    if (!visible) continue;
+
+    ctx.save();
+    ctx.beginPath();
+    for (let x = startX; x <= endX; x++) {
+      if (transformY < zBuffer[x]) {
+        ctx.rect(x, 0, 1, GAME_AREA_HEIGHT);
+      }
+    }
+    ctx.clip();
+
+    // NPC body — colored rectangle with head
+    const bodyY = drawStartY + spriteHeight * 0.2;
+    const bodyH = spriteHeight * 0.8;
+
+    // Glow aura
+    ctx.fillStyle = npc.color + "22";
+    ctx.beginPath();
+    ctx.arc(spriteScreenX, drawStartY + spriteHeight * 0.4, spriteWidth * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Body
+    ctx.fillStyle = npc.color;
+    ctx.fillRect(drawStartX + spriteWidth * 0.2, bodyY, spriteWidth * 0.6, bodyH);
+
+    // Head
+    ctx.beginPath();
+    ctx.arc(spriteScreenX, drawStartY + spriteHeight * 0.15, spriteWidth * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(spriteScreenX - spriteWidth * 0.08, drawStartY + spriteHeight * 0.12, Math.max(1, spriteWidth * 0.05), 0, Math.PI * 2);
+    ctx.arc(spriteScreenX + spriteWidth * 0.08, drawStartY + spriteHeight * 0.12, Math.max(1, spriteWidth * 0.05), 0, Math.PI * 2);
+    ctx.fill();
+
+    // Name tag above
+    if (transformY < 4) {
+      ctx.fillStyle = npc.color;
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(npc.name, spriteScreenX, drawStartY - 4);
+    }
+
+    // Type indicator
+    const typeIcon = npc.type === "merchant" ? "$" : npc.type === "quest" ? "!" : "?";
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${Math.max(10, spriteHeight * 0.15)}px monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(typeIcon, spriteScreenX, drawStartY + spriteHeight * 0.15);
+
+    ctx.restore();
+  }
+}
+
+// ─── Dialog Box ─────────────────────────────────────────────────────
+
+function drawDialogBox(
+  ctx: CanvasRenderingContext2D,
+  fp: FirstPersonState,
+  frameCount: number
+): void {
+  const ds = fp.dialogState;
+  if (!ds || !ds.active) return;
+
+  const boxH = ds.shopOpen ? 300 : 140;
+  const boxY = GAME_AREA_HEIGHT - boxH - 10;
+  const boxX = 16;
+  const boxW = CANVAS_WIDTH - 32;
+
+  // Background
+  ctx.fillStyle = "rgba(0, 0, 10, 0.9)";
+  ctx.beginPath();
+  ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+  ctx.fill();
+
+  // Border
+  const npc = fp.npcs.find((n) => n.id === ds.npcId);
+  const borderColor = npc?.color ?? "#44ccff";
+  ctx.strokeStyle = borderColor + "88";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+  ctx.stroke();
+
+  if (ds.shopOpen && ds.shopItems) {
+    // ── Shop UI ──
+    ctx.fillStyle = "#ffaa44";
+    ctx.font = "bold 12px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(`${npc?.name ?? "SHOP"} — INVENTORY`, boxX + 12, boxY + 12);
+
+    ctx.fillStyle = "#667788";
+    ctx.font = "9px monospace";
+    ctx.fillText("[Z] Close Shop", boxX + boxW - 110, boxY + 12);
+
+    for (let i = 0; i < ds.shopItems.length; i++) {
+      const item = ds.shopItems[i];
+      const iy = boxY + 34 + i * 52;
+
+      // Item background
+      ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+      ctx.beginPath();
+      ctx.roundRect(boxX + 8, iy, boxW - 16, 46, 4);
+      ctx.fill();
+
+      // Item name
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(item.name, boxX + 16, iy + 8);
+
+      // Description
+      ctx.fillStyle = "#889999";
+      ctx.font = "9px monospace";
+      ctx.fillText(item.description, boxX + 16, iy + 24);
+
+      // Price
+      ctx.fillStyle = "#44ff88";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText(`◆ ${item.cost}`, boxX + boxW - 16, iy + 14);
+    }
+  } else {
+    // ── Dialog text ──
+    const line = ds.lines[ds.currentLine];
+    if (!line) return;
+
+    // Speaker name
+    ctx.fillStyle = borderColor;
+    ctx.font = "bold 11px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(line.speaker, boxX + 12, boxY + 12);
+
+    // Dialog text — word wrap
+    ctx.fillStyle = "#cccccc";
+    ctx.font = "12px monospace";
+    const words = line.text.split(" ");
+    let textLine = "";
+    let ty = boxY + 32;
+    const maxWidth = boxW - 24;
+
+    for (const word of words) {
+      const test = textLine + (textLine ? " " : "") + word;
+      if (ctx.measureText(test).width > maxWidth && textLine) {
+        ctx.fillText(textLine, boxX + 12, ty);
+        textLine = word;
+        ty += 18;
+      } else {
+        textLine = test;
+      }
+    }
+    if (textLine) ctx.fillText(textLine, boxX + 12, ty);
+
+    // Advance prompt
+    const prompt = ds.currentLine < ds.lines.length - 1
+      ? "[Z] Continue"
+      : npc?.type === "merchant" && !npc.interacted
+        ? "[Z] Open Shop"
+        : "[Z] Close";
+
+    const promptPulse = 0.5 + 0.5 * Math.sin(frameCount * 0.08);
+    ctx.globalAlpha = promptPulse;
+    ctx.fillStyle = "#667788";
+    ctx.font = "9px monospace";
+    ctx.textAlign = "right";
+    ctx.fillText(prompt, boxX + boxW - 12, boxY + boxH - 14);
+    ctx.globalAlpha = 1;
+
+    // Page indicator
+    ctx.fillStyle = "#445566";
+    ctx.font = "8px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(`${ds.currentLine + 1} / ${ds.lines.length}`, boxX + 12, boxY + boxH - 14);
+  }
+}
+
 export function drawFirstPerson(
   ctx: CanvasRenderingContext2D,
   state: GameState
@@ -452,6 +678,9 @@ export function drawFirstPerson(
   // ── Enemy billboards ──
   drawEnemyBillboards(ctx, fp, hits, state.frameCount);
 
+  // ── NPC billboards ──
+  drawNPCBillboards(ctx, fp, hits, state.frameCount);
+
   // ── Objective marker ──
   drawObjectiveBillboard(ctx, fp);
 
@@ -494,11 +723,36 @@ export function drawFirstPerson(
     ctx.restore();
   }
 
+  // ── NPC interaction prompt ──
+  if (fp.npcs && !fp.dialogState?.active) {
+    for (const npc of fp.npcs) {
+      const dx = npc.x - fp.posX;
+      const dy = npc.y - fp.posY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dot = dx * fp.dirX + dy * fp.dirY;
+      if (dist < 2.0 && dot > 0) {
+        ctx.fillStyle = "#44ccff";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`[Z] Talk to ${npc.name}`, CANVAS_WIDTH / 2, GAME_AREA_HEIGHT / 2 + 60);
+        break;
+      }
+    }
+  }
+
+  // ── Dialog box ──
+  if (fp.dialogState?.active) {
+    drawDialogBox(ctx, fp, state.frameCount);
+  }
+
   // ── Controls hint ──
-  ctx.fillStyle = "#44668844";
-  ctx.font = "9px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText("← → TURN   ↑ ↓ / W S MOVE   A D STRAFE", CANVAS_WIDTH / 2, GAME_AREA_HEIGHT - 8);
+  if (!fp.dialogState?.active) {
+    ctx.fillStyle = "#44668844";
+    ctx.font = "9px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("← → TURN   ↑ ↓ / W S MOVE   A D STRAFE   Z INTERACT", CANVAS_WIDTH / 2, GAME_AREA_HEIGHT - 8);
+  }
 
   ctx.restore();
 

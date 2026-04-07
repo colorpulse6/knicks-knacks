@@ -39,10 +39,10 @@ export default function ComingSoonPage() {
       <section className="relative text-center py-20 px-6 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/colony/outpost.png"
-            alt="Colony outpost concept"
+            src="/images/backgrounds/colony-bg.png"
+            alt=""
             fill
-            className="object-cover opacity-30"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-deep/60 via-deep/40 to-deep" />
         </div>

@@ -62,6 +62,9 @@ web-build
 .DS_Store
 *.pem
 
+# superpowers brainstorming
+.superpowers/
+
 # typescript
 *.tsbuildinfo
 node_modules

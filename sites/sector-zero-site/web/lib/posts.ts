@@ -25,8 +25,17 @@ export function getAllPosts(): PostMeta[] {
     const fileContents = fs.readFileSync(filePath, "utf-8");
     const { data, content } = matter(fileContents);
 
+    const frontmatter = data as Record<string, unknown>;
+
     return {
-      ...(data as PostFrontmatter),
+      title: frontmatter.title as string,
+      slug: frontmatter.slug as string,
+      date: frontmatter.date instanceof Date
+        ? frontmatter.date.toISOString().split("T")[0]
+        : String(frontmatter.date),
+      tag: frontmatter.tag as string,
+      summary: frontmatter.summary as string,
+      heroImage: frontmatter.heroImage as string,
       content,
     };
   });

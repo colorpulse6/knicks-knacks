@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "games/**"
+      - "sites/**"
       - ".github/workflows/deploy-games.yml"
   workflow_dispatch:
 
@@ -78,6 +79,14 @@ jobs:
           NODE_ENV: production
           NEXT_PUBLIC_BASE_PATH: /knicks-knacks/sector-zero
 
+      - name: Build Sector Zero Site
+        run: |
+          cd sites/sector-zero-site/web
+          yarn build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /knicks-knacks/sector-zero-site
+
       - name: Prepare deployment directory
         run: |
           mkdir -p ./deploy
@@ -88,6 +97,7 @@ jobs:
           cp -r games/asteroids/web/out ./deploy/asteroids
           cp -r games/brickles/web/out ./deploy/brickles
           cp -r games/sector-zero/web/out ./deploy/sector-zero
+          cp -r sites/sector-zero-site/web/out ./deploy/sector-zero-site
 
           # Create index page
           cat > ./deploy/index.html << 'HTMLEOF'

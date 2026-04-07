@@ -346,6 +346,15 @@ function drawGunHUD(
 
 // ─── NPC Billboards ─────────────────────────────────────────────────
 
+// Map NPC names to sprite keys
+const NPC_SPRITE_MAP: Record<string, string> = {
+  "Commander Voss": SPRITES.NPC_VOSS,
+  "Doc Kael": SPRITES.NPC_KAEL,
+  "Lt. Reyes": SPRITES.NPC_REYES,
+  "Survivor": SPRITES.NPC_SURVIVOR,
+  "Scavenger": SPRITES.NPC_SCAVENGER,
+};
+
 function drawNPCBillboards(
   ctx: CanvasRenderingContext2D,
   fp: FirstPersonState,
@@ -375,11 +384,11 @@ function drawNPCBillboards(
     if (transformY <= 0.1) continue;
 
     const spriteScreenX = Math.floor((CANVAS_WIDTH / 2) * (1 + transformX / transformY));
-    const spriteHeight = Math.abs(Math.floor(GAME_AREA_HEIGHT / transformY)) * 0.5;
-    const spriteWidth = spriteHeight * 0.6;
+    const spriteHeight = Math.abs(Math.floor(GAME_AREA_HEIGHT / transformY)) * 0.6;
+    const spriteWidth = spriteHeight * 0.4; // Tall portrait ratio
 
     const drawStartX = Math.floor(spriteScreenX - spriteWidth / 2);
-    const drawStartY = Math.floor(GAME_AREA_HEIGHT / 2 - spriteHeight / 2);
+    const drawStartY = Math.floor(GAME_AREA_HEIGHT / 2 - spriteHeight / 3); // Feet on ground
 
     const startX = Math.max(0, drawStartX);
     const endX = Math.min(CANVAS_WIDTH - 1, drawStartX + Math.floor(spriteWidth));
@@ -399,48 +408,40 @@ function drawNPCBillboards(
     }
     ctx.clip();
 
-    // NPC body — colored rectangle with head
-    const bodyY = drawStartY + spriteHeight * 0.2;
-    const bodyH = spriteHeight * 0.8;
+    // Try to use sprite
+    const spritePath = NPC_SPRITE_MAP[npc.name];
+    const sprite = spritePath ? getSprite(spritePath) : null;
 
-    // Glow aura
-    ctx.fillStyle = npc.color + "22";
-    ctx.beginPath();
-    ctx.arc(spriteScreenX, drawStartY + spriteHeight * 0.4, spriteWidth * 0.6, 0, Math.PI * 2);
-    ctx.fill();
+    if (sprite) {
+      ctx.drawImage(sprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
+    } else {
+      // Fallback colored shape
+      ctx.fillStyle = npc.color + "22";
+      ctx.beginPath();
+      ctx.arc(spriteScreenX, drawStartY + spriteHeight * 0.3, spriteWidth * 0.6, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Body
-    ctx.fillStyle = npc.color;
-    ctx.fillRect(drawStartX + spriteWidth * 0.2, bodyY, spriteWidth * 0.6, bodyH);
-
-    // Head
-    ctx.beginPath();
-    ctx.arc(spriteScreenX, drawStartY + spriteHeight * 0.15, spriteWidth * 0.25, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eyes
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(spriteScreenX - spriteWidth * 0.08, drawStartY + spriteHeight * 0.12, Math.max(1, spriteWidth * 0.05), 0, Math.PI * 2);
-    ctx.arc(spriteScreenX + spriteWidth * 0.08, drawStartY + spriteHeight * 0.12, Math.max(1, spriteWidth * 0.05), 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = npc.color;
+      ctx.fillRect(drawStartX + spriteWidth * 0.15, drawStartY + spriteHeight * 0.2, spriteWidth * 0.7, spriteHeight * 0.8);
+      ctx.beginPath();
+      ctx.arc(spriteScreenX, drawStartY + spriteHeight * 0.12, spriteWidth * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Name tag above
-    if (transformY < 4) {
+    if (transformY < 5) {
       ctx.fillStyle = npc.color;
       ctx.font = "bold 9px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
       ctx.fillText(npc.name, spriteScreenX, drawStartY - 4);
-    }
 
-    // Type indicator
-    const typeIcon = npc.type === "merchant" ? "$" : npc.type === "quest" ? "!" : "?";
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold ${Math.max(10, spriteHeight * 0.15)}px monospace`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(typeIcon, spriteScreenX, drawStartY + spriteHeight * 0.15);
+      // Type indicator icon
+      const typeIcon = npc.type === "merchant" ? "$" : npc.type === "quest" ? "!" : "?";
+      ctx.fillStyle = npc.type === "merchant" ? "#ffaa44" : npc.type === "quest" ? "#44ccff" : "#aa88ff";
+      ctx.font = `bold ${Math.max(10, spriteWidth * 0.3)}px monospace`;
+      ctx.fillText(typeIcon, spriteScreenX, drawStartY - 16);
+    }
 
     ctx.restore();
   }

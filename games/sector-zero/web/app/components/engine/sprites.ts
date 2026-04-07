@@ -254,6 +254,13 @@ export const SPRITES = {
   FP_GUN_SHEET: "/sprites/boarding/gun-sheet.png",
 
   // Ship Turret
+  // NPCs (first-person billboards)
+  NPC_VOSS: "/sprites/boarding/npc-voss.png",
+  NPC_KAEL: "/sprites/boarding/npc-kael.png",
+  NPC_REYES: "/sprites/boarding/npc-reyes.png",
+  NPC_SURVIVOR: "/sprites/boarding/npc-survivor.png",
+  NPC_SCAVENGER: "/sprites/boarding/npc-scavenger.png",
+
   TURRET_CROSSHAIR: "/sprites/turret/crosshair.png",
   TURRET_ENEMY_FIGHTER: "/sprites/turret/enemy-fighter.png",
   TURRET_ENEMY_BOMBER: "/sprites/turret/enemy-bomber.png",

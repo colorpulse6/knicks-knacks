@@ -22,6 +22,25 @@ const WALL_COLORS: Record<string, { light: string; dark: string }> = {
   empty: { light: "#2a2a3a", dark: "#1a1a2a" },
 };
 
+function getSpritePathOrFallback(path: string | undefined, fallback: string): string {
+  return path ?? fallback;
+}
+
+function createDepthBuffer(wallHits: (RayHit | null)[]): number[] {
+  const zBuffer: number[] = new Array(CANVAS_WIDTH);
+  for (let x = 0; x < CANVAS_WIDTH; x++) {
+    zBuffer[x] = wallHits[x]?.distance ?? 999;
+  }
+  return zBuffer;
+}
+
+if (process.env.NODE_ENV !== "production") {
+  console.assert(
+    getSpritePathOrFallback(undefined, SPRITES.BOARDING_TILES) === SPRITES.BOARDING_TILES,
+    "Fallback sprite path should return the provided default"
+  );
+}
+
 // ─── Mini-map ───────────────────────────────────────────────────────
 
 function drawMiniMap(
@@ -156,11 +175,7 @@ function drawEnemyBillboards(
   const enemyFlinchSprite = getSprite(SPRITES.FP_ENEMY_FLINCH);
   const enemyDeathSprite = getSprite(SPRITES.FP_ENEMY_DEATH);
 
-  // Build depth buffer from wall hits
-  const zBuffer: number[] = new Array(CANVAS_WIDTH);
-  for (let x = 0; x < CANVAS_WIDTH; x++) {
-    zBuffer[x] = wallHits[x]?.distance ?? 999;
-  }
+  const zBuffer = createDepthBuffer(wallHits);
 
   // Sort enemies by distance (farthest first)
   const sorted = [...fp.enemies]
@@ -279,6 +294,79 @@ function drawEnemyBillboards(
       ctx.fillRect(barX, barY, barW, barH);
       ctx.fillStyle = enemy.hp / enemy.maxHp > 0.5 ? "#44ff44" : "#ff4444";
       ctx.fillRect(barX, barY, barW * (enemy.hp / enemy.maxHp), barH);
+    }
+  }
+}
+
+function drawPropBillboards(
+  ctx: CanvasRenderingContext2D,
+  fp: FirstPersonState,
+  wallHits: (RayHit | null)[]
+): void {
+  const zBuffer = createDepthBuffer(wallHits);
+  const props = fp.props ?? [];
+  if (props.length === 0) return;
+
+  const sorted = [...props]
+    .map((prop) => {
+      const dx = prop.x - fp.posX;
+      const dy = prop.y - fp.posY;
+      return { prop, dist: dx * dx + dy * dy, dx, dy };
+    })
+    .sort((a, b) => b.dist - a.dist);
+
+  for (const { prop, dx, dy } of sorted) {
+    const invDet = 1.0 / (fp.planeX * fp.dirY - fp.dirX * fp.planeY);
+    const transformX = invDet * (fp.dirY * dx - fp.dirX * dy);
+    const transformY = invDet * (-fp.planeY * dx + fp.planeX * dy);
+    if (transformY <= 0.1) continue;
+
+    const spriteScreenX = Math.floor((CANVAS_WIDTH / 2) * (1 + transformX / transformY));
+    const baseSize = Math.abs(Math.floor(GAME_AREA_HEIGHT / transformY)) * 0.6;
+    const spriteHeight = Math.max(20, baseSize * (prop.scale ?? 1));
+    const spriteWidth = spriteHeight;
+    const drawStartX = Math.floor(spriteScreenX - spriteWidth / 2);
+    const drawStartY = Math.floor(GAME_AREA_HEIGHT / 2 - spriteHeight * 0.55);
+    const startX = Math.max(0, drawStartX);
+    const endX = Math.min(CANVAS_WIDTH - 1, drawStartX + Math.floor(spriteWidth));
+
+    let visible = false;
+    for (let x = startX; x <= endX; x++) {
+      if (transformY < zBuffer[x]) {
+        visible = true;
+        break;
+      }
+    }
+    if (!visible) continue;
+
+    const sprite = getSprite(prop.sprite);
+
+    ctx.save();
+    ctx.beginPath();
+    for (let x = startX; x <= endX; x++) {
+      if (transformY < zBuffer[x]) {
+        ctx.rect(x, 0, 1, GAME_AREA_HEIGHT);
+      }
+    }
+    ctx.clip();
+
+    if (sprite) {
+      ctx.drawImage(sprite, drawStartX, drawStartY, spriteWidth, spriteHeight);
+    } else {
+      ctx.fillStyle = "rgba(255, 188, 88, 0.55)";
+      ctx.fillRect(drawStartX, drawStartY, spriteWidth, spriteHeight);
+      ctx.strokeStyle = "#fff1b3";
+      ctx.strokeRect(drawStartX, drawStartY, spriteWidth, spriteHeight);
+    }
+
+    ctx.restore();
+
+    if (prop.label) {
+      ctx.fillStyle = "#ffdd99";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(prop.label, spriteScreenX, Math.max(12, drawStartY - 4));
     }
   }
 }
@@ -583,21 +671,55 @@ export function drawFirstPerson(
   ctx.rect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT);
   ctx.clip();
 
-  const wallTexture = getSprite(SPRITES.BOARDING_TILES);
+  const wallTexturePath = getSpritePathOrFallback(fp.environmentArt?.wallSprite, SPRITES.BOARDING_TILES);
+  const wallTexture = getSprite(wallTexturePath);
+  const skyTexture = fp.environmentArt?.skySprite ? getSprite(fp.environmentArt.skySprite) : null;
+  const floorTexture = fp.environmentArt?.floorSprite ? getSprite(fp.environmentArt.floorSprite) : null;
+  const ceilingTexture = fp.environmentArt?.ceilingSprite ? getSprite(fp.environmentArt.ceilingSprite) : null;
 
-  // ── Ceiling gradient ──
-  const ceilGrad = ctx.createLinearGradient(0, 0, 0, GAME_AREA_HEIGHT / 2);
-  ceilGrad.addColorStop(0, CEILING_COLOR_TOP);
-  ceilGrad.addColorStop(1, CEILING_COLOR_BOT);
-  ctx.fillStyle = ceilGrad;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+  // ── Ceiling / sky ──
+  if (skyTexture) {
+    const offset = ((Math.atan2(fp.dirY, fp.dirX) + Math.PI) / (Math.PI * 2)) * skyTexture.width;
+    const pattern = ctx.createPattern(skyTexture, "repeat-x");
+    if (pattern) {
+      ctx.save();
+      ctx.translate(-offset, 0);
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, CANVAS_WIDTH + skyTexture.width, GAME_AREA_HEIGHT / 2);
+      ctx.restore();
+      ctx.fillStyle = "rgba(28, 12, 10, 0.18)";
+      ctx.fillRect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+    }
+  } else if (ceilingTexture) {
+    const pattern = ctx.createPattern(ceilingTexture, "repeat");
+    if (pattern) {
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+    }
+  } else {
+    const ceilGrad = ctx.createLinearGradient(0, 0, 0, GAME_AREA_HEIGHT / 2);
+    ceilGrad.addColorStop(0, CEILING_COLOR_TOP);
+    ceilGrad.addColorStop(1, CEILING_COLOR_BOT);
+    ctx.fillStyle = ceilGrad;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+  }
 
-  // ── Floor gradient ──
-  const floorGrad = ctx.createLinearGradient(0, GAME_AREA_HEIGHT / 2, 0, GAME_AREA_HEIGHT);
-  floorGrad.addColorStop(0, FLOOR_COLOR_TOP);
-  floorGrad.addColorStop(1, FLOOR_COLOR_BOT);
-  ctx.fillStyle = floorGrad;
-  ctx.fillRect(0, GAME_AREA_HEIGHT / 2, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+  // ── Floor ──
+  if (floorTexture) {
+    const pattern = ctx.createPattern(floorTexture, "repeat");
+    if (pattern) {
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, GAME_AREA_HEIGHT / 2, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+      ctx.fillStyle = "rgba(10, 8, 12, 0.28)";
+      ctx.fillRect(0, GAME_AREA_HEIGHT / 2, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+    }
+  } else {
+    const floorGrad = ctx.createLinearGradient(0, GAME_AREA_HEIGHT / 2, 0, GAME_AREA_HEIGHT);
+    floorGrad.addColorStop(0, FLOOR_COLOR_TOP);
+    floorGrad.addColorStop(1, FLOOR_COLOR_BOT);
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, GAME_AREA_HEIGHT / 2, CANVAS_WIDTH, GAME_AREA_HEIGHT / 2);
+  }
 
   // ── Cast rays ──
   const hits = castAllRays(
@@ -620,13 +742,13 @@ export function drawFirstPerson(
     const stripHeight = drawEnd - drawStart;
 
     if (wallTexture) {
-      // Textured wall — sample from tile sheet (frame 1 = wall)
-      const texWidth = wallTexture.width / 3;
+      const isBoardingTiles = wallTexturePath === SPRITES.BOARDING_TILES;
+      const texWidth = isBoardingTiles ? wallTexture.width / 3 : wallTexture.width;
       const texHeight = wallTexture.height;
       const texX = Math.floor(hit.wallX * texWidth);
-
-      // Use wall frame (index 1)
-      const srcX = texWidth + Math.min(texX, texWidth - 1);
+      const srcX = isBoardingTiles
+        ? texWidth + Math.min(texX, texWidth - 1)
+        : Math.min(texX, texWidth - 1);
 
       ctx.drawImage(
         wallTexture,
@@ -675,6 +797,9 @@ export function drawFirstPerson(
       }
     }
   }
+
+  // ── Static props ──
+  drawPropBillboards(ctx, fp, hits);
 
   // ── Enemy billboards ──
   drawEnemyBillboards(ctx, fp, hits, state.frameCount);

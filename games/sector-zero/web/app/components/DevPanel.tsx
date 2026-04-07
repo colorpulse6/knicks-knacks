@@ -195,7 +195,7 @@ export default function DevPanel({ gameState, onAction }: DevPanelProps) {
             onClick={() => onAction("goto-exploration")}
             className="px-1 py-1.5 border border-purple-900 hover:border-purple-500 text-purple-400 hover:text-purple-300 transition-colors text-center"
           >
-            EXPLORE
+            ASHFALL CAMP
           </button>
         </div>
       </div>

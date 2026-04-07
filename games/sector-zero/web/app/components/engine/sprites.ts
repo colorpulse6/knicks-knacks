@@ -252,6 +252,19 @@ export const SPRITES = {
   BOARDING_ENEMY_GRUNT_ATTACK: "/sprites/boarding/enemy-grunt-attack.png",
   BOARDING_TILES: "/sprites/boarding/tiles.png",
   FP_GUN_SHEET: "/sprites/boarding/gun-sheet.png",
+  EXPLORE_OUTPOST_SKY: "/sprites/explore/scrapyard-outpost-sky.png",
+  EXPLORE_OUTPOST_GROUND: "/sprites/explore/scrapyard-outpost-ground.png",
+  EXPLORE_OUTPOST_WALL_EXTERIOR: "/sprites/explore/scrapyard-outpost-wall-exterior.png",
+  EXPLORE_OUTPOST_WALL_INTERIOR: "/sprites/explore/scrapyard-outpost-wall-interior.png",
+  EXPLORE_OUTPOST_FLOOR_METAL: "/sprites/explore/scrapyard-outpost-floor-metal.png",
+  EXPLORE_OUTPOST_LANDMARK_RIG: "/sprites/explore/scrapyard-outpost-landmark-rig.png",
+  EXPLORE_OUTPOST_PROP_CRATES: "/sprites/explore/scrapyard-outpost-prop-crates.png",
+  EXPLORE_OUTPOST_PROP_ANTENNA: "/sprites/explore/scrapyard-outpost-prop-antenna.png",
+  EXPLORE_OUTPOST_PROP_LAMP: "/sprites/explore/scrapyard-outpost-prop-lamp.png",
+  EXPLORE_OUTPOST_PROP_TERMINAL: "/sprites/explore/scrapyard-outpost-prop-terminal.png",
+  EXPLORE_OUTPOST_PROP_BARREL: "/sprites/explore/scrapyard-outpost-prop-barrel.png",
+  EXPLORE_OUTPOST_PROP_SIGNPOST: "/sprites/explore/scrapyard-outpost-prop-signpost.png",
+  EXPLORE_OUTPOST_PROP_CABLE_SPOOL: "/sprites/explore/scrapyard-outpost-prop-cable-spool.png",
 
   // Ship Turret
   // NPCs (first-person billboards)

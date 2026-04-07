@@ -510,8 +510,9 @@ export default function Game() {
         setShowStartScreen(false);
         setShowMap(false);
         setShowCockpit(false);
-        const { createExplorationState } = require("./engine/explorationLevel");
-        const fpState = createExplorationState();
+        const { createAshfallForwardCampState } = require("./engine/ashfallForwardCamp");
+        const fpState = createAshfallForwardCampState();
+        console.assert(fpState.npcs.length > 0, "Ashfall camp should launch with NPCs");
         const baseState = createGameState(1, 1, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
         setGameState({
           ...baseState,

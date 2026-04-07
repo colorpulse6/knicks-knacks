@@ -905,6 +905,22 @@ export interface FPEnemy {
   classId: EnemyClass;
 }
 
+export interface FPEnvironmentArt {
+  skySprite?: string;
+  wallSprite?: string;
+  floorSprite?: string;
+  ceilingSprite?: string;
+}
+
+export interface FPProp {
+  id: number;
+  x: number;
+  y: number;
+  sprite: string;
+  scale?: number;
+  label?: string;
+}
+
 export interface FirstPersonState {
   map: BoardingMap;
   posX: number;
@@ -928,6 +944,9 @@ export interface FirstPersonState {
   // RPG layer
   npcs: FPNPC[];
   dialogState: FPDialogState | null;
+  environmentArt?: FPEnvironmentArt;
+  props?: FPProp[];
+  missionLabel?: string;
 }
 
 // ─── Pilot Leveling ─────────────────────────────────────────────────

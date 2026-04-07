@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sector Zero — Space Shooter Hub",
+  title: "Sector Zero  - Space Shooter Hub",
   description:
     "Pilot a strike fighter through 8 sectors of hostile space. 6 gameplay modes, RPG progression, and the Hollow awaits.",
 };

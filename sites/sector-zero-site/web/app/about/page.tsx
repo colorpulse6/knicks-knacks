@@ -14,7 +14,7 @@ export default function AboutPage() {
           <div className="space-y-4 text-sm text-text-primary leading-relaxed">
             <p>
               In 2535, forty-seven colony ships launched toward the edge of known
-              space. The Kepler Exodus — humanity&apos;s boldest leap. Two million
+              space. The Kepler Exodus  - humanity&apos;s boldest leap. Two million
               souls chasing a new home. They never arrived. The region was sealed
               off and renamed: Sector Zero. For 312 years, no one went in.
             </p>
@@ -23,14 +23,14 @@ export default function AboutPage() {
             </p>
             <p>
               Commander Voss, Lieutenant Reyes, and Doc Kael are the crew of the
-              UEC Vanguard — sent to silence it. What they find is far worse than
+              UEC Vanguard  - sent to silence it. What they find is far worse than
               aliens: the Hollow are evolved humans, descendants of the Kepler
               colonists, merged into a collective consciousness over centuries of
               isolation.
             </p>
             <p className="text-text-muted italic">
               Two endings await. Destroy the Hollow Mind and restart the cycle.
-              Or merge with it — breaking the cycle, but losing your humanity.
+              Or merge with it  - breaking the cycle, but losing your humanity.
             </p>
           </div>
         </div>

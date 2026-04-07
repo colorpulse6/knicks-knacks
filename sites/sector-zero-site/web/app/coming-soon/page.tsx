@@ -64,7 +64,7 @@ export default function ComingSoonPage() {
               // COMMANDER&apos;S NOTE
             </p>
             <p className="text-sm text-text-primary leading-relaxed">
-              The Kepler colonists didn&apos;t just survive — they built. Ruins of
+              The Kepler colonists didn&apos;t just survive  - they built. Ruins of
               their settlements dot every planet in Sector Zero. Now it&apos;s your
               turn. Found colonies, manage resources, and hold the line against
               the Hollow. But be warned: the further you push from Earth, the

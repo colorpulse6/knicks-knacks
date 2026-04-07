@@ -418,8 +418,11 @@ export interface Keys {
   right: boolean;
   up: boolean;
   down: boolean;
+  strafeLeft: boolean;
+  strafeRight: boolean;
   shoot: boolean;
   bomb: boolean;
+  jump: boolean;  // Ground-run: Space=jump, Z/Shift=shoot
 }
 
 // ─── Audio Events ────────────────────────────────────────────────────
@@ -505,11 +508,20 @@ export interface GameState {
   allocatedSkills: SkillNodeId[];
   // Multi-phase tracking
   currentPhase: number;
+  currentMode: GameMode;
   totalPhases: number;
   phaseCheckpoint: CheckpointState | null;
   phaseTransitionTimer: number;
   phaseTransitionCard: string;
   phaseTransitionSubtext: string;
+  /** Ground run-and-gun mode state (only populated when currentMode === "ground-run") */
+  groundState?: GroundState;
+  /** Ship boarding mode state (only populated when currentMode === "boarding") */
+  boardingState?: BoardingState;
+  /** First-person raycaster state (only populated when currentMode === "first-person") */
+  firstPersonState?: FirstPersonState;
+  /** Ship turret mode state (only populated when currentMode === "turret") */
+  turretState?: TurretState;
   background: BackgroundLayer[];
   score: number;
   combo: number;
@@ -658,8 +670,12 @@ export type PlanetId =
   | "luminos"
   | "bastion";
 
+export type SpecialMissionId = "kepler-black-box";
+
+export type StoryItemId = "kepler-black-box";
+
 // ─── Multi-Phase Levels ─────────────────────────────────────────────
-export type GameMode = "shooter" | "ground-run" | "boarding" | "turret" | "base-defense" | "mech-duel";
+export type GameMode = "shooter" | "ground-run" | "boarding" | "first-person" | "turret" | "base-defense" | "mech-duel";
 
 export interface PhaseConfig {
   mode: GameMode;
@@ -706,6 +722,233 @@ export interface CheckpointState {
   activePowerUps: ActivePowerUp[];
 }
 
+// ─── Ground Run-and-Gun ─────────────────────────────────────────────
+
+export type TileType = "empty" | "solid" | "platform" | "spawn" | "goal";
+
+export interface TileMap {
+  width: number;
+  height: number;
+  tileSize: number;
+  tiles: TileType[][];
+}
+
+export interface GroundEntity {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vx: number;
+  vy: number;
+  hp: number;
+  maxHp: number;
+  type: "patrol" | "turret" | "jumper" | "flyer";
+  onGround: boolean;
+  facingRight: boolean;
+  fireTimer: number;
+  classId: EnemyClass;
+}
+
+export interface GroundState {
+  tileMap: TileMap;
+  cameraX: number;
+  groundEnemies: GroundEntity[];
+  groundBullets: Bullet[];
+  playerOnGround: boolean;
+  playerVY: number;
+  playerFacingRight: boolean;
+  goalReached: boolean;
+}
+
+// ─── Ship Boarding (Top-Down) ───────────────────────────────────────
+
+export type BoardingTileType = "floor" | "wall" | "door" | "spawn" | "goal" | "empty";
+
+export type FacingDirection = "up" | "down" | "left" | "right";
+
+export interface BoardingEntity {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vx: number;
+  vy: number;
+  hp: number;
+  maxHp: number;
+  type: "grunt" | "charger" | "sentry";
+  facing: FacingDirection;
+  fireTimer: number;
+  classId: EnemyClass;
+  aggroRange: number;    // pixels — starts chasing when player is within range
+  isAggro: boolean;
+}
+
+export interface BoardingMap {
+  width: number;
+  height: number;
+  tileSize: number;
+  tiles: BoardingTileType[][];
+}
+
+export interface BoardingState {
+  map: BoardingMap;
+  cameraX: number;
+  cameraY: number;
+  enemies: BoardingEntity[];
+  bullets: Bullet[];
+  playerFacing: FacingDirection;
+  dashTimer: number;      // frames remaining on dash (0 = not dashing)
+  dashCooldown: number;   // frames until dash available again
+  goalReached: boolean;
+}
+
+// ─── Ship Turret (Star Wars Gunner) ─────────────────────────────────
+
+export interface TurretEnemy {
+  id: number;
+  x: number;           // Screen-space X (0-1 normalized, 0.5 = center)
+  y: number;           // Screen-space Y (0-1 normalized, 0.5 = center)
+  z: number;           // Depth (1 = far, 0 = at camera). Determines apparent size.
+  vx: number;          // Drift velocity X per frame
+  vy: number;          // Drift velocity Y per frame
+  speed: number;       // Approach speed (z decreases by this per frame)
+  hp: number;
+  maxHp: number;
+  type: "fighter" | "bomber" | "drone";
+  classId: EnemyClass;
+  score: number;
+}
+
+export interface TurretBolt {
+  id: number;
+  x: number;           // Screen-space normalized (0-1)
+  y: number;
+  z: number;           // Depth — starts at 0 (camera), flies outward toward 1
+  targetX: number;     // Where it's heading
+  targetY: number;
+  speed: number;
+  life: number;        // Frames remaining
+}
+
+export interface TurretState {
+  crosshairX: number;  // 0-1 normalized screen position
+  crosshairY: number;
+  enemies: TurretEnemy[];
+  bolts: TurretBolt[];
+  shipHp: number;      // Dropship HP (enemies reaching z=0 deal damage)
+  shipMaxHp: number;
+  wave: number;
+  totalWaves: number;
+  waveTimer: number;    // Frames until next wave spawns
+  spawnTimer: number;   // Frames until next enemy in current wave
+  enemiesRemaining: number; // In current wave
+  killCount: number;
+  targetKills: number;  // Win condition: total kills needed (0 = wave-based)
+  completed: boolean;
+  fireCooldown: number;
+}
+
+// ─── First-Person (Raycaster) ───────────────────────────────────────
+
+// ─── First-Person NPCs ──────────────────────────────────────────────
+
+export interface FPDialogLine {
+  speaker: string;
+  text: string;
+  portraitKey?: string;
+}
+
+export interface FPShopItem {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  type: "consumable" | "material" | "upgrade";
+  itemId?: string;  // ConsumableId or MaterialId
+}
+
+export interface FPNPC {
+  id: number;
+  x: number;           // Tile-unit position
+  y: number;
+  name: string;
+  type: "quest" | "merchant" | "lore";
+  dialog: FPDialogLine[];
+  shopItems?: FPShopItem[];  // Only for merchants
+  color: string;       // Fallback color for billboard
+  interacted: boolean; // Has player talked to this NPC this session?
+}
+
+export interface FPDialogState {
+  active: boolean;
+  npcId: number;
+  lines: FPDialogLine[];
+  currentLine: number;
+  shopOpen: boolean;
+  shopItems?: FPShopItem[];
+}
+
+export interface FPEnemy {
+  id: number;
+  x: number;              // Tile-unit position
+  y: number;
+  hp: number;
+  maxHp: number;
+  speed: number;
+  type: "grunt" | "charger" | "sentry";
+  aggroRange: number;
+  isAggro: boolean;
+  deathTimer: number;     // > 0 means dying animation, 0 = alive, -1 = dead & removed
+  fireTimer: number;
+  classId: EnemyClass;
+}
+
+export interface FPEnvironmentArt {
+  skySprite?: string;
+  wallSprite?: string;
+  floorSprite?: string;
+  ceilingSprite?: string;
+}
+
+export interface FPProp {
+  id: number;
+  x: number;
+  y: number;
+  sprite: string;
+  scale?: number;
+  label?: string;
+}
+
+export interface FirstPersonState {
+  map: BoardingMap;
+  posX: number;
+  posY: number;
+  dirX: number;
+  dirY: number;
+  planeX: number;
+  planeY: number;
+  moveSpeed: number;
+  rotSpeed: number;
+  goalReached: boolean;
+  objectivePickup?: {
+    x: number;
+    y: number;
+    label: string;
+  };
+  objectiveCollected?: boolean;
+  enemies: FPEnemy[];
+  gunFireTimer: number;   // Frames since last shot (for muzzle flash)
+  gunCooldown: number;    // Frames until can fire again
+  // RPG layer
+  npcs: FPNPC[];
+  dialogState: FPDialogState | null;
+  environmentArt?: FPEnvironmentArt;
+  props?: FPProp[];
+  missionLabel?: string;
+}
+
 // ─── Pilot Leveling ─────────────────────────────────────────────────
 export type SkillTreeId = "combat" | "engineering" | "piloting";
 
@@ -749,6 +992,9 @@ export interface SaveData {
   activeQuests: string[];
   // Planet mission data
   completedPlanets: PlanetId[];
+  unlockedSpecialMissions: SpecialMissionId[];
+  completedSpecialMissions: SpecialMissionId[];
+  storyItems: StoryItemId[];
   materials: MaterialId[];
   consumableInventory: Partial<Record<ConsumableId, number>>;
   equippedConsumables: ConsumableId[];

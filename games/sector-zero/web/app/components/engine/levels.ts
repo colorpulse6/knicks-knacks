@@ -1113,40 +1113,115 @@ export function getMultiPhaseLevelData(
   world: number,
   level: number
 ): MultiPhaseLevelData | null {
-  // Test multi-phase level: World 1, Level 3
-  if (world === 1 && level === 3) {
-    const baseLevel = getLevelData(world, level);
-    if (!baseLevel) return null;
+  const baseLevel = getLevelData(world, level);
+  if (!baseLevel) return null;
+
+  // Helper to wrap base level as Phase 1 (shooter) + a Phase 2 in another mode
+  function makeMultiPhase(
+    mode: import("./types").GameMode,
+    cardText: string,
+    cardSubtext: string,
+    rewards?: import("./types").MaterialId[]
+  ): MultiPhaseLevelData {
     return {
       world,
       level,
-      name: baseLevel.name,
-      briefingText: baseLevel.briefingText,
-      worldIntroText: baseLevel.worldIntroText,
+      name: baseLevel!.name,
+      briefingText: baseLevel!.briefingText,
+      worldIntroText: baseLevel!.worldIntroText,
       phases: [
         {
           config: {
             mode: "shooter",
-            waves: baseLevel.waves,
-            isBoss: false,
+            waves: baseLevel!.waves,
+            isBoss: baseLevel!.isBoss,
           },
         },
         {
           config: {
-            mode: "shooter",
-            waves: baseLevel.waves.slice(0, 2),
+            mode,
+            waves: [],
             isBoss: false,
-            briefingText: "Enemy reinforcements detected. Clear the second wave.",
           },
           transitionIn: {
-            cardText: "REINFORCEMENTS INCOMING",
-            cardSubtext: "Phase 2: Clear the second wave",
+            cardText,
+            cardSubtext,
             duration: 180,
           },
         },
       ],
-      completionRewards: ["kinetic-core"],
+      completionRewards: rewards,
     };
   }
+
+  // ── World 1, Level 3: Ground Run-and-Gun ──
+  if (world === 1 && level === 3) {
+    return makeMultiPhase(
+      "ground-run",
+      "GROUND DEPLOYMENT",
+      "Phase 2: Reach the extraction point",
+      ["kinetic-core"]
+    );
+  }
+
+  // ── World 2, Level 3: Ship Boarding ──
+  if (world === 2 && level === 3) {
+    return makeMultiPhase(
+      "boarding",
+      "DERELICT DETECTED",
+      "Phase 2: Board the vessel and extract the data core",
+      ["energy-cell"]
+    );
+  }
+
+  // ── World 3, Level 3: Ship Turret ──
+  if (world === 3 && level === 3) {
+    return makeMultiPhase(
+      "turret",
+      "ENEMY FIGHTERS SCRAMBLING",
+      "Phase 2: Man the turret — defend the Vanguard!",
+      ["ember-shard"]
+    );
+  }
+
+  // ── World 5, Level 3: First-Person Exploration ──
+  if (world === 5 && level === 3) {
+    return makeMultiPhase(
+      "first-person",
+      "ANCIENT STATION DETECTED",
+      "Phase 2: Investigate the abandoned facility on foot",
+      ["cryo-essence"]
+    );
+  }
+
+  // ── World 6, Level 3: Ground Run-and-Gun ──
+  if (world === 6 && level === 3) {
+    return makeMultiPhase(
+      "ground-run",
+      "SURFACE ASSAULT",
+      "Phase 2: Clear the Hollow ground forces",
+      ["void-fragment"]
+    );
+  }
+
+  // ── World 7, Level 3: Ship Boarding ──
+  if (world === 7 && level === 3) {
+    return makeMultiPhase(
+      "boarding",
+      "HOLLOW VESSEL INTERCEPTED",
+      "Phase 2: Board and sabotage the reactor",
+      ["hollow-resonance"]
+    );
+  }
+
+  // ── World 8, Level 3: Ship Turret (final approach) ──
+  if (world === 8 && level === 3) {
+    return makeMultiPhase(
+      "turret",
+      "FINAL APPROACH",
+      "Phase 2: Defend the Vanguard — all hands to turrets!",
+    );
+  }
+
   return null;
 }

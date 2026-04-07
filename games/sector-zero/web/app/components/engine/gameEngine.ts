@@ -28,6 +28,7 @@ import {
   type ShipUpgrades,
   type EnhancementId,
   type PlanetId,
+  type SpecialMissionId,
   type ObjectiveState,
   type SpriteExplosion,
   type SkillNodeId,
@@ -58,6 +59,12 @@ import { clamp } from "./physics";
 
 const spatialHash = new SpatialHash();
 import { createBossForWorld, updateBossForWorld, isBossDefeated, resetBossBulletIds } from "./bosses";
+import { updateGroundEngine } from "./groundEngine";
+import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./groundLevel";
+import { updateBoardingEngine } from "./boardingEngine";
+import { createBoardingState, getBoardingSpawn } from "./boardingLevel";
+import { updateFirstPerson } from "./firstPersonEngine";
+import { updateTurretEngine, createTurretState } from "./turretEngine";
 import { createDialogState, updateDialog, checkDialogTriggers, getDialogTriggers } from "./dialog";
 import { createObjectiveState, createEscortEntity, createDefendStructure, updateObjective } from "./objectives";
 import { getPlanetDef } from "./planets";
@@ -65,6 +72,7 @@ import { getPlanetLevelData } from "./planetLevels";
 import { getPlanetDialogTriggers } from "./planetDialog";
 import { createHazardState, updateHazards, type HazardState } from "./hazards";
 import { createCheckpoint, isLastPhase } from "./phases";
+import { createKeplerBlackBoxFirstPersonState } from "./keplerBlackBoxMission";
 
 // ─── Power-Up Spawning ──────────────────────────────────────────────
 
@@ -239,6 +247,7 @@ export function createGameState(world: number, level: number, upgrades: ShipUpgr
     pilotLevel,
     allocatedSkills,
     currentPhase: 0,
+    currentMode: "shooter",
     totalPhases: multiPhaseData?.phases.length ?? 1,
     phaseCheckpoint: null,
     phaseTransitionTimer: 0,
@@ -323,6 +332,7 @@ export function createPlanetGameState(
     pilotLevel,
     allocatedSkills,
     currentPhase: 0,
+    currentMode: "shooter",
     totalPhases: 1,
     phaseCheckpoint: null,
     phaseTransitionTimer: 0,
@@ -333,6 +343,86 @@ export function createPlanetGameState(
     escort,
     defendStructure,
     loopFromWave: levelData.loopFromWave,
+  };
+}
+
+export function createSpecialMissionGameState(
+  missionId: SpecialMissionId,
+  blackBoxRecovered: boolean,
+  upgrades: ShipUpgrades = DEFAULT_UPGRADES,
+  enhancements: EnhancementId[] = [],
+  pilotLevel: number = 1,
+  allocatedSkills: SkillNodeId[] = []
+): GameState {
+  currentUpgrades = { ...upgrades };
+  currentEnhancements = [...enhancements];
+  currentAllocatedSkills = [...allocatedSkills];
+  currentHazardState = null;
+  setPlanetClassOverride(null);
+  setDifficultyForWorld(4);
+  resetEnemyIds();
+  resetFloatingLabelIds();
+  resetBulletIds();
+  resetBossBulletIds();
+  resetPowerUpIds();
+
+  const firstPersonState =
+    missionId === "kepler-black-box"
+      ? createKeplerBlackBoxFirstPersonState(blackBoxRecovered)
+      : createKeplerBlackBoxFirstPersonState(blackBoxRecovered);
+
+  return {
+    screen: GameScreen.BRIEFING,
+    player: createPlayer(upgrades, pilotLevel, allocatedSkills),
+    playerBullets: [],
+    enemyBullets: [],
+    enemies: [],
+    boss: null,
+    powerUps: [],
+    activePowerUps: [],
+    particles: [],
+    explosions: [],
+    floatingLabels: [],
+    equippedWeaponType: "kinetic",
+    pendingBestiaryKills: [],
+    background: createBackground(),
+    score: 0,
+    combo: 0,
+    comboTimer: 0,
+    maxCombo: 0,
+    lives: 3,
+    bombs: 2 + upgrades.munitionsBay,
+    bombCooldown: 0,
+    currentWorld: 4,
+    currentLevel: 2,
+    currentWave: 0,
+    totalWaves: 0,
+    waves: [],
+    waveDelay: 0,
+    kills: 0,
+    totalEnemies: firstPersonState.enemies.length,
+    deaths: 0,
+    frameCount: 0,
+    screenShake: 0,
+    audioEvents: [],
+    bossIntroTimer: 0,
+    briefingTimer: 360,
+    levelCompleteTimer: 0,
+    devInvincible: false,
+    dialog: createDialogState(),
+    dialogTriggers: [],
+    xp: 0,
+    hpWarningTriggered: false,
+    pilotLevel,
+    allocatedSkills,
+    currentPhase: 0,
+    currentMode: "first-person",
+    totalPhases: 1,
+    phaseCheckpoint: null,
+    phaseTransitionTimer: 0,
+    phaseTransitionCard: "",
+    phaseTransitionSubtext: "",
+    firstPersonState,
   };
 }
 
@@ -373,6 +463,48 @@ export function updateGame(
   }
 
   if (state.screen !== GameScreen.PLAYING) return state;
+
+  // ── Ground-run mode dispatch ──
+  if (state.currentMode === "ground-run") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateGroundEngine(s, keys);
+    s.particles = updateParticles(s.particles);
+    s.explosions = updateSpriteExplosions(s.explosions);
+    s.floatingLabels = updateFloatingLabels(s.floatingLabels);
+    s.background = updateBackground(s.background);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
+  // ── Ship boarding mode dispatch ──
+  if (state.currentMode === "boarding") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateBoardingEngine(s, keys);
+    s.particles = updateParticles(s.particles);
+    s.explosions = updateSpriteExplosions(s.explosions);
+    s.floatingLabels = updateFloatingLabels(s.floatingLabels);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
+  // ── First-person raycaster mode dispatch ──
+  if (state.currentMode === "first-person") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateFirstPerson(s, keys);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
+
+  // ── Ship turret mode dispatch ──
+  if (state.currentMode === "turret") {
+    const s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
+    updateTurretEngine(s, keys);
+    s.particles = updateParticles(s.particles);
+    s.explosions = updateSpriteExplosions(s.explosions);
+    s.floatingLabels = updateFloatingLabels(s.floatingLabels);
+    if (s.screenShake > 0) s.screenShake *= 0.9;
+    return s;
+  }
 
   let s = { ...state, audioEvents: [] as AudioEvent[], frameCount: state.frameCount + 1 };
 
@@ -537,12 +669,13 @@ export function updateGame(
         s.screen = GameScreen.PHASE_TRANSITION;
         s.phaseTransitionTimer = 180;
         s.currentPhase += 1;
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        const nextMode = nextPhaseData?.config.mode ?? "shooter";
+        s.currentMode = nextMode;
         s.phaseCheckpoint = createCheckpoint(s);
         s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
         s.phaseTransitionSubtext = "Preparing next phase...";
-        // Load next phase's waves
-        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
-        const nextPhaseData = multiPhase?.phases[s.currentPhase];
         if (nextPhaseData?.transitionIn) {
           s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
           s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
@@ -567,6 +700,59 @@ export function updateGame(
           s.explosions = [];
           s.floatingLabels = [];
           s.boss = null;
+        }
+        // Initialize mode-specific state
+        if (nextPhaseData?.config.mode === "ground-run") {
+          const groundState = createTestGroundState();
+          const spawn = getGroundSpawn(groundState.tileMap);
+          s.groundState = groundState;
+          s.boardingState = undefined;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "boarding") {
+          const boardingState = createBoardingState();
+          const spawn = getBoardingSpawn(boardingState.map);
+          s.boardingState = boardingState;
+          s.groundState = undefined;
+          s.firstPersonState = undefined;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "first-person") {
+          const boardingState = createBoardingState();
+          s.firstPersonState = {
+            map: boardingState.map,
+            posX: 2.5, posY: 2.5,
+            dirX: 1, dirY: 0,
+            planeX: 0, planeY: 0.66,
+            moveSpeed: 0.06,
+            rotSpeed: 0.04,
+            goalReached: false,
+            enemies: boardingState.enemies.map((e, i) => ({
+              id: i + 1,
+              x: e.x / boardingState.map.tileSize + 0.5,
+              y: e.y / boardingState.map.tileSize + 0.5,
+              hp: e.hp, maxHp: e.maxHp,
+              speed: e.type === "charger" ? 0.03 : 0.015,
+              type: e.type as "grunt" | "charger" | "sentry",
+              aggroRange: e.aggroRange / boardingState.map.tileSize,
+              isAggro: false, deathTimer: 0,
+              fireTimer: e.fireTimer, classId: e.classId,
+            })),
+            gunFireTimer: 0,
+            gunCooldown: 0,
+            npcs: [],
+            dialogState: null,
+          };
+          s.groundState = undefined;
+          s.boardingState = undefined;
+        } else if (nextPhaseData?.config.mode === "turret") {
+          s.turretState = createTurretState();
+          s.groundState = undefined;
+          s.boardingState = undefined;
+          s.firstPersonState = undefined;
+        } else {
+          s.groundState = undefined;
+          s.boardingState = undefined;
+          s.firstPersonState = undefined;
+          s.turretState = undefined;
         }
       } else {
         s.screen = GameScreen.LEVEL_COMPLETE;
@@ -751,12 +937,13 @@ function updateBossFight(
         s.screen = GameScreen.PHASE_TRANSITION;
         s.phaseTransitionTimer = 180;
         s.currentPhase += 1;
+        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
+        const nextPhaseData = multiPhase?.phases[s.currentPhase];
+        const nextMode = nextPhaseData?.config.mode ?? "shooter";
+        s.currentMode = nextMode;
         s.phaseCheckpoint = createCheckpoint(s);
         s.phaseTransitionCard = `PHASE ${s.currentPhase + 1}`;
         s.phaseTransitionSubtext = "Preparing next phase...";
-        // Load next phase's waves
-        const multiPhase = getMultiPhaseLevelData(s.currentWorld, s.currentLevel);
-        const nextPhaseData = multiPhase?.phases[s.currentPhase];
         if (nextPhaseData?.transitionIn) {
           s.phaseTransitionCard = nextPhaseData.transitionIn.cardText;
           s.phaseTransitionSubtext = nextPhaseData.transitionIn.cardSubtext ?? "";
@@ -781,6 +968,59 @@ function updateBossFight(
           s.explosions = [];
           s.floatingLabels = [];
           s.boss = null;
+        }
+        // Initialize mode-specific state
+        if (nextPhaseData?.config.mode === "ground-run") {
+          const groundState = createTestGroundState();
+          const spawn = getGroundSpawn(groundState.tileMap);
+          s.groundState = groundState;
+          s.boardingState = undefined;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "boarding") {
+          const boardingState = createBoardingState();
+          const spawn = getBoardingSpawn(boardingState.map);
+          s.boardingState = boardingState;
+          s.groundState = undefined;
+          s.firstPersonState = undefined;
+          s.player = { ...s.player, x: spawn.x, y: spawn.y };
+        } else if (nextPhaseData?.config.mode === "first-person") {
+          const boardingState = createBoardingState();
+          s.firstPersonState = {
+            map: boardingState.map,
+            posX: 2.5, posY: 2.5,
+            dirX: 1, dirY: 0,
+            planeX: 0, planeY: 0.66,
+            moveSpeed: 0.06,
+            rotSpeed: 0.04,
+            goalReached: false,
+            enemies: boardingState.enemies.map((e, i) => ({
+              id: i + 1,
+              x: e.x / boardingState.map.tileSize + 0.5,
+              y: e.y / boardingState.map.tileSize + 0.5,
+              hp: e.hp, maxHp: e.maxHp,
+              speed: e.type === "charger" ? 0.03 : 0.015,
+              type: e.type as "grunt" | "charger" | "sentry",
+              aggroRange: e.aggroRange / boardingState.map.tileSize,
+              isAggro: false, deathTimer: 0,
+              fireTimer: e.fireTimer, classId: e.classId,
+            })),
+            gunFireTimer: 0,
+            gunCooldown: 0,
+            npcs: [],
+            dialogState: null,
+          };
+          s.groundState = undefined;
+          s.boardingState = undefined;
+        } else if (nextPhaseData?.config.mode === "turret") {
+          s.turretState = createTurretState();
+          s.groundState = undefined;
+          s.boardingState = undefined;
+          s.firstPersonState = undefined;
+        } else {
+          s.groundState = undefined;
+          s.boardingState = undefined;
+          s.firstPersonState = undefined;
+          s.turretState = undefined;
         }
       } else {
         // Check if this is the final level in the game

@@ -13,6 +13,7 @@ import { WEAPON_TYPE_META } from "./weaponTypes";
 import { ENEMY_SPRITE_MAP } from "./enemies";
 import { xpForLevel, xpProgress, getMilestones, MAX_PILOT_LEVEL, bonusHp, creditBonus, materialDropBonus, skillPointsAtLevel } from "./pilotLevel";
 import { getTreeNodes, canAllocate } from "./skillTree";
+import { getAvailableSpecialMissions, isSpecialMissionCompleted } from "./specialMissions";
 
 // ─── Main Cockpit Drawing ───────────────────────────────────────────
 
@@ -164,6 +165,12 @@ function drawCockpitHub(
   ctx.fillStyle = "#556666";
   ctx.font = "10px monospace";
   ctx.fillText("SELECT STATION", CANVAS_WIDTH / 2, 252);
+
+  if (save.storyItems.includes("kepler-black-box")) {
+    ctx.fillStyle = "#ffaa44";
+    ctx.font = "bold 9px monospace";
+    ctx.fillText("QUEST ITEM SECURED: KEPLER BLACK BOX", CANVAS_WIDTH / 2, 268);
+  }
 
   // Hotspots
   for (let i = 0; i < COCKPIT_HOTSPOTS.length; i++) {
@@ -1092,14 +1099,14 @@ function drawMissionsScreen(
   drawSubScreenFrame(ctx, "MISSION BOARD", SPRITES.MISSIONS_BG);
 
   // ── Tabs ──
-  const tabNames = ["SIDE QUESTS", "PLANET MISSIONS"];
-  const tabColors = ["#44ccff", "#ff8844"];
+  const tabNames = ["SIDE QUESTS", "SPECIAL OPS", "PLANET MISSIONS"];
+  const tabColors = ["#44ccff", "#ffaa44", "#ff8844"];
   const tabY = 52;
   const tabH = 26;
   const tabSpacing = 6;
-  const tabW = (CANVAS_WIDTH - 24 - tabSpacing) / 2;
+  const tabW = (CANVAS_WIDTH - 24 - tabSpacing * 2) / 3;
 
-  for (let t = 0; t < 2; t++) {
+  for (let t = 0; t < 3; t++) {
     const tx = 12 + t * (tabW + tabSpacing);
     const isActive = state.missionTab === t;
 
@@ -1125,6 +1132,23 @@ function drawMissionsScreen(
 
     // Planet notification badge
     if (t === 1) {
+      const unlocked = getAvailableSpecialMissions(save).length;
+      if (unlocked > 0) {
+        const bx = tx + tabW - 6;
+        const by = tabY + 4;
+        ctx.fillStyle = "#ffaa44";
+        ctx.beginPath();
+        ctx.arc(bx, by, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#101010";
+        ctx.font = "bold 8px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`${unlocked}`, bx, by);
+      }
+    }
+
+    if (t === 2) {
       const unlockedNotDone = PLANET_DEFS.filter(p =>
         isPlanetUnlocked(p, save) && !isPlanetCompleted(p.id, save)
       ).length;
@@ -1146,6 +1170,8 @@ function drawMissionsScreen(
 
   if (state.missionTab === 0) {
     drawMissionsQuestsTab(ctx, state, save, tabY + tabH + 6);
+  } else if (state.missionTab === 1) {
+    drawMissionsSpecialTab(ctx, state, save, tabY + tabH + 6);
   } else {
     drawMissionsPlanetsTab(ctx, state, save, tabY + tabH + 6);
   }
@@ -1314,6 +1340,97 @@ function drawMissionsQuestsTab(
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText("\u25BC more", CANVAS_WIDTH / 2, bottomY - 4);
+  }
+}
+
+// ─── Planet Missions Tab ────────────────────────────────────────────
+
+function drawMissionsSpecialTab(
+  ctx: CanvasRenderingContext2D,
+  state: CockpitHubState,
+  save: SaveData,
+  startY: number
+): void {
+  const missions = getAvailableSpecialMissions(save);
+  const listY = startY + 4;
+  const listX = 12;
+  const listW = CANVAS_WIDTH - 24;
+  const rowH = 72;
+  const maxVisible = Math.floor((CANVAS_HEIGHT - listY - 60) / rowH);
+
+  if (missions.length === 0) {
+    ctx.fillStyle = "#556677";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("No special missions unlocked.", CANVAS_WIDTH / 2, listY + 30);
+    ctx.fillStyle = "#445566";
+    ctx.font = "9px monospace";
+    ctx.fillText("Story side missions appear here after key campaign discoveries.", CANVAS_WIDTH / 2, listY + 50);
+    return;
+  }
+
+  const scrollOffset = Math.max(0, state.missionSelected - maxVisible + 1);
+
+  for (let i = scrollOffset; i < Math.min(missions.length, scrollOffset + maxVisible); i++) {
+    const mission = missions[i];
+    const isSelected = state.missionSelected === i;
+    const completed = isSpecialMissionCompleted(mission.id, save);
+    const y = listY + (i - scrollOffset) * rowH;
+
+    if (isSelected) {
+      const pulse = 0.06 + 0.03 * Math.sin(state.animTimer * 0.06);
+      ctx.fillStyle = `rgba(255, 170, 68, ${pulse})`;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.fill();
+      ctx.strokeStyle = "#ffaa44aa";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(10, 10, 20, 0.3)";
+      ctx.beginPath();
+      ctx.roundRect(listX, y, listW, rowH - 4, 6);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#ffaa44";
+    ctx.font = "bold 17px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("\u25A3", listX + 22, y + (rowH - 4) / 2 - 4);
+    ctx.font = "bold 7px monospace";
+    ctx.fillText("OPS", listX + 22, y + (rowH - 4) / 2 + 14);
+
+    ctx.fillStyle = isSelected ? "#ffffff" : "#aabbcc";
+    ctx.font = isSelected ? "bold 11px monospace" : "11px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(mission.name, listX + 48, y + 6);
+
+    ctx.fillStyle = "#ffcc88";
+    ctx.font = "8px monospace";
+    ctx.fillText(`${WORLD_NAMES[mission.world - 1]} • ${mission.subtitle}`, listX + 48, y + 20);
+
+    ctx.fillStyle = isSelected ? "#889999" : "#556677";
+    ctx.font = "9px monospace";
+    ctx.fillText(mission.description, listX + 48, y + 34);
+
+    if (completed) {
+      ctx.fillStyle = "#44ff88";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("\u2713 CLEARED", listX + listW - 8, y + 8);
+    }
+
+    if (isSelected) {
+      ctx.fillStyle = "#ffaa44";
+      ctx.font = "8px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("[ENTER] LAUNCH", listX + listW - 8, y + rowH - 18);
+    }
   }
 }
 

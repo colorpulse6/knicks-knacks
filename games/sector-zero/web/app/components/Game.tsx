@@ -8,15 +8,19 @@ import {
   PowerUpType,
   type GameState,
   type Keys,
+  type SpecialMissionId,
 } from "./engine/types";
-import { createGameState, createPlanetGameState, updateGame, togglePause } from "./engine/gameEngine";
+import { createGameState, createPlanetGameState, createSpecialMissionGameState, updateGame, togglePause } from "./engine/gameEngine";
 import { completePlanet, getPlanetDef } from "./engine/planets";
 import type { PlanetId } from "./engine/types";
 import { drawGame, drawStarMap, drawIntroCrawl, INTRO_TOTAL_FRAMES } from "./engine/renderer";
 import { AudioEngine } from "./engine/audio";
 import {
+  addStoryItem,
+  completeSpecialMission,
   loadSave,
   saveSave,
+  unlockSpecialMission,
   updateLevelResult,
   recalcPilotLevel,
   calculateCreditsEarned,
@@ -31,6 +35,7 @@ import {
   createStarMapState,
   updateStarMap,
   resetStarMapKeys,
+  getWorldNodes,
 } from "./engine/starMap";
 import {
   type CockpitHubState,
@@ -44,6 +49,7 @@ import { checkQuestCompletion, type QuestCheckData } from "./engine/sideQuests";
 import { recordKill } from "./engine/bestiary";
 import { allocateNode } from "./engine/skillTree";
 import { drawCockpit } from "./engine/cockpitRenderer";
+import { unlockCodexEntry } from "./engine/codex";
 import {
   drawPreChoice, drawChoiceScreen, drawEnding, drawCredits,
   PRE_CHOICE_TOTAL_FRAMES, DESTROY_TOTAL_FRAMES, MERGE_TOTAL_FRAMES,
@@ -51,6 +57,9 @@ import {
   type EndingChoice,
 } from "./engine/ending";
 import { restoreCheckpoint } from "./engine/phases";
+import { createTestGroundState, getSpawnPosition as getGroundSpawn } from "./engine/groundLevel";
+import { createBoardingState, getBoardingSpawn } from "./engine/boardingLevel";
+import { getSpecialMissionDef } from "./engine/specialMissions";
 import DevPanel from "./DevPanel";
 
 export default function Game() {
@@ -69,16 +78,22 @@ export default function Game() {
   const [muted, setMuted] = useState(false);
   const [playerName, setPlayerName] = useState("Guest");
   const [activePlanetId, setActivePlanetId] = useState<PlanetId | null>(null);
+  const [activeSpecialMissionId, setActiveSpecialMissionId] = useState<SpecialMissionId | null>(null);
+  const [specialPromptChoice, setSpecialPromptChoice] = useState(0);
 
   const keysRef = useRef<Keys>({
     left: false,
     right: false,
     up: false,
     down: false,
+    strafeLeft: false,
+    strafeRight: false,
     shoot: false,
     bomb: false,
+    jump: false,
   });
   const touchPosRef = useRef<{ x: number; y: number } | null>(null);
+  const mouseRef = useRef<{ x: number; y: number; down: boolean }>({ x: 0.5, y: 0.5, down: false });
   const animationFrameRef = useRef<number | null>(null);
   const audioRef = useRef<AudioEngine | null>(null);
   const introFrameRef = useRef(0);
@@ -133,12 +148,22 @@ export default function Game() {
     }
   }, [ensureAudio, saveData.introSeen]);
 
+  const shouldPromptKeplerMission =
+    gameState?.screen === GameScreen.LEVEL_COMPLETE &&
+    !activePlanetId &&
+    !activeSpecialMissionId &&
+    gameState.currentWorld === 4 &&
+    gameState.currentLevel === 2 &&
+    !saveData.unlockedSpecialMissions.includes("kepler-black-box");
+  const activeSpecialMission = activeSpecialMissionId ? getSpecialMissionDef(activeSpecialMissionId) : null;
+
   const startLevel = useCallback(
     (world: number, level: number) => {
       const audio = ensureAudio();
       audio.switchMusic("game");
       setShowMap(false);
       setActivePlanetId(null);
+      setActiveSpecialMissionId(null);
       setGameState(createGameState(world, level, saveData.upgrades, saveData.unlockedEnhancements));
     },
     [ensureAudio, saveData.upgrades, saveData.unlockedEnhancements]
@@ -148,15 +173,40 @@ export default function Game() {
     (planetId: PlanetId) => {
       const audio = ensureAudio();
       audio.switchMusic("game");
+      setActiveSpecialMissionId(null);
       setActivePlanetId(planetId);
       setGameState(createPlanetGameState(planetId, saveData.upgrades, saveData.unlockedEnhancements));
     },
     [ensureAudio, saveData.upgrades, saveData.unlockedEnhancements]
   );
 
+  const startSpecialMission = useCallback(
+    (missionId: SpecialMissionId, overrideSave?: SaveData) => {
+      const audio = ensureAudio();
+      const missionSave = overrideSave ?? saveData;
+      audio.switchMusic("game");
+      setShowMap(false);
+      setShowCockpit(false);
+      setActivePlanetId(null);
+      setActiveSpecialMissionId(missionId);
+      setGameState(
+        createSpecialMissionGameState(
+          missionId,
+          missionSave.storyItems.includes("kepler-black-box"),
+          missionSave.upgrades,
+          missionSave.unlockedEnhancements,
+          missionSave.pilotLevel,
+          missionSave.allocatedSkills
+        )
+      );
+    },
+    [ensureAudio, saveData]
+  );
+
   const returnToCockpit = useCallback(() => {
     setGameState(null);
     setActivePlanetId(null);
+    setActiveSpecialMissionId(null);
     setEndingPhase("off");
     setEndingChoice(null);
     setShowCockpit(true);
@@ -164,6 +214,12 @@ export default function Game() {
     resetCockpitKeys();
     audioRef.current?.switchMusic("menu");
   }, []);
+
+  useEffect(() => {
+    if (shouldPromptKeplerMission) {
+      setSpecialPromptChoice(0);
+    }
+  }, [shouldPromptKeplerMission]);
 
   const startEnding = useCallback(() => {
     setGameState(null);
@@ -200,6 +256,10 @@ export default function Game() {
     // If we have a checkpoint (multi-phase, not phase 1), restart from checkpoint
     if (gameState?.phaseCheckpoint && gameState.currentPhase > 0) {
       const restored = restoreCheckpoint(gameState, gameState.phaseCheckpoint);
+      // For ground-run mode, re-initialize ground state and reset player spawn position
+      const isGroundRun = gameState.currentMode === "ground-run";
+      const freshGroundState = isGroundRun ? createTestGroundState() : undefined;
+      const groundSpawn = isGroundRun && freshGroundState ? getGroundSpawn(freshGroundState.tileMap) : null;
       setGameState({
         ...gameState,
         ...restored,
@@ -217,18 +277,62 @@ export default function Game() {
         levelCompleteTimer: 0,
         screenShake: 0,
         bombCooldown: 0,
+        ...(isGroundRun && freshGroundState && groundSpawn ? {
+          groundState: freshGroundState,
+          player: { ...restored.player, x: groundSpawn.x, y: groundSpawn.y },
+        } : {}),
       } as GameState);
       return;
     }
-    if (activePlanetId) {
+    if (activeSpecialMissionId) {
+      setGameState(
+        createSpecialMissionGameState(
+          activeSpecialMissionId,
+          saveData.storyItems.includes("kepler-black-box"),
+          saveData.upgrades,
+          saveData.unlockedEnhancements,
+          saveData.pilotLevel,
+          saveData.allocatedSkills
+        )
+      );
+    } else if (activePlanetId) {
       setGameState(createPlanetGameState(activePlanetId, saveData.upgrades, saveData.unlockedEnhancements));
     } else {
       setGameState(createGameState(gameState?.currentWorld ?? 1, gameState?.currentLevel ?? 1, saveData.upgrades, saveData.unlockedEnhancements));
     }
-  }, [gameState, activePlanetId, ensureAudio, saveData.upgrades, saveData.unlockedEnhancements]);
+  }, [gameState, activePlanetId, activeSpecialMissionId, ensureAudio, saveData]);
 
-  const nextLevel = useCallback(() => {
+  const nextLevel = useCallback((options?: { unlockSpecialMission?: SpecialMissionId; launchSpecialMission?: boolean }) => {
     if (!gameState) return;
+
+    if (activeSpecialMissionId) {
+      let newSave = {
+        ...saveData,
+        credits: saveData.credits + calculateCreditsEarned(gameState.score, 1, gameState.currentWorld),
+      };
+
+      let updatedBestiary = newSave.bestiary;
+      if (gameState.pendingBestiaryKills?.length) {
+        for (const kill of gameState.pendingBestiaryKills) {
+          updatedBestiary = recordKill(updatedBestiary, kill.type, kill.classId, {
+            world: gameState.currentWorld,
+          });
+        }
+      }
+      newSave = { ...newSave, bestiary: updatedBestiary };
+      newSave = completeSpecialMission(newSave, activeSpecialMissionId);
+
+      if (activeSpecialMissionId === "kepler-black-box" && gameState.firstPersonState?.objectiveCollected) {
+        const missionDef = getSpecialMissionDef(activeSpecialMissionId);
+        newSave = addStoryItem(newSave, missionDef.storyItemId);
+        newSave = unlockCodexEntry(newSave, missionDef.storyCodexId);
+      }
+
+      saveSave(newSave);
+      setSaveData(newSave);
+      returnToCockpit();
+      return;
+    }
 
     // Planet mission completion — award rewards and return to cockpit
     if (activePlanetId) {
@@ -307,8 +411,17 @@ export default function Game() {
       }
     }
 
+    if (options?.unlockSpecialMission) {
+      newSave = unlockSpecialMission(newSave, options.unlockSpecialMission);
+    }
+
     saveSave(newSave);
     setSaveData(newSave);
+
+    if (options?.unlockSpecialMission && options.launchSpecialMission) {
+      startSpecialMission(options.unlockSpecialMission, newSave);
+      return;
+    }
 
     const maxLevels = getWorldLevelCount(gameState.currentWorld);
     const nextLv = gameState.currentLevel + 1;
@@ -343,7 +456,7 @@ export default function Game() {
         startEnding();
       }
     }
-  }, [gameState, activePlanetId, saveData, returnToCockpit, startEnding]);
+  }, [gameState, activePlanetId, activeSpecialMissionId, saveData, returnToCockpit, startEnding, startSpecialMission]);
 
   const handleDevAction = useCallback(
     (action: string) => {
@@ -366,6 +479,161 @@ export default function Game() {
         setShowMap(false);
         setShowCockpit(false);
         startPlanetMission(planetId);
+        return;
+      }
+
+      if (action === "goto-ground-run") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        // Create a ground-run state directly (bypass phase system for quick testing)
+        const gs = createTestGroundState();
+        const spawn = getGroundSpawn(gs.tileMap);
+        const baseState = createGameState(1, 3, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "ground-run",
+          currentPhase: 1,
+          totalPhases: 2,
+          groundState: gs,
+          player: { ...baseState.player, x: spawn.x, y: spawn.y },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
+      if (action === "goto-exploration") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const { createAshfallForwardCampState } = require("./engine/ashfallForwardCamp");
+        const fpState = createAshfallForwardCampState();
+        console.assert(fpState.npcs.length > 0, "Ashfall camp should launch with NPCs");
+        const baseState = createGameState(1, 1, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "first-person",
+          currentPhase: 0,
+          totalPhases: 1,
+          firstPersonState: fpState,
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
+      if (action === "goto-turret") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const baseState = createGameState(1, 1, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "turret",
+          currentPhase: 1,
+          totalPhases: 2,
+          turretState: {
+            crosshairX: 0.5, crosshairY: 0.5,
+            enemies: [], shipHp: 10, shipMaxHp: 10,
+            wave: 0, totalWaves: 5, waveTimer: 120,
+            spawnTimer: 0, enemiesRemaining: 0,
+            killCount: 0, targetKills: 0,
+            completed: false, fireCooldown: 0,
+            bolts: [],
+          },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
+      if (action === "goto-first-person") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const bs = createBoardingState();
+        const baseState = createGameState(1, 3, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        // Find spawn position in tile coordinates (not pixels)
+        let spawnTileX = 2.5;
+        let spawnTileY = 2.5;
+        for (let r = 0; r < bs.map.height; r++) {
+          for (let c = 0; c < bs.map.width; c++) {
+            if (bs.map.tiles[r][c] === "spawn") {
+              spawnTileX = c + 0.5;
+              spawnTileY = r + 0.5;
+            }
+          }
+        }
+        // Create enemies from boarding state positions (convert pixel → tile coords)
+        const fpEnemies = bs.enemies.map((e, i) => ({
+          id: i + 1,
+          x: e.x / bs.map.tileSize + 0.5,
+          y: e.y / bs.map.tileSize + 0.5,
+          hp: e.hp,
+          maxHp: e.maxHp,
+          speed: e.type === "charger" ? 0.03 : 0.015,
+          type: e.type as "grunt" | "charger" | "sentry",
+          aggroRange: e.aggroRange / bs.map.tileSize,
+          isAggro: false,
+          deathTimer: 0,
+          fireTimer: e.fireTimer,
+          classId: e.classId,
+        }));
+
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "first-person",
+          currentPhase: 1,
+          totalPhases: 2,
+          firstPersonState: {
+            map: bs.map,
+            posX: spawnTileX,
+            posY: spawnTileY,
+            dirX: 1, dirY: 0,
+            planeX: 0, planeY: 0.66,
+            moveSpeed: 0.06,
+            rotSpeed: 0.04,
+            goalReached: false,
+            enemies: fpEnemies,
+            gunFireTimer: 0,
+            gunCooldown: 0,
+            npcs: [],
+            dialogState: null,
+          },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
+        return;
+      }
+
+      if (action === "goto-boarding") {
+        ensureAudio();
+        setShowStartScreen(false);
+        setShowMap(false);
+        setShowCockpit(false);
+        const bs = createBoardingState();
+        const spawn = getBoardingSpawn(bs.map);
+        const baseState = createGameState(1, 3, saveData.upgrades, saveData.unlockedEnhancements, saveData.pilotLevel, saveData.allocatedSkills);
+        setGameState({
+          ...baseState,
+          screen: GameScreen.PLAYING,
+          currentMode: "boarding",
+          currentPhase: 1,
+          totalPhases: 2,
+          boardingState: bs,
+          player: { ...baseState.player, x: spawn.x, y: spawn.y },
+          briefingTimer: 0,
+          devInvincible: gameState?.devInvincible ?? false,
+        });
         return;
       }
 
@@ -430,30 +698,54 @@ export default function Game() {
   // Keyboard input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const isFirstPerson = gameState?.currentMode === "first-person";
+
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
         e.preventDefault();
       }
 
       switch (e.key) {
         case "ArrowLeft":
-        case "a":
           keysRef.current.left = true;
+          if (shouldPromptKeplerMission) setSpecialPromptChoice(0);
           break;
         case "ArrowRight":
-        case "d":
           keysRef.current.right = true;
+          if (shouldPromptKeplerMission) setSpecialPromptChoice(1);
+          break;
+        case "a":
+          if (isFirstPerson) {
+            keysRef.current.strafeLeft = true;
+          } else {
+            keysRef.current.left = true;
+          }
+          break;
+        case "d":
+          if (isFirstPerson) {
+            keysRef.current.strafeRight = true;
+          } else {
+            keysRef.current.right = true;
+          }
           break;
         case "ArrowUp":
         case "w":
           keysRef.current.up = true;
           if (endingPhase === "choice") setChoiceHover(0);
+          if (shouldPromptKeplerMission) setSpecialPromptChoice(0);
           break;
         case "ArrowDown":
         case "s":
           keysRef.current.down = true;
           if (endingPhase === "choice") setChoiceHover(1);
+          if (shouldPromptKeplerMission) setSpecialPromptChoice(1);
           break;
         case " ":
+          keysRef.current.shoot = true;
+          keysRef.current.jump = true;
+          break;
+        case "z":
+        case "Z":
+        case "Shift":
           keysRef.current.shoot = true;
           break;
         case "b":
@@ -482,7 +774,15 @@ export default function Game() {
           } else if (gameState?.screen === GameScreen.GAME_OVER) {
             returnToCockpit();
           } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
-            nextLevel();
+            if (shouldPromptKeplerMission) {
+              if (specialPromptChoice === 0) {
+                nextLevel({ unlockSpecialMission: "kepler-black-box", launchSpecialMission: true });
+              } else {
+                nextLevel({ unlockSpecialMission: "kepler-black-box" });
+              }
+            } else {
+              nextLevel();
+            }
           }
           break;
         case "Escape":
@@ -520,12 +820,18 @@ export default function Game() {
     const handleKeyUp = (e: KeyboardEvent) => {
       switch (e.key) {
         case "ArrowLeft":
-        case "a":
           keysRef.current.left = false;
           break;
         case "ArrowRight":
+          keysRef.current.right = false;
+          break;
+        case "a":
+          keysRef.current.left = false;
+          keysRef.current.strafeLeft = false;
+          break;
         case "d":
           keysRef.current.right = false;
+          keysRef.current.strafeRight = false;
           break;
         case "ArrowUp":
         case "w":
@@ -536,6 +842,12 @@ export default function Game() {
           keysRef.current.down = false;
           break;
         case " ":
+          keysRef.current.shoot = false;
+          keysRef.current.jump = false;
+          break;
+        case "z":
+        case "Z":
+        case "Shift":
           keysRef.current.shoot = false;
           break;
         case "b":
@@ -554,7 +866,7 @@ export default function Game() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [showStartScreen, showIntro, endingPhase, choiceHover, showCockpit, showMap, gameState, openMap, finishIntro, advanceEnding, confirmChoice, restartGame, nextLevel, returnToCockpit]);
+  }, [showStartScreen, showIntro, endingPhase, choiceHover, showCockpit, showMap, gameState, openMap, finishIntro, advanceEnding, confirmChoice, restartGame, nextLevel, returnToCockpit, shouldPromptKeplerMission, specialPromptChoice]);
 
   // Touch input
   useEffect(() => {
@@ -643,7 +955,15 @@ export default function Game() {
       } else if (gameState?.screen === GameScreen.GAME_OVER) {
         returnToCockpit();
       } else if (gameState?.screen === GameScreen.LEVEL_COMPLETE) {
-        nextLevel();
+        if (shouldPromptKeplerMission) {
+          if (specialPromptChoice === 0) {
+            nextLevel({ unlockSpecialMission: "kepler-black-box", launchSpecialMission: true });
+          } else {
+            nextLevel({ unlockSpecialMission: "kepler-black-box" });
+          }
+        } else {
+          nextLevel();
+        }
       }
     };
 
@@ -656,7 +976,7 @@ export default function Game() {
       canvas.removeEventListener("touchmove", handleTouchMove);
       canvas.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [showStartScreen, showIntro, endingPhase, showCockpit, cockpitState.screen, showMap, gameState, openMap, finishIntro, advanceEnding, confirmChoice, restartGame, nextLevel, returnToCockpit]);
+  }, [showStartScreen, showIntro, endingPhase, showCockpit, cockpitState.screen, showMap, gameState, openMap, finishIntro, advanceEnding, confirmChoice, restartGame, nextLevel, returnToCockpit, shouldPromptKeplerMission, specialPromptChoice]);
 
   // Intro crawl loop
   useEffect(() => {
@@ -806,6 +1126,11 @@ export default function Game() {
         return;
       }
 
+      if (action.type === "launch-special-mission" && action.missionId) {
+        startSpecialMission(action.missionId);
+        return;
+      }
+
       if (action.type === "save-updated" && action.save) {
         saveSave(action.save);
         setSaveData(action.save);
@@ -835,7 +1160,7 @@ export default function Game() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [showCockpit, cockpitState, saveData]);
+  }, [showCockpit, cockpitState, saveData, startPlanetMission, startSpecialMission]);
 
   // Game loop
   useEffect(() => {
@@ -849,6 +1174,14 @@ export default function Game() {
     if (!ctx) return;
 
     const gameLoop = () => {
+      // Feed mouse position into turret crosshair + mouse-click as shoot
+      if (gameState?.currentMode === "turret" && gameState.turretState) {
+        const m = mouseRef.current;
+        gameState.turretState.crosshairX = Math.max(0.05, Math.min(0.95, m.x));
+        gameState.turretState.crosshairY = Math.max(0.05, Math.min(0.95, m.y));
+        if (m.down) keysRef.current.shoot = true;
+      }
+
       const newState = updateGame(
         gameState,
         keysRef.current,
@@ -961,6 +1294,71 @@ export default function Game() {
           maxHeight: "100vh",
           maxWidth: "100vw",
           objectFit: "contain",
+          cursor: gameState?.currentMode === "turret" ? "none" : "default",
+        }}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const scaleX = CANVAS_WIDTH / rect.width;
+          const scaleY = CANVAS_HEIGHT / rect.height;
+          mouseRef.current.x = (e.clientX - rect.left) * scaleX / CANVAS_WIDTH;
+          mouseRef.current.y = (e.clientY - rect.top) * scaleY / CANVAS_HEIGHT;
+        }}
+        onMouseDown={(e) => {
+          if (e.button === 0) mouseRef.current.down = true;
+        }}
+        onMouseUp={(e) => {
+          if (e.button === 0) mouseRef.current.down = false;
+        }}
+        onMouseLeave={() => {
+          mouseRef.current.down = false;
+        }}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const scaleX = CANVAS_WIDTH / rect.width;
+          const scaleY = CANVAS_HEIGHT / rect.height;
+          const cx = (e.clientX - rect.left) * scaleX;
+          const cy = (e.clientY - rect.top) * scaleY;
+
+          // Cockpit hub — click on hotspots
+          if (showCockpit && cockpitState.screen === "hub") {
+            for (let i = 0; i < COCKPIT_HOTSPOTS.length; i++) {
+              const h = COCKPIT_HOTSPOTS[i];
+              if (cx >= h.x && cx <= h.x + h.w && cy >= h.y && cy <= h.y + h.h) {
+                setCockpitState((prev) => ({
+                  ...prev,
+                  screen: h.id,
+                  selectedHotspot: i,
+                }));
+                break;
+              }
+            }
+          }
+
+          // Cockpit sub-screens — click near top-left to go back
+          if (showCockpit && cockpitState.screen !== "hub") {
+            if (cx < 60 && cy < 50) {
+              setCockpitState((prev) => ({ ...prev, screen: "hub" }));
+            }
+          }
+
+          // Star map — click on world nodes to select
+          if (showMap && starMapState) {
+            const worldNodes = getWorldNodes(saveData);
+            for (const node of worldNodes) {
+              if (!node.unlocked) continue;
+              const dx = cx - node.x;
+              const dy = cy - node.y;
+              if (dx * dx + dy * dy < 30 * 30) {
+                if (starMapState.selectedWorld === node.world && !starMapState.expanded) {
+                  // Double-click to expand
+                  setStarMapState((prev) => prev ? { ...prev, expanded: true, selectedLevel: 1 } : prev);
+                } else {
+                  setStarMapState((prev) => prev ? { ...prev, selectedWorld: node.world, expanded: false } : prev);
+                }
+                break;
+              }
+            }
+          }
         }}
       />
 
@@ -1050,19 +1448,24 @@ export default function Game() {
           <h2
             className="text-4xl font-bold mb-4 tracking-wider"
             style={{
-              background: activePlanetId
+              background: activePlanetId || activeSpecialMissionId
                 ? "linear-gradient(135deg, #44ffaa, #44ccff)"
                 : "linear-gradient(135deg, #FFD700, #FF6600)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
           >
-            {activePlanetId ? "MISSION COMPLETE" : "LEVEL COMPLETE"}
+            {activePlanetId || activeSpecialMissionId ? "MISSION COMPLETE" : "LEVEL COMPLETE"}
           </h2>
           <div className="text-center mb-6 space-y-2">
             {activePlanetId && (
               <p className="text-cyan-300 text-lg mb-2">
                 {getPlanetDef(activePlanetId).name}
+              </p>
+            )}
+            {activeSpecialMission && (
+              <p className="text-amber-300 text-lg mb-2">
+                {activeSpecialMission.name}
               </p>
             )}
             <p className="text-2xl">
@@ -1103,7 +1506,7 @@ export default function Game() {
             {gameState.maxCombo >= 3 && (
               <p className="text-yellow-500">Max Combo: {gameState.maxCombo}x</p>
             )}
-            {!activePlanetId && (
+            {!activePlanetId && !activeSpecialMissionId && (
               <div className="flex justify-center gap-2 mt-2">
                 {[1, 2, 3].map((star) => {
                   const earned =
@@ -1129,14 +1532,34 @@ export default function Game() {
                 )}
               </div>
             )}
+            {activeSpecialMissionId === "kepler-black-box" && gameState.firstPersonState?.objectiveCollected && !saveData.storyItems.includes("kepler-black-box") && (
+              <div className="mt-3 space-y-1">
+                <p className="text-sm text-amber-300 font-bold animate-pulse">+ KEPLER BLACK BOX</p>
+                <p className="text-sm text-cyan-300">+ REYES RECORDER LOG</p>
+              </div>
+            )}
             <p className="text-lg mt-3" style={{ color: "#44ff88" }}>
               +{calculateCreditsEarned(
                 gameState.score,
-                gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8 ? 3 :
-                  gameState.deaths === 0 ? 2 : 1,
+                activeSpecialMissionId
+                  ? 1
+                  : gameState.deaths === 0 && gameState.kills / Math.max(1, gameState.totalEnemies) >= 0.8 ? 3 :
+                    gameState.deaths === 0 ? 2 : 1,
                 gameState.currentWorld
               )} CREDITS
             </p>
+            {shouldPromptKeplerMission && (
+              <div className="mt-4 max-w-md space-y-3 border border-amber-500/40 bg-amber-950/20 px-4 py-4">
+                <p className="text-sm text-amber-300 font-bold tracking-wider">REYES</p>
+                <p className="text-sm text-gray-200">
+                  I&apos;m reading a surviving recorder beacon inside one of the Kepler wrecks.
+                  If that black box is still intact, it can tell us what happened to these ships.
+                </p>
+                <p className="text-xs text-gray-400">
+                  Board now, or continue the campaign and recover it later from the Mission Board.
+                </p>
+              </div>
+            )}
             {(() => {
               const mpData = getMultiPhaseLevelData(gameState.currentWorld, gameState.currentLevel);
               if (!mpData?.completionRewards?.length) return null;
@@ -1157,12 +1580,37 @@ export default function Game() {
             })()}
           </div>
           <div className="flex gap-4">
-            <button
-              onClick={nextLevel}
-              className="px-8 py-4 border-2 border-cyan-400 text-cyan-400 text-lg hover:bg-cyan-400 hover:text-black transition-colors tracking-wider"
-            >
-              {activePlanetId ? "COMPLETE" : "NEXT LEVEL"}
-            </button>
+            {shouldPromptKeplerMission ? (
+              <>
+                <button
+                  onClick={() => nextLevel({ unlockSpecialMission: "kepler-black-box", launchSpecialMission: true })}
+                  className={`px-8 py-4 border-2 text-lg transition-colors tracking-wider ${
+                    specialPromptChoice === 0
+                      ? "border-amber-300 bg-amber-300 text-black"
+                      : "border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-black"
+                  }`}
+                >
+                  BOARD THE WRECK
+                </button>
+                <button
+                  onClick={() => nextLevel({ unlockSpecialMission: "kepler-black-box" })}
+                  className={`px-6 py-4 border-2 text-lg transition-colors tracking-wider ${
+                    specialPromptChoice === 1
+                      ? "border-cyan-300 bg-cyan-300 text-black"
+                      : "border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white"
+                  }`}
+                >
+                  CONTINUE
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => nextLevel()}
+                className="px-8 py-4 border-2 border-cyan-400 text-cyan-400 text-lg hover:bg-cyan-400 hover:text-black transition-colors tracking-wider"
+              >
+                {activePlanetId || activeSpecialMissionId ? "COMPLETE" : "NEXT LEVEL"}
+              </button>
+            )}
             <button
               onClick={returnToCockpit}
               className="px-6 py-4 border-2 border-gray-600 text-gray-400 text-lg hover:bg-gray-600 hover:text-white transition-colors tracking-wider"

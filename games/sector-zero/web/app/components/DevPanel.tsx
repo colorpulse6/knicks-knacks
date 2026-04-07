@@ -163,6 +163,43 @@ export default function DevPanel({ gameState, onAction }: DevPanelProps) {
         </div>
       </div>
 
+      {/* Game Modes */}
+      <div className="space-y-1">
+        <div className="text-purple-500 border-b border-purple-900 pb-1">GAME MODES</div>
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            onClick={() => onAction("goto-ground-run")}
+            className="px-1 py-1.5 border border-purple-900 hover:border-purple-500 text-purple-400 hover:text-purple-300 transition-colors text-center"
+          >
+            GROUND RUN
+          </button>
+          <button
+            onClick={() => onAction("goto-boarding")}
+            className="px-1 py-1.5 border border-purple-900 hover:border-purple-500 text-purple-400 hover:text-purple-300 transition-colors text-center"
+          >
+            BOARDING
+          </button>
+          <button
+            onClick={() => onAction("goto-first-person")}
+            className="px-1 py-1.5 border border-purple-900 hover:border-purple-500 text-purple-400 hover:text-purple-300 transition-colors text-center"
+          >
+            FIRST PERSON
+          </button>
+          <button
+            onClick={() => onAction("goto-turret")}
+            className="px-1 py-1.5 border border-purple-900 hover:border-purple-500 text-purple-400 hover:text-purple-300 transition-colors text-center"
+          >
+            TURRET
+          </button>
+          <button
+            onClick={() => onAction("goto-exploration")}
+            className="px-1 py-1.5 border border-purple-900 hover:border-purple-500 text-purple-400 hover:text-purple-300 transition-colors text-center"
+          >
+            ASHFALL CAMP
+          </button>
+        </div>
+      </div>
+
       {/* Player Cheats */}
       <div className="space-y-1">
         <div className="text-green-600 border-b border-green-900 pb-1">CHEATS</div>

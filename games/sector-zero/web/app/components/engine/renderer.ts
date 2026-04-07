@@ -25,6 +25,10 @@ import {
 } from "./starMap";
 import { PLANET_DEFS } from "./planets";
 import { drawPhaseTransition } from "./phaseTransition";
+import { drawGroundGame } from "./groundRenderer";
+import { drawBoardingGame } from "./boardingRenderer";
+import { drawFirstPerson } from "./firstPersonRenderer";
+import { drawTurretGame } from "./turretRenderer";
 
 export function drawGame(
   ctx: CanvasRenderingContext2D,
@@ -66,6 +70,34 @@ export function drawGame(
   if (state.screen === GameScreen.BOSS_INTRO) {
     drawBossIntro(ctx, state);
     drawDashboard(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // Ground-run mode has its own renderer
+  if (state.currentMode === "ground-run") {
+    drawGroundGame(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // Ship boarding mode has its own renderer
+  if (state.currentMode === "boarding") {
+    drawBoardingGame(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // First-person raycaster mode
+  if (state.currentMode === "first-person") {
+    drawFirstPerson(ctx, state);
+    ctx.restore();
+    return;
+  }
+
+  // Ship turret mode
+  if (state.currentMode === "turret") {
+    drawTurretGame(ctx, state);
     ctx.restore();
     return;
   }

@@ -5,6 +5,7 @@
   "workspaces": [
     "apps/*/*",
     "games/*/web",
+    "sites/*/web",
     "packages/*"
   ],
   "scripts": {
@@ -28,7 +29,8 @@
     "asteroids:dev": "cd games/asteroids/web && yarn dev",
     "chimera:dev": "cd games/chimera/web && yarn dev",
     "brickles:dev": "cd games/brickles/web && yarn dev",
-    "sector-zero:dev": "cd games/sector-zero/web && yarn dev"
+    "sector-zero:dev": "cd games/sector-zero/web && yarn dev",
+    "sector-zero-site:dev": "cd sites/sector-zero-site/web && yarn dev"
   },
   "devDependencies": {
     "babel-plugin-module-resolver": "^5.0.2",

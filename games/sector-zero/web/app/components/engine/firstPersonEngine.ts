@@ -94,10 +94,10 @@ export function updateFirstPerson(gs: GameState, keys: Keys): void {
 
   // ── Rotation ──
   if (keys.left) {
-    ({ dirX, dirY, planeX, planeY } = rotateView({ dirX, dirY, planeX, planeY }, -ROT_SPEED));
+    ({ dirX, dirY, planeX, planeY } = rotateView({ dirX, dirY, planeX, planeY }, ROT_SPEED));
   }
   if (keys.right) {
-    ({ dirX, dirY, planeX, planeY } = rotateView({ dirX, dirY, planeX, planeY }, ROT_SPEED));
+    ({ dirX, dirY, planeX, planeY } = rotateView({ dirX, dirY, planeX, planeY }, -ROT_SPEED));
   }
 
   // ── Movement ──

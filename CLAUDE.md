@@ -73,10 +73,11 @@ Web-based games deployed to GitHub Pages at https://colorpulse6.github.io/knicks
 | 2048 | Number sliding puzzle |
 | Asteroids | Space shooter with collision detection |
 | Brickles | Neon brick-breaker with power-ups and combos |
-| Sector Zero | Vertical space shooter with 8 worlds and boss battles |
 | Chimera | FF6-style JRPG with ATB combat (in development) |
 
 Games use Next.js with static export (`output: 'export'`) for GitHub Pages compatibility.
+
+**Note:** Sector Zero (vertical space shooter) has been moved to a separate repository: https://github.com/colorpulse6/sector-zero
 
 ### Chimera (RPG)
 An ambitious FF6-style JRPG with:
@@ -126,6 +127,7 @@ yarn leaf:mobile             # Leaf Expo app
 yarn wordle:dev              # Start Wordle game
 yarn 2048:dev                # Start 2048 game
 yarn asteroids:dev           # Start Asteroids game
+yarn brickles:dev            # Start Brickles game
 yarn chimera:dev             # Start Chimera RPG
 ```
 

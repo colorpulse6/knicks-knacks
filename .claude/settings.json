@@ -25,7 +25,24 @@
       "Bash(git stash:*)",
       "Bash(git commit -m ':*)",
       "Bash(yarn lint:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(/Users/nichalasbarnes/.claude/plugins/marketplaces/superpowers-dev/skills/brainstorming/scripts/start-server.sh --project-dir /Users/nichalasbarnes/Desktop/projects/knicks-knacks)",
+      "Read(//Users/nichalasbarnes/.claude/plugins/marketplaces/superpowers-dev/skills/brainstorming/**)",
+      "Read(//Users/nichalasbarnes/.claude/plugins/marketplaces/superpowers-dev/skills/writing-plans/**)",
+      "Read(//Users/nichalasbarnes/.claude/plugins/marketplaces/superpowers-dev/skills/subagent-driven-development/**)",
+      "Bash(yarn install:*)",
+      "Bash(sed -i '' 's/—/ -/g' content/posts/*.mdx app/about/page.tsx app/coming-soon/page.tsx app/layout.tsx)",
+      "Bash(sed -i '' 's/\\\\&mdash;/ -/g' components/Footer.tsx)",
+      "Bash(cp -r /Users/nichalasbarnes/Desktop/projects/knicks-knacks/sites/sector-zero-site/web/ /Users/nichalasbarnes/Desktop/projects/sector-zero/site/)",
+      "Bash(rm -rf /Users/nichalasbarnes/Desktop/projects/sector-zero/site/.next /Users/nichalasbarnes/Desktop/projects/sector-zero/site/out /Users/nichalasbarnes/Desktop/projects/sector-zero/site/node_modules)",
+      "Read(//Users/nichalasbarnes/Desktop/projects/sector-zero/game/**)",
+      "Read(//Users/nichalasbarnes/Desktop/projects/sector-zero/site/**)",
+      "Read(//Users/nichalasbarnes/Desktop/projects/**)",
+      "Read(//Users/nichalasbarnes/Desktop/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/nichalasbarnes/Desktop/projects/sector-zero/docs",
+      "/Users/nichalasbarnes/Desktop/projects/sector-zero"
     ]
   }
 }

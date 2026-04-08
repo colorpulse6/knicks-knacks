@@ -86,11 +86,11 @@ Web-based games built with Next.js and deployed to GitHub Pages at https://color
 - **Location:** `games/brickles/web`
 - **Live URL:** https://colorpulse6.github.io/knicks-knacks/brickles/
 
-### Sector Zero
+### Sector Zero (External)
 
-- **Description:** Vertical scrolling space shooter with 8 worlds, boss battles, ship upgrades, and a branching story.
-- **Location:** `games/sector-zero/web`
-- **Live URL:** https://colorpulse6.github.io/knicks-knacks/sector-zero/
+- **Description:** Vertical scrolling space shooter with 6 gameplay modes, RPG progression, and a companion website.
+- **Repo:** https://github.com/colorpulse6/sector-zero
+- **Live URL:** https://colorpulse6.github.io/sector-zero/
 
 See each app's own README for setup and usage details.
 

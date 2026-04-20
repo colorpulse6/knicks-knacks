@@ -346,7 +346,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         description:
           "xAI's flagship reasoning model with a 2M token context window. Reasoning is baked into the model ID variant rather than a parameter.",
         status: "current",
-        modelType: "standard",
+        modelType: "reasoning",
         supportsReasoningEffort: false,
         lastVerified: "2026-04-20",
       },

@@ -297,7 +297,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           notes:
             "Text input: $0.75/M; Audio input: $3.00/M or $0.005/min; Image/Video: $1.00/M or $0.002/min. Text output: $4.50/M; Audio output: $12.00/M or $0.018/min. Real-time audio/dialogue model — Live API integration differs from standard chat API. Launched ~March 26, 2026.",
         },
-        costType: "userKeyRequired",
+        costType: "appKeyPermissive",
         capabilities: [
           "text",
           "image",
@@ -308,7 +308,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "multilingual",
         ],
         description:
-          "Google's low-latency real-time dialogue model supporting audio-to-audio and multimodal inputs. Uses the Live API, not standard chat API.",
+          "Google's low-latency real-time dialogue model supporting audio-to-audio and multimodal inputs. Uses the Live API, not standard chat API. Free via BotBattle's shared key.",
         status: "preview",
         modelType: "standard",
         supportsReasoningEffort: false,
@@ -503,6 +503,75 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "Alibaba's latest flagship model with 1M token context window. Hybrid linear attention + sparse MoE architecture with reasoning support.",
         status: "current",
         modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-20",
+      },
+    ],
+  },
+  {
+    id: "groq",
+    displayName: "Groq",
+    apiKeyProviderName: "Groq",
+    apiKeyLink: "https://console.groq.com/keys",
+    providerWebsite: "https://groq.com",
+    models: [
+      {
+        id: "meta-llama/llama-4-scout-17b-16e-instruct",
+        displayName: "Llama 4 Scout",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Groq key. Groq list price: $0.11/$0.34 per 1M tokens. Shared rate limit: 30 RPM / 14,400 req/day. Preview status on Groq as of April 2026.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Meta's Llama 4 Scout (17B, 16 experts MoE) served on Groq's fast inference hardware. Free via BotBattle's shared key — no API key needed.",
+        status: "preview",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-20",
+      },
+      {
+        id: "llama-3.3-70b-versatile",
+        displayName: "Llama 3.3 70B",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Groq key. Groq list price: $0.59/$0.79 per 1M tokens. Shared rate limit: 30 RPM / 14,400 req/day. Production model.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Meta's Llama 3.3 70B Versatile served on Groq's LPU hardware at up to 280 tokens/sec. Free via BotBattle's shared key — no API key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-20",
+      },
+      {
+        id: "qwen/qwen3-32b",
+        displayName: "Qwen3 32B",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Groq key. Groq list price: $0.29/$0.59 per 1M tokens. Shared rate limit: 30 RPM / 14,400 req/day. Preview status on Groq as of April 2026. Reasoning mode toggled via thinking budget parameter.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use", "reasoning"],
+        description:
+          "Alibaba's Qwen3 32B reasoning model served on Groq. Supports hybrid thinking mode. Free via BotBattle's shared key — no API key needed.",
+        status: "preview",
+        modelType: "reasoning",
         supportsReasoningEffort: false,
         lastVerified: "2026-04-20",
       },

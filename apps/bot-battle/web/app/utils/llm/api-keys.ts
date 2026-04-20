@@ -1,6 +1,5 @@
 // API key management for LLM services
 
-import { OPENROUTER_BASED_PROVIDERS } from "./constants";
 import { APIError } from "../apiErrors";
 
 // For client-side API key access - use a singleton object to maintain state across navigations
@@ -11,17 +10,11 @@ export function getClientApiKeysInstance(): Record<string, string | null> {
   if (!clientApiKeysSingleton) {
     clientApiKeysSingleton = {
       groq: null,
-      gemini: null,
       openai: null,
-      openrouter: null,
       anthropic: null,
+      google: null,
+      xai: null,
       mistral: null,
-      cohere: null,
-      ai21: null,
-      // Add new providers that use OpenRouter under the hood
-      meta: null,
-      nousresearch: null,
-      microsoft: null,
       qwen: null,
       deepseek: null,
     };
@@ -41,25 +34,6 @@ export function setClientApiKey(provider: string, key: string | null): void {
   if (clientApiKeys[lowerProvider] !== key) {
     clientApiKeys[lowerProvider] = key;
     console.log(`🔑 API key for ${provider} ${key ? "set" : "cleared"}`);
-
-    // If this is an OpenRouter key, also apply it to all OpenRouter-based providers
-    if (
-      lowerProvider === "openrouter" &&
-      OPENROUTER_BASED_PROVIDERS.includes(lowerProvider)
-    ) {
-      // Apply the OpenRouter key to all providers that use it
-      OPENROUTER_BASED_PROVIDERS.forEach((openRouterProvider) => {
-        if (openRouterProvider !== "openrouter") {
-          // Skip the original one
-          if (clientApiKeys[openRouterProvider] !== key) {
-            clientApiKeys[openRouterProvider] = key;
-            console.log(
-              `🔑 API key for ${openRouterProvider} ${key ? "set" : "cleared"} (via OpenRouter)`
-            );
-          }
-        }
-      });
-    }
   }
 }
 
@@ -106,17 +80,6 @@ export function getApiKey(provider: string, serverKey?: string): string {
       return clientKey;
     }
 
-    // For OpenRouter-based providers, check if we have an OpenRouter key
-    if (
-      OPENROUTER_BASED_PROVIDERS.includes(provider) &&
-      provider !== "openrouter"
-    ) {
-      const openRouterKey = clientApiKeys["openrouter"];
-      if (openRouterKey) {
-        console.log(`Using OpenRouter key for ${provider}`);
-        return openRouterKey;
-      }
-    }
   }
 
   // Fall back to server key if available

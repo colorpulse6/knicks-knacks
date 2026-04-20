@@ -130,33 +130,9 @@ export default function SettingsPage() {
         />
 
         <ApiKeyInput
-          provider="cohere"
-          label="Cohere"
-          description="Used for Command R+ and Command R models. Get your API key from the Cohere dashboard."
-        />
-
-        <ApiKeyInput
-          provider="ai21"
-          label="AI21 Labs"
-          description="Used for Jamba models with long context windows. Get your API key from the AI21 Studio."
-        />
-
-        <ApiKeyInput
-          provider="openrouter"
-          label="OpenRouter"
-          description="Used to access a wide range of models through a unified API. Get your API key from OpenRouter."
-        />
-
-        <ApiKeyInput
-          provider="meta"
-          label="Meta AI"
-          description="Used for premium Llama models including Llama 3 Opus and Llama 4 Opus. If you have a Meta API key, you can access these models through the Meta platform."
-        />
-
-        <ApiKeyInput
-          provider="microsoft"
-          label="Microsoft"
-          description="Used for premium Phi-4 models with enhanced reasoning capabilities. Get your API key from the Microsoft Azure portal."
+          provider="xai"
+          label="xAI (Grok)"
+          description="Used for Grok models from xAI. Get your API key from the xAI console."
         />
 
         <ApiKeyInput

@@ -6,9 +6,8 @@ export type LLMModel =
   | "groq"
   | "deepseek"
   | "mistral"
-  | "perplexity"
-  | "cohere"
-  | "openrouter"
+  | "xai"
+  | "qwen"
   | "openai";
 
 export interface AdvancedLLMMetrics {

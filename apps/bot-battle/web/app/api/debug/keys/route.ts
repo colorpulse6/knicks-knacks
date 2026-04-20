@@ -26,8 +26,8 @@ export async function GET() {
     gemini: process.env.GEMINI_API_KEY
       ? maskApiKey(process.env.GEMINI_API_KEY)
       : null,
-    openrouter: process.env.OPENROUTER_API_KEY
-      ? maskApiKey(process.env.OPENROUTER_API_KEY)
+    xai: process.env.XAI_API_KEY
+      ? maskApiKey(process.env.XAI_API_KEY)
       : null,
   };
 
@@ -40,7 +40,7 @@ export async function GET() {
       nextPublicGroq: !!process.env.NEXT_PUBLIC_GROQ_API_KEY,
       openai: !!process.env.OPENAI_API_KEY,
       gemini: !!process.env.GEMINI_API_KEY,
-      openrouter: !!process.env.OPENROUTER_API_KEY,
+      xai: !!process.env.XAI_API_KEY,
     },
   };
 

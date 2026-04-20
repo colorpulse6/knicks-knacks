@@ -23,6 +23,9 @@ import Link from "next/link";
 import { useApiKeyStore } from "./providers/ApiKeyProvider";
 import { LLM_REGISTRY } from "./core/llm-registry";
 import { CostCalculator } from "./components/CostCalculator";
+import { streamLLMResponse } from "./utils/llm/streamClient";
+import { getStreamPreference } from "./utils/streamPreference";
+import { StreamToggle } from "./components/StreamToggle";
 
 // Create a unique ID for each selected model to use as map keys
 const getModelKey = (model: SelectedLLM): string => {
@@ -42,56 +45,13 @@ interface ResponseData {
   response: string | React.ReactElement;
   displayName: string;
   metrics?: Record<string, string | number | undefined>;
+  isStreaming?: boolean;
+  thinking?: string;
 }
 
 // Add this type guard function at the top of the file
 function isString(value: any): value is string {
   return typeof value === "string";
-}
-
-async function fetchLLMResponse(
-  selectedModel: SelectedLLM,
-  prompt: string,
-  signal?: AbortSignal,
-  effort?: "low" | "medium" | "high"
-) {
-  const provider = LLM_REGISTRY.find((p) => p.id === selectedModel.providerId);
-  const spec = provider?.models.find((m) => m.id === selectedModel.modelId);
-  const isReasoning = spec?.modelType === "reasoning";
-
-  const res = await fetch("/api/llm", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      providerId: selectedModel.providerId,
-      modelId: selectedModel.modelId,
-      prompt,
-      ...(isReasoning && effort ? { effort } : {}),
-    }),
-    signal,
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    // Extract specific error messages
-    if (data.errorType === "model_unavailable") {
-      throw new Error(
-        `Model unavailable: ${data.error}. Please check API Settings.`
-      );
-    }
-    if (
-      data.errorType === "api_key_missing" ||
-      data.errorType === "api_key_invalid"
-    ) {
-      throw new Error(
-        `API key error: ${data.error}. Go to Settings to add your key.`
-      );
-    }
-    throw new Error(data.error || "Unknown error");
-  }
-
-  return data;
 }
 
 // Entry page for BotBattle Web (Next.js app directory convention)
@@ -159,69 +119,71 @@ export default function Page() {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
+    const useStream = getStreamPreference();
+
     // Process each model individually instead of waiting for all to complete
-    models.forEach(async (model) => {
-      try {
-        const modelKey = getModelKey(model);
-        const res = await fetchLLMResponse(
-          model,
-          usedPrompt,
-          undefined,
-          effortPerModel[modelKey] ?? "medium"
-        );
+    models.forEach((model) => {
+      const modelKey = getModelKey(model);
+      const provider = LLM_REGISTRY.find((p) => p.id === model.providerId);
+      const spec = provider?.models.find((m) => m.id === model.modelId);
+      const isReasoning = spec?.modelType === "reasoning";
 
-        // Update just this model's result, preserving other models' states
-        setResponses((prevResponses) => ({
-          ...prevResponses,
-          [getModelKey(model)]: {
-            loading: false,
-            response: res.response,
-            metrics: res.metrics,
-            displayName: getModelDisplayName(model),
-          },
-        }));
-      } catch (err: any) {
-        // Create a user-friendly error message based on error type
-        let errorMessage: string | React.ReactElement = `Error: ${err.message}`;
+      // Mark cell as streaming-in-progress so UI can render caret later
+      setResponses((prev) => ({
+        ...prev,
+        [modelKey]: { ...prev[modelKey], isStreaming: useStream },
+      }));
 
-        // Handle API key errors with a settings link
-        if (
-          err.message.includes("API key") ||
-          err.message.includes("Model unavailable")
-        ) {
-          // Use string for type checking but render React node in UI
-          const errorText = `⚠️ ${err.message}`;
-          errorMessage = (
-            <div>
-              <p className="text-red-500 mb-2">{errorText}</p>
-              <a
-                href="/settings"
-                className="text-rust hover:underline text-sm"
-              >
-                Go to API Settings →
-              </a>
-            </div>
-          );
+      streamLLMResponse(
+        {
+          providerId: model.providerId,
+          modelId: model.modelId,
+          prompt: usedPrompt,
+          stream: useStream,
+          ...(isReasoning && effortPerModel[modelKey] ? { effort: effortPerModel[modelKey] } : {}),
+        },
+        {
+          onChunk: (delta) =>
+            setResponses((prev) => {
+              const cur = prev[modelKey];
+              const prior = typeof cur?.response === "string" ? cur.response : "";
+              return {
+                ...prev,
+                [modelKey]: {
+                  ...cur,
+                  loading: false,
+                  response: prior + delta,
+                  isStreaming: useStream,
+                },
+              };
+            }),
+          onDone: (metrics, thinking) =>
+            setResponses((prev) => ({
+              ...prev,
+              [modelKey]: {
+                ...prev[modelKey],
+                loading: false,
+                isStreaming: false,
+                metrics,
+                thinking,
+              },
+            })),
+          onError: (err) =>
+            setResponses((prev) => {
+              const cur = prev[modelKey];
+              const priorResponse = typeof cur?.response === "string" ? cur.response : "";
+              return {
+                ...prev,
+                [modelKey]: {
+                  ...cur,
+                  loading: false,
+                  isStreaming: false,
+                  response: priorResponse + (priorResponse ? "\n\n" : "") + `⚠️ ${err}`,
+                },
+              };
+            }),
         }
-        // Handle token limit errors
-        else if (
-          err.message.includes("Token limit exceeded") ||
-          err.message.includes("API quota exceeded") ||
-          err.message.includes("RESOURCE_EXHAUSTED")
-        ) {
-          errorMessage = `⚠️ ${err.message}`;
-        }
-
-        // Update just this model's error state
-        setResponses((prevResponses) => ({
-          ...prevResponses,
-          [getModelKey(model)]: {
-            loading: false,
-            response: errorMessage,
-            displayName: getModelDisplayName(model),
-          },
-        }));
-      }
+      );
     });
   };
 
@@ -352,14 +314,17 @@ export default function Page() {
           <CostCalculator prompt={prompt} selectedModels={models} />
         )}
 
-        <button
-          type="submit"
-          className="bg-ink hover:bg-ink-soft text-paper font-medium px-6 py-3 rounded-md shadow-md flex items-center justify-center gap-2 w-full sm:w-auto mb-8 disabled:opacity-50 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-colors"
-          disabled={!prompt.trim() || models.length === 0}
-        >
-          <PlayCircle size={20} />
-          Run Benchmark
-        </button>
+        <div className="flex items-center gap-4 mt-4">
+          <button
+            type="submit"
+            className="bg-ink hover:bg-ink-soft text-paper font-medium px-6 py-3 rounded-md shadow-md flex items-center justify-center gap-2 w-full sm:w-auto mb-8 disabled:opacity-50 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-colors"
+            disabled={!prompt.trim() || models.length === 0}
+          >
+            <PlayCircle size={20} />
+            Run Benchmark
+          </button>
+          <StreamToggle />
+        </div>
 
         {Object.keys(responses).length > 0 && (
           <>
@@ -499,6 +464,7 @@ export default function Page() {
                     setEffortPerModel((prev) => ({ ...prev, [modelKey]: e }))
                   }
                   isLoading={loading}
+                  isStreaming={responses[modelKey]?.isStreaming}
                   response={renderResponseContent(response)}
                   thinking={
                     typeof metrics?.thinking === "string"

@@ -62,6 +62,7 @@ export async function callLLMWithProviderAndModel(
 
   let result: {
     response: string;
+    thinking?: string;
     metrics: Record<string, number | undefined>;
   } = { response: "", metrics: { latencyMs: 0 } };
 
@@ -128,6 +129,7 @@ export async function callLLMWithProviderAndModel(
 
   return {
     response: result.response,
+    thinking: result.thinking,
     metrics: result.metrics as LLMCallResult["metrics"],
   };
 }

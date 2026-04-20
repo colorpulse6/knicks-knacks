@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log("Request body:", JSON.stringify(body, null, 2));
 
-    const { providerId, modelId, prompt, effort } = body;
+    const { providerId, modelId, prompt, effort, isReasoning } = body;
 
     if (!providerId || !modelId || !prompt) {
       console.log("Missing required fields:", {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         providerId,
         modelId,
         prompt,
-        { effort }
+        { effort, isReasoning }
       );
 
       console.log("LLM response successful");

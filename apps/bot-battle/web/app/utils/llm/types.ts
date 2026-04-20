@@ -23,6 +23,7 @@ export interface AdvancedLLMMetrics {
 
 export interface LLMCallResult {
   response: string;
+  thinking?: string;
   metrics: {
     latencyMs: number;
     tokensPerSecond?: number;

@@ -1,16 +1,9 @@
 import React from "react";
 
-export type Effort = "low" | "medium" | "high";
+export type { Effort } from "../core/reasoning";
+export { effortToBudgetTokens } from "../core/reasoning";
 
-const BUDGET_MAP: Record<Effort, number> = {
-  low: 1024,
-  medium: 4096,
-  high: 16384,
-};
-
-export function effortToBudgetTokens(effort: Effort): number {
-  return BUDGET_MAP[effort];
-}
+import type { Effort } from "../core/reasoning";
 
 interface Props {
   value: Effort;

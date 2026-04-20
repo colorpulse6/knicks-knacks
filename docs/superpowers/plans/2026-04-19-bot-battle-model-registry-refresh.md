@@ -14,6 +14,36 @@
 
 ---
 
+## Research Adjustments (2026-04-20)
+
+After Task 3 verified current model availability, the user approved these adjustments:
+
+- **Meta provider dropped entirely.** Llama 4 Maverick is deprecated on Groq (March 2026); Scout is preview-only. Not worth the plumbing for this cycle. **Provider count: 7** (was 8): OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Qwen.
+- **DeepSeek V3.2-Speciale removed.** Endpoint expired December 2025 — only reachable via OpenRouter, which we dropped. DeepSeek provider offers just `deepseek-chat` (V3.2) as a standard (non-reasoning) model.
+- **Claude 3.5 Sonnet legacy entry removed.** Anthropic retired it October 2025.
+- **GPT-4o legacy entry removed.** Retired from ChatGPT April 2026; raw API status uncertain.
+- **GPT-5.4 Thinking consolidated.** There is no separate API ID — it's `gpt-5.4` with `reasoning.effort` set. One entry in the registry, `modelType: "reasoning"`, `supportsReasoningEffort: true`.
+
+**Resulting curated list (~15 models):**
+
+| Provider | Models |
+|---|---|
+| OpenAI | gpt-5.4 (reasoning), gpt-5.4-mini, o3 (reasoning), o4-mini (reasoning) |
+| Anthropic | claude-opus-4-7, claude-sonnet-4-6 (reasoning, extended thinking), claude-haiku-4-5, Claude Mythos Preview *(if accessible)* |
+| Google | gemini-3.1-pro, gemini-3.1-flash-live |
+| xAI | grok-4.20, grok-4.1-fast *(name pending verification during Task 7)* |
+| DeepSeek | deepseek-chat (V3.2) |
+| Mistral | mistral-large-latest, mistral-medium-3.1 |
+| Qwen | qwen3.6-plus |
+
+**Task impacts:**
+- **Task 4:** Also delete `meta.ts` provider file; remove `META_API_KEY` env check.
+- **Task 6:** Use the trimmed list above. Consult `docs/superpowers/plans/2026-04-19-bot-battle-model-ids-verified.md` for exact IDs, pricing, and context windows.
+- **Task 15 (DeepSeek reasoning token parsing):** **SKIPPED** — no reasoning model for DeepSeek in this cycle. Provider still gets a light cleanup pass if needed.
+- **Task 19:** Also purge `meta` / `metaapi` / `META_API_KEY` references.
+
+---
+
 ## Preconditions
 
 Vitest is installed in `devDependencies` but has no config file and no tests exist in the app. Task 1 sets up the harness before any TDD work begins.

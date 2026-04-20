@@ -28,6 +28,7 @@ import {
   callOpenAIAPI,
   callQwenAPI,
   callDeepSeekAPI,
+  callXAIAPI,
 } from "./providers";
 
 // Main function to call any LLM with providerId and modelId
@@ -81,6 +82,10 @@ export async function callLLMWithProviderAndModel(
       case "deepseek":
         // Call DeepSeek API directly
         result = await callDeepSeekAPI(prompt, signal, modelId);
+        break;
+      case "xai":
+        // Call xAI API directly
+        result = await callXAIAPI(prompt, signal, modelId);
         break;
       default:
         throw new APIError(

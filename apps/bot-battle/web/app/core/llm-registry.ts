@@ -19,6 +19,10 @@ export interface LLMModelSpec {
   capabilities?: string[]; // List of capabilities like "text", "image", "code", "json", "tool_use", etc.
   description?: string;
   notes?: string; // General notes about the model or its usage.
+  status?: "current" | "legacy" | "preview";
+  modelType?: "standard" | "reasoning";
+  supportsReasoningEffort?: boolean;
+  lastVerified?: string;
 }
 
 export interface LLMProviderSpec {

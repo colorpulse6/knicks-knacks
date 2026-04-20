@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { ModelBadge } from "./ModelBadge";
+import { EffortSelector } from "./EffortSelector";
 
 const Tooltip = ({
   content,
@@ -25,8 +27,14 @@ const Tooltip = ({
 
 interface LLMResponsePanelProps {
   model: string;
+  modelType?: "standard" | "reasoning";
+  status?: "current" | "legacy" | "preview";
+  supportsReasoningEffort?: boolean;
+  effort?: "low" | "medium" | "high";
+  onEffortChange?: (e: "low" | "medium" | "high") => void;
   isLoading?: boolean;
   response?: string | React.ReactNode;
+  thinking?: string;
   metrics?: Record<string, string | number | undefined>;
 }
 
@@ -57,6 +65,9 @@ const METRIC_TOOLTIPS: Record<string, string> = {
   bias: "How unbiased and neutral is the response? (1=biased, 5=neutral)",
   comprehensiveness:
     "How complete and thorough is the response? (1=incomplete, 5=very comprehensive)",
+  reasoningTokens:
+    "Number of tokens used for internal reasoning (not visible in the answer).",
+  answerTokens: "Number of tokens in the final answer portion of the response.",
 };
 
 const ADVANCED_METRICS = [
@@ -71,11 +82,20 @@ const ADVANCED_METRICS = [
 
 export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
   model,
+  modelType,
+  status,
+  supportsReasoningEffort,
+  effort,
+  onEffortChange,
   isLoading,
   response,
+  thinking,
   metrics = {},
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [tab, setTab] = useState<"answer" | "thinking">("answer");
+
+  const isReasoning = modelType === "reasoning";
 
   function renderMetric(
     label: string,
@@ -96,10 +116,29 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
     );
   }
 
+  const reasoningTokenCount =
+    typeof metrics.reasoningTokens === "number"
+      ? metrics.reasoningTokens
+      : undefined;
+
+  const thinkingTabLabel =
+    reasoningTokenCount !== undefined
+      ? `Thinking (${reasoningTokenCount} tok)`
+      : "Thinking";
+
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
       <div className="flex justify-between items-center mb-3">
-        <div className="font-bold">{model}</div>
+        <div className="font-bold flex items-center flex-wrap gap-1">
+          {model}
+          <ModelBadge status={status} modelType={modelType} />
+          {isReasoning && supportsReasoningEffort && onEffortChange && (
+            <EffortSelector
+              value={effort ?? "medium"}
+              onChange={onEffortChange}
+            />
+          )}
+        </div>
         {!isLoading && response && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -126,7 +165,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
         <div className="text-gray-500">Loading...</div>
       ) : (
         <>
-          {/* Metrics panel - now above the response */}
+          {/* Metrics panel - above the response */}
           <div className="text-xs text-gray-700 dark:text-gray-300 mb-3 bg-gray-50 dark:bg-gray-800 p-3 rounded">
             {metrics && (
               <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -164,6 +203,18 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
                   renderMetric("Word count", metrics.wordCount, "wordCount")}
                 {metrics.charCount !== undefined &&
                   renderMetric("Char count", metrics.charCount, "charCount")}
+                {metrics.reasoningTokens !== undefined &&
+                  renderMetric(
+                    "Reasoning tokens",
+                    metrics.reasoningTokens,
+                    "reasoningTokens"
+                  )}
+                {metrics.answerTokens !== undefined &&
+                  renderMetric(
+                    "Answer tokens",
+                    metrics.answerTokens,
+                    "answerTokens"
+                  )}
                 {/* Advanced Groq metrics (auto-judged) */}
                 {ADVANCED_METRICS.map(({ key, label }) =>
                   metrics[key] !== undefined
@@ -174,49 +225,60 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
             )}
           </div>
 
-          {/* Collapsible response */}
-          {isExpanded && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
-              <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-96">
-                {response}
-              </pre>
+          {/* Tab bar for reasoning models */}
+          {isReasoning && (
+            <div
+              className="flex border-b border-gray-200 dark:border-gray-700 mb-3"
+              role="tablist"
+            >
+              <button
+                role="tab"
+                aria-selected={tab === "answer"}
+                onClick={() => setTab("answer")}
+                className={`px-4 py-2 text-sm font-medium ${
+                  tab === "answer"
+                    ? "border-b-2 border-purple-600 text-purple-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Answer
+              </button>
+              <button
+                role="tab"
+                aria-selected={tab === "thinking"}
+                onClick={() => setTab("thinking")}
+                className={`px-4 py-2 text-sm font-medium ${
+                  tab === "thinking"
+                    ? "border-b-2 border-purple-600 text-purple-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {thinkingTabLabel}
+              </button>
             </div>
           )}
 
-          {/* Human rating controls */}
-          {/* <div className="flex items-center gap-4 mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
-            <div>
-              <span className="mr-1">Human rating:</span>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  className={`text-xl ${
-                    rating && rating >= star
-                      ? "text-yellow-400"
-                      : "text-gray-300"
-                  }`}
-                  onClick={() => setRating(star)}
-                  aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                  type="button"
-                >
-                  ★
-                </button>
-              ))}
+          {/* Collapsible response */}
+          {isExpanded && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
+              {!isReasoning || tab === "answer" ? (
+                <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-96">
+                  {response}
+                </pre>
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-96 text-gray-600 dark:text-gray-400">
+                  {thinking ?? (
+                    <span className="italic text-gray-400">
+                      Thinking not exposed by provider
+                      {reasoningTokenCount !== undefined
+                        ? ` (${reasoningTokenCount} tokens used)`
+                        : ""}
+                    </span>
+                  )}
+                </pre>
+              )}
             </div>
-            <div>
-              <span className="mr-1">Accuracy:</span>
-              <select
-                value={accuracy ?? ""}
-                onChange={(e) => setAccuracy(e.target.value as any)}
-                className="border rounded px-2 py-1 text-xs"
-              >
-                <option value="">Select</option>
-                <option value="accurate">Accurate</option>
-                <option value="inaccurate">Inaccurate</option>
-                <option value="unsure">Unsure</option>
-              </select>
-            </div>
-          </div> */}
+          )}
         </>
       )}
     </div>

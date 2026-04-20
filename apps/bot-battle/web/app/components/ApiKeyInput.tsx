@@ -98,11 +98,11 @@ export function ApiKeyInput({
 
   if (apiKey) {
     return (
-      <div className="p-4 border rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-2">{label} API Key</h3>
+      <div className="p-4 border border-rule rounded-lg shadow-md bg-paper">
+        <h3 className="text-lg font-semibold mb-2 text-ink">{label} API Key</h3>
         <div className="flex items-center mb-2">
           <p
-            className={`mr-2 ${isKeyInClient ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}
+            className={`mr-2 ${isKeyInClient ? "text-rust" : "text-orange-600 dark:text-orange-400"}`}
           >
             {isKeyInClient
               ? "✓ API Key set for this session"
@@ -110,14 +110,14 @@ export function ApiKeyInput({
           </p>
           <button
             onClick={() => setShowKey(!showKey)}
-            className="text-sm px-2 py-1 rounded-md font-medium text-white bg-neutral-600 hover:bg-neutral-700 transition"
+            className="text-sm px-2 py-1 rounded-md font-medium text-paper bg-ink hover:bg-ink-soft transition"
           >
             {showKey ? "Hide Key" : "Show Key"}
           </button>
         </div>
         {showKey && (
-          <div className="mb-4 p-2 bg-neutral-100 dark:bg-neutral-800 rounded">
-            <code className="break-all text-sm">{apiKey}</code>
+          <div className="mb-4 p-2 bg-paper-sunk rounded">
+            <code className="break-all text-sm text-ink">{apiKey}</code>
           </div>
         )}
         <div className="flex gap-2">
@@ -149,7 +149,7 @@ export function ApiKeyInput({
                   }, 100);
                 }
               }}
-              className="px-4 py-2 rounded-md font-medium text-white bg-blue-600 hover:bg-blue-700 transition"
+              className="bg-ink hover:bg-ink-soft text-paper px-5 py-1.5 rounded-sm text-sm font-semibold"
             >
               Force Sync Key
             </button>
@@ -158,15 +158,15 @@ export function ApiKeyInput({
             type="button"
             disabled={testStatus === "testing"}
             onClick={() => runTest(apiKey)}
-            className="text-xs px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-xs px-2.5 py-1 border border-rule rounded-sm text-ink-soft hover:text-ink hover:border-ink-soft disabled:opacity-50"
           >
             {testStatus === "testing" ? "Testing…" : "Test"}
           </button>
-          {testStatus === "ok" && <span className="text-green-600 text-xs ml-2">✓ Works</span>}
+          {testStatus === "ok" && <span className="text-rust text-xs ml-2">✓ Works</span>}
           {testStatus === "error" && <span className="text-red-600 text-xs ml-2">✗ {testMessage}</span>}
         </div>
         {saveStatus && (
-          <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+          <p className="mt-2 text-sm text-rust">
             {saveStatus}
           </p>
         )}
@@ -175,10 +175,10 @@ export function ApiKeyInput({
   }
 
   return (
-    <div className="p-4 border rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-2">{label} API Key</h3>
+    <div className="p-4 border border-rule rounded-lg shadow-md bg-paper">
+      <h3 className="text-lg font-semibold mb-2 text-ink">{label} API Key</h3>
       {description && (
-        <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mb-3 text-sm text-ink-soft">
           {description}
         </p>
       )}
@@ -188,12 +188,12 @@ export function ApiKeyInput({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder={`Enter your ${label} API key`}
-          className="w-full p-2 border rounded dark:bg-neutral-700 dark:border-neutral-600"
+          className="w-full bg-paper border border-rule rounded-sm px-3 py-2 text-ink placeholder:text-ink-soft focus:outline-none focus:border-rust"
         />
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            className="px-4 py-2 rounded-md font-medium text-white bg-blue-600 hover:bg-blue-700 transition"
+            className="bg-ink text-paper px-5 py-1.5 rounded-sm text-sm font-semibold hover:bg-ink-soft"
           >
             Save Key for Session
           </button>
@@ -201,20 +201,20 @@ export function ApiKeyInput({
             type="button"
             disabled={testStatus === "testing"}
             onClick={() => runTest(inputValue.trim())}
-            className="text-xs px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-xs px-2.5 py-1 border border-rule rounded-sm text-ink-soft hover:text-ink hover:border-ink-soft disabled:opacity-50"
           >
             {testStatus === "testing" ? "Testing…" : "Test"}
           </button>
-          {testStatus === "ok" && <span className="text-green-600 text-xs ml-2">✓ Works</span>}
+          {testStatus === "ok" && <span className="text-rust text-xs ml-2">✓ Works</span>}
           {testStatus === "error" && <span className="text-red-600 text-xs ml-2">✗ {testMessage}</span>}
         </div>
         {saveStatus && (
-          <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+          <p className="mt-2 text-sm text-rust">
             {saveStatus}
           </p>
         )}
       </form>
-      <div className="mt-4 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+      <div className="mt-4 text-sm text-ink-soft space-y-1">
         <p>
           <strong>Important Security Notes:</strong>
         </p>

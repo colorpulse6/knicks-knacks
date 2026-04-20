@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLMWithProviderAndModel } from "../../utils/llm/index";
-import { isModelAvailable } from "../../core/llm-registry";
+import { isModelAvailable, LLM_REGISTRY } from "../../core/llm-registry";
+import { STREAMABLE_PROVIDERS, openAIStreamToNDJSON } from "../../utils/llm/streaming";
+import { getApiKey } from "../../utils/llm/api-keys";
+
+const PROVIDER_STREAM_ENDPOINTS: Record<string, string> = {
+  openai: "https://api.openai.com/v1/chat/completions",
+  xai: "https://api.x.ai/v1/chat/completions",
+  deepseek: "https://api.deepseek.com/v1/chat/completions",
+  groq: "https://api.groq.com/openai/v1/chat/completions",
+  mistral: "https://api.mistral.ai/v1/chat/completions",
+};
+const PROVIDER_ENV_KEY: Record<string, string> = {
+  openai: "OPENAI_API_KEY",
+  xai: "XAI_API_KEY",
+  deepseek: "DEEPSEEK_API_KEY",
+  groq: "GROQ_API_KEY",
+  mistral: "MISTRAL_API_KEY",
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +26,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log("Request body:", JSON.stringify(body, null, 2));
 
-    const { providerId, modelId, prompt, effort, isReasoning } = body;
+    const { providerId, modelId, prompt, effort, isReasoning, stream } = body;
 
     if (!providerId || !modelId || !prompt) {
       console.log("Missing required fields:", {
@@ -55,6 +72,40 @@ export async function POST(req: NextRequest) {
         },
         { status: 403 }
       );
+    }
+
+    if (stream === true && STREAMABLE_PROVIDERS.has(providerId)) {
+      const endpoint = PROVIDER_STREAM_ENDPOINTS[providerId];
+      const envKeyName = PROVIDER_ENV_KEY[providerId];
+      const apiKey = getApiKey(providerId, process.env[envKeyName]);
+      const modelSpec = LLM_REGISTRY.find((p) => p.id === providerId)
+        ?.models.find((m) => m.id === modelId);
+      const isStreamReasoning = modelSpec?.modelType === "reasoning";
+      const startedAt = Date.now();
+      const providerRes = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: modelId,
+          messages: [{ role: "user", content: prompt }],
+          stream: true,
+          ...(isStreamReasoning && effort ? { reasoning: { effort } } : {}),
+        }),
+      });
+      if (!providerRes.ok) {
+        const text = await providerRes.text().catch(() => "");
+        return NextResponse.json(
+          { error: `${providerRes.status}: ${text.slice(0, 200)}` },
+          { status: providerRes.status }
+        );
+      }
+      const ndjson = openAIStreamToNDJSON(providerRes, startedAt);
+      return new Response(ndjson, {
+        headers: { "content-type": "application/x-ndjson" },
+      });
     }
 
     try {

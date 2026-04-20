@@ -29,4 +29,20 @@ describe("ModelBadge", () => {
     const { container } = render(<ModelBadge modelType="standard" status="current" />);
     expect(container.firstChild).toBeNull();
   });
+
+  it("REASONING badge is filled; LEGACY/PREVIEW are outlined", () => {
+    const { container: reasoningEl } = render(<ModelBadge modelType="reasoning" status="current" />);
+    const reasoning = reasoningEl.querySelector("[data-badge='reasoning']");
+    expect(reasoning?.className).toMatch(/bg-rust/);
+
+    const { container: legacyEl } = render(<ModelBadge modelType="standard" status="legacy" />);
+    const legacy = legacyEl.querySelector("[data-badge='legacy']");
+    expect(legacy?.className).toMatch(/border/);
+    expect(legacy?.className).not.toMatch(/bg-ink-soft\b/);
+
+    const { container: previewEl } = render(<ModelBadge modelType="standard" status="preview" />);
+    const preview = previewEl.querySelector("[data-badge='preview']");
+    expect(preview?.className).toMatch(/border/);
+    expect(preview?.className).not.toMatch(/bg-rust\b/);
+  });
 });

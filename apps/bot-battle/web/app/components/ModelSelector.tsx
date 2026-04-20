@@ -1,22 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   LLM_REGISTRY,
   LLMProviderSpec,
-  LLMModelSpec,
   isModelAvailable,
 } from "../core/llm-registry";
-import {
-  ChevronDown,
-  ChevronUp,
-  Info,
-  Briefcase,
-  Zap,
-  DollarSign,
-  Lock,
-  Gift,
-} from "lucide-react"; // For icons
+import { Info, Gift, Lock } from "lucide-react";
 import { useApiKeyStore } from "../providers/ApiKeyProvider";
 import { ModelBadge } from "./ModelBadge";
 
@@ -31,30 +21,12 @@ const providerHasFreeModels = (provider: LLMProviderSpec): boolean => {
 export interface SelectedLLM {
   providerId: string;
   modelId: string;
-  // Store displayName for easier access if needed, though we can look it up
-  // displayName?: string;
 }
 
 interface ModelSelectorProps {
   selected: SelectedLLM[];
   onChange: (models: SelectedLLM[]) => void;
 }
-
-// Helper to format cost
-const formatCost = (cost: LLMModelSpec["cost"]) => {
-  if (!cost) return "N/A";
-  let parts = [];
-  if (cost.inputPerMillionTokens !== undefined) {
-    parts.push(`In: $${cost.inputPerMillionTokens.toFixed(2)}/M`);
-  }
-  if (cost.outputPerMillionTokens !== undefined) {
-    parts.push(`Out: $${cost.outputPerMillionTokens.toFixed(2)}/M`);
-  }
-  if (parts.length === 0 && cost.notes) {
-    return cost.notes;
-  }
-  return parts.join(", ") + (cost.notes ? ` (${cost.notes})` : "");
-};
 
 // Component to explain model availability based on cost types
 function ModelAvailabilityInfo() {
@@ -122,10 +94,6 @@ function ModelAvailabilityInfo() {
 }
 
 export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
-  const [expandedProviders, setExpandedProviders] = useState<
-    Record<string, boolean>
-  >({});
-
   // Get API keys from store
   const apiKeys = useApiKeyStore((state) => state.apiKeys);
 
@@ -138,18 +106,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
     {} as Record<string, boolean>
   );
 
-  useEffect(() => {
-    // console.log("Selected models in selector:", selected);
-  }, [selected]);
-
-  function toggleModel(
-    providerId: string,
-    modelId: string,
-    isAvailable: boolean
-  ) {
-    // Prevent selecting unavailable models
-    if (!isAvailable) return;
-
+  function toggleModel(providerId: string, modelId: string) {
     const isCurrentlySelected = selected.some(
       (s) => s.providerId === providerId && s.modelId === modelId
     );
@@ -165,12 +122,10 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
     }
   }
 
-  function toggleProviderExpansion(providerId: string) {
-    setExpandedProviders((prev) => ({
-      ...prev,
-      [providerId]: !prev[providerId],
-    }));
-  }
+  // Flatten all models from the registry with their provider id attached
+  const allModels = LLM_REGISTRY.flatMap((p) =>
+    p.models.map((m) => ({ ...m, providerId: p.id, providerName: p.displayName, hasFreeModels: providerHasFreeModels(p) }))
+  );
 
   return (
     <div className="mb-6">
@@ -180,143 +135,62 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
 
       <ModelAvailabilityInfo />
 
-      <div className="space-y-3">
-        {LLM_REGISTRY.map((provider) => (
-          <div
-            key={provider.id}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm"
-          >
+      {/* Chip row */}
+      <div className="flex flex-wrap gap-1.5">
+        {allModels.map((m) => {
+          const isSelected = selected.some(
+            (s) => s.providerId === m.providerId && s.modelId === m.id
+          );
+          const availability = isModelAvailable(
+            m.providerId,
+            m.id,
+            availableApiKeys
+          );
+          const isAvailable = availability.available;
+          const isFree =
+            m.costType === "appKeyPermissive" || m.costType === "free";
+
+          return (
             <button
+              key={`${m.providerId}:${m.id}`}
               type="button"
-              className="w-full flex items-center justify-between p-4 text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-t-lg"
-              onClick={() => toggleProviderExpansion(provider.id)}
+              onClick={() => isAvailable && toggleModel(m.providerId, m.id)}
+              disabled={!isAvailable}
+              title={
+                !isAvailable && availability.reason
+                  ? availability.reason
+                  : `${m.providerName} — ${m.displayName}`
+              }
+              className={[
+                "text-xs px-2.5 py-1 rounded-full border inline-flex items-center gap-0.5 transition-colors",
+                isSelected
+                  ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500"
+                  : isAvailable
+                  ? "bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-400"
+                  : "bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700 opacity-50 cursor-not-allowed",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
-              <div className="flex items-center">
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {provider.displayName}
-                </span>
-                {providerHasFreeModels(provider) && (
-                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                    <Gift size={12} className="mr-1" />
-                  </span>
-                )}
-              </div>
-              {expandedProviders[provider.id] ? (
-                <ChevronUp size={20} />
-              ) : (
-                <ChevronDown size={20} />
+              {m.displayName}
+              {isFree && isAvailable && (
+                <Gift
+                  size={10}
+                  className={
+                    isSelected
+                      ? "text-white"
+                      : "text-green-600 dark:text-green-400"
+                  }
+                />
               )}
+              {!isAvailable && <Lock size={10} className="text-gray-400 dark:text-gray-600" />}
+              <ModelBadge status={m.status} modelType={m.modelType} />
             </button>
-            {expandedProviders[provider.id] && (
-              <div className="p-4 bg-white dark:bg-gray-800/50 rounded-b-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {provider.models.map((model) => {
-                    const isSelected = selected.some(
-                      (s) =>
-                        s.providerId === provider.id && s.modelId === model.id
-                    );
-
-                    // Check if this model is available based on API keys
-                    const availability = isModelAvailable(
-                      provider.id,
-                      model.id,
-                      availableApiKeys
-                    );
-                    const isAvailable = availability.available;
-
-                    return (
-                      <button
-                        type="button"
-                        key={model.id}
-                        onClick={() =>
-                          toggleModel(provider.id, model.id, isAvailable)
-                        }
-                        disabled={!isAvailable}
-                        className={`
-                          p-3 rounded-md text-left transition-all duration-150 border 
-                          ${
-                            isSelected
-                              ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700 shadow-md ring-2 ring-blue-500 dark:ring-blue-400"
-                              : isAvailable
-                                ? "bg-gray-50 hover:bg-gray-100 border-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                                : "bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70"
-                          }
-                        `}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-sm">
-                            {model.displayName}
-                          </span>
-                          <ModelBadge status={model.status} modelType={model.modelType} />
-                          {!isAvailable && (
-                            <Lock
-                              size={16}
-                              className="text-gray-400 dark:text-gray-500"
-                            />
-                          )}
-                          {(model.costType === "appKeyPermissive" ||
-                            model.costType === "free") &&
-                            isAvailable && (
-                              <Gift
-                                size={14}
-                                className="text-green-600 dark:text-green-400"
-                              />
-                            )}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
-                          <div className="flex items-center">
-                            <Briefcase
-                              size={12}
-                              className="mr-1.5 opacity-70"
-                            />{" "}
-                            Context: {model.contextWindow.toLocaleString()}{" "}
-                            tokens
-                          </div>
-                          <div className="flex items-center">
-                            <DollarSign
-                              size={12}
-                              className="mr-1.5 opacity-70"
-                            />{" "}
-                            Cost: {formatCost(model.cost)}
-                          </div>
-                          {model.capabilities &&
-                            model.capabilities.length > 0 && (
-                              <div className="flex items-center pt-0.5">
-                                <Zap
-                                  size={12}
-                                  className="mr-1.5 opacity-70 flex-shrink-0"
-                                />
-                                Capabilities: {model.capabilities.join(", ")}
-                              </div>
-                            )}
-                          {model.costType === "appKeyPermissive" && (
-                            <div className="flex items-center text-green-600 dark:text-green-400">
-                              <Gift size={12} className="mr-1.5 opacity-70" />{" "}
-                              Free with app&apos;s key
-                            </div>
-                          )}
-                          {model.costType === "free" && (
-                            <div className="flex items-center text-green-600 dark:text-green-400">
-                              <Gift size={12} className="mr-1.5 opacity-70" />{" "}
-                              Free to use
-                            </div>
-                          )}
-                          {!isAvailable && availability.reason && (
-                            <div className="flex items-center text-red-500 dark:text-red-400 mt-1.5">
-                              <Lock size={12} className="mr-1.5 opacity-70" />{" "}
-                              {availability.reason}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Selected model count + removable summary pills */}
       <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
         Selected: {selected.length} model{selected.length !== 1 ? "s" : ""}
         {selected.length > 0 && (
@@ -336,7 +210,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleModel(s.providerId, s.modelId, true);
+                      toggleModel(s.providerId, s.modelId);
                     }}
                     className="ml-1.5 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
                   >
@@ -361,6 +235,8 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
           </div>
         )}
       </div>
+
+      {/* No API keys warning */}
       {Object.keys(availableApiKeys).length === 0 && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
           <p className="font-medium mb-1">No API keys available</p>

@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLMWithProviderAndModel } from "../../utils/llm/index";
-import { isModelAvailable, getModelSpec } from "../../core/llm-registry";
-
-// Providers that use OpenRouter under the hood
-const OPENROUTER_BASED_PROVIDERS = [
-  "openrouter",
-  "nousresearch",
-  "qwen",
-  "deepseek",
-  "google",
-];
-
-// Providers that can use OpenRouter for free models or direct API for premium models
-const HYBRID_PROVIDERS = ["meta", "microsoft"];
+import { isModelAvailable } from "../../core/llm-registry";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,64 +33,11 @@ export async function POST(req: NextRequest) {
     if (process.env.GROQ_API_KEY) availableApiKeys.groq = true;
     if (process.env.OPENAI_API_KEY) availableApiKeys.openai = true;
     if (process.env.GEMINI_API_KEY) availableApiKeys.google = true;
-    if (process.env.OPENROUTER_API_KEY) {
-      // Make OpenRouter API key available for all OpenRouter-based providers
-      availableApiKeys.openrouter = true;
-
-      // The app's OpenRouter key should work for all these providers
-      OPENROUTER_BASED_PROVIDERS.forEach((provider) => {
-        availableApiKeys[provider] = true;
-      });
-    }
     if (process.env.ANTHROPIC_API_KEY) availableApiKeys.anthropic = true;
     if (process.env.MISTRAL_API_KEY) availableApiKeys.mistral = true;
-    if (process.env.COHERE_API_KEY) availableApiKeys.cohere = true;
-    if (process.env.AI21_API_KEY) availableApiKeys.ai21 = true;
-    if (process.env.META_API_KEY) availableApiKeys.meta = true;
-    if (process.env.MICROSOFT_API_KEY) availableApiKeys.microsoft = true;
     if (process.env.DEEPSEEK_API_KEY) availableApiKeys.deepseek = true;
     if (process.env.QWEN_API_KEY) availableApiKeys.qwen = true;
-
-    // Special case for OpenRouter-based providers with appKeyPermissive models
-    if (OPENROUTER_BASED_PROVIDERS.includes(providerId.toLowerCase())) {
-      const modelSpec = getModelSpec(providerId, modelId);
-      if (modelSpec?.costType === "appKeyPermissive") {
-        // For free models, we'll mark them as available if we have the app's OpenRouter key
-        if (process.env.OPENROUTER_API_KEY) {
-          console.log(
-            `Using app's OpenRouter API key for ${providerId}/${modelId}`
-          );
-          availableApiKeys[providerId] = true;
-        }
-      }
-    }
-
-    // Special case for hybrid providers (Meta, Microsoft) that can use OpenRouter for free models
-    if (HYBRID_PROVIDERS.includes(providerId.toLowerCase())) {
-      const modelSpec = getModelSpec(providerId, modelId);
-      if (
-        modelSpec?.costType === "appKeyPermissive" &&
-        modelId.includes(":free")
-      ) {
-        // For free models, we'll use OpenRouter
-        if (process.env.OPENROUTER_API_KEY) {
-          console.log(
-            `Using app's OpenRouter API key for free model ${providerId}/${modelId}`
-          );
-          availableApiKeys[providerId] = true;
-        }
-      } else if (modelSpec?.costType === "userKeyRequired") {
-        // For premium models, check if we have the provider's own API key
-        const providerApiKey =
-          process.env[`${providerId.toUpperCase()}_API_KEY`];
-        if (providerApiKey) {
-          console.log(
-            `Using ${providerId}'s API key for premium model ${modelId}`
-          );
-          availableApiKeys[providerId] = true;
-        }
-      }
-    }
+    if (process.env.XAI_API_KEY) availableApiKeys.xai = true;
 
     // Check model availability
     const { available, reason } = isModelAvailable(

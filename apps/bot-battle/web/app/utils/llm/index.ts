@@ -21,20 +21,13 @@ import { LEGACY_MODEL_MAPPING } from "./constants";
 import { LLMCallResult, LLMModel } from "./types";
 import { judgeWithGroq } from "./utils";
 import {
-  callAI21API,
   callAnthropicAPI,
-  callCohereAPI,
   callGeminiAPI,
   callGroqAPI,
-  callMetaAPI,
-  callMicrosoftAPI,
   callMistralAPI,
   callOpenAIAPI,
   callQwenAPI,
   callDeepSeekAPI,
-  callOpenRouterClaude,
-  callOpenRouterDeepSeek,
-  callOpenRouterGeneric,
 } from "./providers";
 
 // Main function to call any LLM with providerId and modelId
@@ -74,117 +67,20 @@ export async function callLLMWithProviderAndModel(
         result = await callGroqAPI(prompt, signal, modelId);
         break;
       case "google":
-        // Call Google/Gemini API with the specific model
-        // Check if it's a free tier model or a premium one
-        if (modelId.includes(":free")) {
-          // Free tier via OpenRouter
-          result = await callOpenRouterGeneric(
-            prompt,
-            providerId,
-            modelId,
-            signal
-          );
-        } else {
-          // Premium direct API access
-          result = await callGeminiAPI(prompt, signal, modelId);
-        }
+        // Call Google/Gemini API directly
+        result = await callGeminiAPI(prompt, signal, modelId);
         break;
       case "mistral":
         // Call Mistral API with the specific model
         result = await callMistralAPI(prompt, signal, modelId);
         break;
-      case "cohere":
-        // Call Cohere API with the specific model
-        result = await callCohereAPI(prompt, signal, modelId);
-        break;
-      case "ai21":
-        // Call AI21 API with the specific model
-        result = await callAI21API(prompt, signal, modelId);
-        break;
-      case "meta":
-        // For Meta models, check if it's a free tier model or a premium one
-        if (modelId.includes(":free")) {
-          // Free tier via OpenRouter
-          result = await callOpenRouterGeneric(
-            prompt,
-            providerId,
-            modelId,
-            signal
-          );
-        } else {
-          // Premium direct API access
-          result = await callMetaAPI(prompt, signal, modelId);
-        }
-        break;
-      case "microsoft":
-        // For Microsoft models, check if it's a free tier model or a premium one
-        if (modelId.includes(":free")) {
-          // Free tier via OpenRouter
-          result = await callOpenRouterGeneric(
-            prompt,
-            providerId,
-            modelId,
-            signal
-          );
-        } else {
-          // Premium direct API access
-          result = await callMicrosoftAPI(prompt, signal, modelId);
-        }
-        break;
-      // Other providers
-      case "nousresearch":
-        // NousResearch always uses OpenRouter
-        result = await callOpenRouterGeneric(
-          prompt,
-          providerId,
-          modelId,
-          signal
-        );
-        break;
       case "qwen":
-        // For Qwen models, check if it's a free tier model or a premium one
-        if (modelId.includes(":free")) {
-          // Free tier via OpenRouter
-          result = await callOpenRouterGeneric(
-            prompt,
-            providerId,
-            modelId,
-            signal
-          );
-        } else {
-          // Premium direct API access
-          result = await callQwenAPI(prompt, signal, modelId);
-        }
+        // Call Qwen API directly
+        result = await callQwenAPI(prompt, signal, modelId);
         break;
       case "deepseek":
-        // For DeepSeek models, check if it's a free tier model or a premium one
-        if (modelId.includes(":free")) {
-          // Free tier via OpenRouter
-          result = await callOpenRouterGeneric(
-            prompt,
-            providerId,
-            modelId,
-            signal
-          );
-        } else {
-          // Premium direct API access via DeepSeek API
-          result = await callDeepSeekAPI(prompt, signal, modelId);
-        }
-        break;
-      case "openrouter":
-        // Handle OpenRouter models - determine the routing based on modelId prefix
-        if (modelId.startsWith("anthropic/")) {
-          const actualModelId = modelId.replace("anthropic/", "");
-          result = await callOpenRouterClaude(prompt, signal, actualModelId);
-        } else if (modelId.startsWith("deepseek/")) {
-          const actualModelId = modelId.replace("deepseek/", "");
-          result = await callOpenRouterDeepSeek(prompt, signal, actualModelId);
-        } else {
-          throw new APIError(
-            `Unsupported OpenRouter model format: ${modelId}`,
-            "model_not_supported"
-          );
-        }
+        // Call DeepSeek API directly
+        result = await callDeepSeekAPI(prompt, signal, modelId);
         break;
       default:
         throw new APIError(

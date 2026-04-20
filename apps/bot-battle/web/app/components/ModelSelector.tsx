@@ -36,14 +36,14 @@ function ModelAvailabilityInfo() {
     <div className="mt-2 mb-4">
       <button
         onClick={() => setShowInfo(!showInfo)}
-        className="text-sm flex items-center text-blue-600 dark:text-blue-400 hover:underline"
+        className="text-sm flex items-center text-rust hover:underline"
       >
         <Info size={16} className="mr-1.5" />
         {showInfo ? "Hide model availability info" : "About model availability"}
       </button>
 
       {showInfo && (
-        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-gray-700 dark:text-gray-300 text-sm">
+        <div className="mt-2 p-3 bg-paper border border-rule rounded-sm text-ink-soft text-sm">
           <p className="font-medium mb-2">Model Types:</p>
           <ul className="space-y-2 pl-1">
             <li className="flex items-start">
@@ -129,7 +129,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
 
   return (
     <div className="mb-6">
-      <label className="block text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">
+      <label className="block text-lg font-semibold mb-3 text-ink font-serif">
         Select LLM Models
       </label>
 
@@ -164,10 +164,10 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
               className={[
                 "text-xs px-2.5 py-1 rounded-full border inline-flex items-center gap-0.5 transition-colors",
                 isSelected
-                  ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500"
+                  ? "bg-rust text-paper border-rust"
                   : isAvailable
-                  ? "bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-400"
-                  : "bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700 opacity-50 cursor-not-allowed",
+                  ? "bg-paper text-ink-soft border-rule hover:border-ink-soft hover:text-ink"
+                  : "bg-paper-sunk text-ink-soft border-rule opacity-50 cursor-not-allowed",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -176,14 +176,10 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
               {isFree && isAvailable && (
                 <Gift
                   size={10}
-                  className={
-                    isSelected
-                      ? "text-white"
-                      : "text-green-600 dark:text-green-400"
-                  }
+                  className={isSelected ? "text-paper" : "text-rust"}
                 />
               )}
-              {!isAvailable && <Lock size={10} className="text-gray-400 dark:text-gray-600" />}
+              {!isAvailable && <Lock size={10} className="text-ink-soft" />}
               <ModelBadge status={m.status} modelType={m.modelType} />
             </button>
           );
@@ -191,7 +187,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
       </div>
 
       {/* Selected model count + removable summary pills */}
-      <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+      <div className="mt-4 text-sm text-ink-soft">
         Selected: {selected.length} model{selected.length !== 1 ? "s" : ""}
         {selected.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
@@ -203,7 +199,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
               return (
                 <div
                   key={`${s.providerId}-${s.modelId}`}
-                  className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+                  className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rust-tint text-rust border border-rust"
                 >
                   {displayName}
                   <button
@@ -212,7 +208,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
                       e.stopPropagation();
                       toggleModel(s.providerId, s.modelId);
                     }}
-                    className="ml-1.5 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                    className="ml-1.5 text-rust hover:text-ink"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

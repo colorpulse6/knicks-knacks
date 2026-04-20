@@ -1,25 +1,45 @@
-@import "tailwindcss"; /* Changed from @tailwind base/components/utilities */
+@import "tailwindcss";
 
+/* Light palette ("Paper") — default */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #faf6ee;
+  --paper-sunk: #f2ecdc;
+  --ink: #2b241c;
+  --ink-soft: #5c503f;
+  --rust: #8a4b2f;
+  --rust-tint: #f4e8df;
+  --rule: #d9cdb4;
+  --rule-soft: #e5d9bf;
 }
 
-@theme inline { /* Added to match regexplain structure */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  /* bot-battle uses Arial/Helvetica directly in body, not CSS vars for font-family like regexplain's Geist */
+/* Dark palette ("Espresso") — applied via .dark class on <html> */
+.dark {
+  --paper: #221a14;
+  --paper-sunk: #1a1410;
+  --ink: #e8dcc5;
+  --ink-soft: #a69780;
+  --rust: #d18c55;
+  --rust-tint: #2e2218;
+  --rule: #3a2e24;
+  --rule-soft: #2e2319;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rust: var(--rust);
+  --color-rust-tint: var(--rust-tint);
+  --color-rule: var(--rule);
+  --color-rule-soft: var(--rule-soft);
+
+  --font-serif: Georgia, "Source Serif Pro", "Iowan Old Style", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper-sunk);
+  color: var(--ink);
+  font-family: var(--font-sans);
 }

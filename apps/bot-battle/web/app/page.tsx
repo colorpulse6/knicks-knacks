@@ -189,7 +189,7 @@ export default function Page() {
               <p className="text-red-500 mb-2">{errorText}</p>
               <a
                 href="/settings"
-                className="text-blue-500 hover:underline text-sm"
+                className="text-rust hover:underline text-sm"
               >
                 Go to API Settings →
               </a>
@@ -282,7 +282,7 @@ export default function Page() {
             href={content}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
+            className="text-rust hover:underline"
           >
             {content}
           </a>
@@ -347,7 +347,7 @@ export default function Page() {
 
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-md shadow-md flex items-center justify-center gap-2 w-full sm:w-auto mb-8 disabled:opacity-50 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-colors"
+          className="bg-ink hover:bg-ink-soft text-paper font-medium px-6 py-3 rounded-md shadow-md flex items-center justify-center gap-2 w-full sm:w-auto mb-8 disabled:opacity-50 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-colors"
           disabled={!prompt.trim() || models.length === 0}
         >
           <PlayCircle size={20} />
@@ -371,11 +371,11 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="mb-6 border rounded-lg overflow-hidden">
+            <div className="mb-6 border rounded-sm overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowMetricsComparison(!showMetricsComparison)}
-                className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800"
+                className="w-full flex items-center justify-between p-3 bg-paper-sunk"
               >
                 <span className="font-medium">Side by side comparison</span>
                 {showMetricsComparison ? (
@@ -387,23 +387,23 @@ export default function Page() {
 
               {showMetricsComparison && (
                 <div className="overflow-x-auto p-3">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <table className="min-w-full divide-y divide-rule">
                     <thead>
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-ink-soft">
                           Metric
                         </th>
                         {Object.keys(responses).map((key) => (
                           <th
                             key={key}
-                            className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400"
+                            className="px-4 py-2 text-left text-xs font-medium text-ink-soft"
                           >
                             {responses[key].displayName}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="divide-y divide-rule">
                       {[
                         "latencyMs",
                         "inputTokens",
@@ -421,7 +421,7 @@ export default function Page() {
                             metric
                           ] !== undefined && (
                             <tr key={metric}>
-                              <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                              <td className="px-4 py-2 text-sm text-ink-soft">
                                 {metric === "latencyMs"
                                   ? "Latency (ms)"
                                   : metric === "tokensPerSecond"
@@ -475,7 +475,7 @@ export default function Page() {
             return (
               <div
                 key={modelKey}
-                className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md bg-white dark:bg-gray-800 ${
+                className={`p-4 border border-rule rounded-sm shadow-md bg-paper ${
                   isTokenError ? "bg-red-50 dark:bg-red-900/20" : ""
                 }`}
               >

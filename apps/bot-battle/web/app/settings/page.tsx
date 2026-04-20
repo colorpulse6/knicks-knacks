@@ -42,25 +42,25 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">API Settings</h1>
+        <h1 className="font-serif text-2xl font-bold mb-6 text-ink">API Settings</h1>
         <div className="flex gap-3">
           <button
             onClick={refreshClientKeys}
-            className={`p-2 rounded-md border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${isRefreshing ? "animate-spin" : ""}`}
+            className={`p-2 rounded-sm border border-rule hover:bg-paper-sunk transition-all ${isRefreshing ? "animate-spin" : ""}`}
             title="Refresh API key state"
           >
             <RefreshCw size={18} />
           </button>
           <Link
             href="/"
-            className="px-4 py-2 rounded-md text-blue-600 border border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 transition"
+            className="px-4 py-2 rounded-sm text-rust border border-rule hover:bg-paper-sunk transition"
           >
             Return to Bot Battle
           </Link>
         </div>
       </div>
 
-      <p className="mb-6 text-neutral-600 dark:text-neutral-400">
+      <p className="mb-6 text-ink-soft">
         Add your own API keys to use with Bot Battle.
         {isPersistenceEnabled
           ? " Your keys are stored in your browser's localStorage and will persist between sessions until you clear them."
@@ -68,12 +68,12 @@ export default function SettingsPage() {
       </p>
 
       {/* Debug information - can be removed in production */}
-      <div className="p-3 mb-6 text-xs bg-gray-100 dark:bg-gray-800 rounded-md">
+      <div className="p-3 mb-6 text-xs bg-paper-sunk rounded-sm">
         <div className="flex items-center justify-between">
           <h4 className="font-medium">API Key Status:</h4>
           <button
             onClick={refreshClientKeys}
-            className="text-blue-600 hover:underline flex items-center gap-1 text-xs"
+            className="text-rust hover:underline flex items-center gap-1 text-xs"
           >
             <RefreshCw
               size={12}
@@ -85,7 +85,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-2 gap-2 mt-2">
           {Object.entries(clientKeysState).map(([provider, isActive]) => (
             <div key={provider} className="flex items-center">
-              <span className={isActive ? "text-green-600" : "text-gray-400"}>
+              <span className={isActive ? "text-green-600" : "text-ink-soft"}>
                 {isActive ? "✓" : "✗"}
               </span>
               <span className="ml-2 capitalize">{provider}</span>
@@ -96,56 +96,80 @@ export default function SettingsPage() {
 
       <h2 className="text-xl font-semibold mb-4">Major Providers</h2>
       <div className="grid gap-6 md:grid-cols-2 mb-10">
-        <ApiKeyInput
-          provider="openai"
-          label="OpenAI"
-          description="Used for GPT-4o, GPT-4.1, and other OpenAI models. Get your API key from the OpenAI dashboard."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">OpenAI</h3>
+          <ApiKeyInput
+            provider="openai"
+            label="OpenAI"
+            description="Used for GPT-4o, GPT-4.1, and other OpenAI models. Get your API key from the OpenAI dashboard."
+          />
+        </section>
 
-        <ApiKeyInput
-          provider="anthropic"
-          label="Anthropic"
-          description="Used for Claude 3.7, Claude 3.5, and other Claude models. Get your API key from the Anthropic console."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Anthropic</h3>
+          <ApiKeyInput
+            provider="anthropic"
+            label="Anthropic"
+            description="Used for Claude 3.7, Claude 3.5, and other Claude models. Get your API key from the Anthropic console."
+          />
+        </section>
 
-        <ApiKeyInput
-          provider="google"
-          label="Google AI"
-          description="Used for Gemini 2.5, Gemini 2.0, and other Gemini models. Get your API key from Google AI Studio."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Google AI</h3>
+          <ApiKeyInput
+            provider="google"
+            label="Google AI"
+            description="Used for Gemini 2.5, Gemini 2.0, and other Gemini models. Get your API key from Google AI Studio."
+          />
+        </section>
 
-        <ApiKeyInput
-          provider="mistral"
-          label="Mistral AI"
-          description="Used for Mistral Large, Medium, Small, and other Mistral models. Get your API key from the Mistral AI console."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Mistral AI</h3>
+          <ApiKeyInput
+            provider="mistral"
+            label="Mistral AI"
+            description="Used for Mistral Large, Medium, Small, and other Mistral models. Get your API key from the Mistral AI console."
+          />
+        </section>
       </div>
 
       <h2 className="text-xl font-semibold mb-4">Additional Providers</h2>
       <div className="grid gap-6 md:grid-cols-2">
-        <ApiKeyInput
-          provider="groq"
-          label="Groq"
-          description="Used for Llama and Mixtral models with high-performance inference. Get your API key from the Groq console."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Groq</h3>
+          <ApiKeyInput
+            provider="groq"
+            label="Groq"
+            description="Used for Llama and Mixtral models with high-performance inference. Get your API key from the Groq console."
+          />
+        </section>
 
-        <ApiKeyInput
-          provider="xai"
-          label="xAI (Grok)"
-          description="Used for Grok models from xAI. Get your API key from the xAI console."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">xAI (Grok)</h3>
+          <ApiKeyInput
+            provider="xai"
+            label="xAI (Grok)"
+            description="Used for Grok models from xAI. Get your API key from the xAI console."
+          />
+        </section>
 
-        <ApiKeyInput
-          provider="deepseek"
-          label="DeepSeek AI"
-          description="Used for premium DeepSeek models like DeepSeek Coder and DeepSeek V2. Get your API key from the DeepSeek platform."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">DeepSeek AI</h3>
+          <ApiKeyInput
+            provider="deepseek"
+            label="DeepSeek AI"
+            description="Used for premium DeepSeek models like DeepSeek Coder and DeepSeek V2. Get your API key from the DeepSeek platform."
+          />
+        </section>
 
-        <ApiKeyInput
-          provider="qwen"
-          label="Qwen"
-          description="Used for premium Qwen models including Qwen3 235B and other Qwen models. Get your API key from the Alibaba Cloud DashScope console."
-        />
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Qwen</h3>
+          <ApiKeyInput
+            provider="qwen"
+            label="Qwen"
+            description="Used for premium Qwen models including Qwen3 235B and other Qwen models. Get your API key from the Alibaba Cloud DashScope console."
+          />
+        </section>
       </div>
 
       <div className="mt-10 pb-10">
@@ -159,11 +183,11 @@ export default function SettingsPage() {
               setTimeout(refreshClientKeys, 100);
             }
           }}
-          className="px-4 py-2 rounded-md font-medium text-white bg-red-600 hover:bg-red-700 transition"
+          className="px-4 py-2 rounded-sm font-medium text-paper bg-red-600 hover:bg-red-700 transition"
         >
           Clear All API Keys
         </button>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mt-2 text-sm text-ink-soft">
           This will remove all API keys{" "}
           {isPersistenceEnabled
             ? "from localStorage and the current session"

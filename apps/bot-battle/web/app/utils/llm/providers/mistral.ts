@@ -7,11 +7,12 @@ import { handleApiError } from "../utils";
 export async function callMistralAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "mistral-medium-latest" // Default model if not specified
+  modelId: string = "mistral-medium-latest", // Default model if not specified
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("mistral", process.env.MISTRAL_API_KEY);
+    const apiKey = getApiKey("mistral", process.env.MISTRAL_API_KEY, userKey);
 
     const start = performance.now();
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {

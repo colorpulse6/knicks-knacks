@@ -24,6 +24,7 @@ import { useApiKeyStore } from "./providers/ApiKeyProvider";
 import { LLM_REGISTRY } from "./core/llm-registry";
 import { CostCalculator } from "./components/CostCalculator";
 import { streamLLMResponse } from "./utils/llm/streamClient";
+import { getClientApiKey } from "./utils/llm/api-keys";
 import { getStreamPreference } from "./utils/streamPreference";
 import { StreamToggle } from "./components/StreamToggle";
 
@@ -134,6 +135,8 @@ export default function Page() {
         [modelKey]: { ...prev[modelKey], isStreaming: useStream },
       }));
 
+      const clientKey = getClientApiKey(model.providerId);
+
       streamLLMResponse(
         {
           providerId: model.providerId,
@@ -141,6 +144,7 @@ export default function Page() {
           prompt: usedPrompt,
           stream: useStream,
           ...(isReasoning && effortPerModel[modelKey] ? { effort: effortPerModel[modelKey] } : {}),
+          ...(clientKey ? { apiKey: clientKey } : {}),
         },
         {
           onChunk: (delta) =>

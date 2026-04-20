@@ -8,11 +8,12 @@ export async function callOpenAIAPI(
   prompt: string,
   signal?: AbortSignal,
   modelId: string = "gpt-5.4-mini", // Default model if not specified
-  options?: { effort?: "low" | "medium" | "high"; isReasoning?: boolean }
+  options?: { effort?: "low" | "medium" | "high"; isReasoning?: boolean },
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("openai", process.env.OPENAI_API_KEY);
+    const apiKey = getApiKey("openai", process.env.OPENAI_API_KEY, userKey);
 
     const start = performance.now();
     const response = await fetch("https://api.openai.com/v1/chat/completions", {

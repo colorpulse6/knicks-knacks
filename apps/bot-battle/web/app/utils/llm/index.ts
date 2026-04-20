@@ -35,6 +35,7 @@ export interface LLMCallOptions {
   signal?: AbortSignal;
   effort?: "low" | "medium" | "high";
   isReasoning?: boolean;
+  userKey?: string;
 }
 
 // Main function to call any LLM with providerId and modelId
@@ -55,6 +56,7 @@ export async function callLLMWithProviderAndModel(
 
   const signal = options?.signal;
   const effort = options?.effort;
+  const userKey = options?.userKey;
   const isReasoning =
     options?.isReasoning ?? modelSpec.modelType === "reasoning";
 
@@ -71,7 +73,7 @@ export async function callLLMWithProviderAndModel(
     switch (providerId.toLowerCase()) {
       case "openai":
         // Call OpenAI API with the specific model
-        result = await callOpenAIAPI(prompt, signal, modelId, reasoningOptions);
+        result = await callOpenAIAPI(prompt, signal, modelId, reasoningOptions, userKey);
         break;
       case "anthropic":
         // Call Anthropic API directly with the specific model
@@ -79,32 +81,33 @@ export async function callLLMWithProviderAndModel(
           prompt,
           signal,
           modelId,
-          reasoningOptions
+          reasoningOptions,
+          userKey
         );
         break;
       case "groq":
         // Call Groq API with the specific model
-        result = await callGroqAPI(prompt, signal, modelId);
+        result = await callGroqAPI(prompt, signal, modelId, userKey);
         break;
       case "google":
         // Call Google/Gemini API directly
-        result = await callGeminiAPI(prompt, signal, modelId);
+        result = await callGeminiAPI(prompt, signal, modelId, userKey);
         break;
       case "mistral":
         // Call Mistral API with the specific model
-        result = await callMistralAPI(prompt, signal, modelId);
+        result = await callMistralAPI(prompt, signal, modelId, userKey);
         break;
       case "qwen":
         // Call Qwen API directly
-        result = await callQwenAPI(prompt, signal, modelId);
+        result = await callQwenAPI(prompt, signal, modelId, userKey);
         break;
       case "deepseek":
         // Call DeepSeek API directly
-        result = await callDeepSeekAPI(prompt, signal, modelId);
+        result = await callDeepSeekAPI(prompt, signal, modelId, userKey);
         break;
       case "xai":
         // Call xAI API directly
-        result = await callXAIAPI(prompt, signal, modelId, reasoningOptions);
+        result = await callXAIAPI(prompt, signal, modelId, reasoningOptions, userKey);
         break;
       default:
         throw new APIError(

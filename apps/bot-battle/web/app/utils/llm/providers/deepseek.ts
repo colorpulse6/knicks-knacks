@@ -7,11 +7,12 @@ import { handleApiError } from "../utils";
 export async function callDeepSeekAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "deepseek-v2" // Default model if not specified
+  modelId: string = "deepseek-v2", // Default model if not specified
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("deepseek", process.env.DEEPSEEK_API_KEY);
+    const apiKey = getApiKey("deepseek", process.env.DEEPSEEK_API_KEY, userKey);
 
     const start = performance.now();
 

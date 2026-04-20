@@ -8,11 +8,12 @@ export async function callXAIAPI(
   prompt: string,
   signal?: AbortSignal,
   modelId: string = "grok-4-1-fast-non-reasoning", // Default model if not specified
-  options?: { effort?: "low" | "medium" | "high"; isReasoning?: boolean }
+  options?: { effort?: "low" | "medium" | "high"; isReasoning?: boolean },
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("xai", process.env.XAI_API_KEY);
+    const apiKey = getApiKey("xai", process.env.XAI_API_KEY, userKey);
 
     const start = performance.now();
     const response = await fetch("https://api.x.ai/v1/chat/completions", {

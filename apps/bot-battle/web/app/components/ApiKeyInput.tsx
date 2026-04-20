@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useApiKeyStore } from "../providers/ApiKeyProvider";
 import { getClientApiKeys, setClientApiKey } from "../utils/llm/api-keys";
+import { validateKeyFormat } from "../utils/llm/sanitize";
 
 interface ApiKeyInputProps {
   provider: string;
@@ -18,6 +19,7 @@ export function ApiKeyInput({
   const [inputValue, setInputValue] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [keyWarning, setKeyWarning] = useState<string | null>(null);
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "ok" | "error">("idle");
   const [testMessage, setTestMessage] = useState<string>("");
   const setApiKey = useApiKeyStore((state) => state.setApiKey);
@@ -53,6 +55,11 @@ export function ApiKeyInput({
     e.preventDefault();
     if (inputValue.trim()) {
       const key = inputValue.trim();
+
+      // Validate key format — non-blocking warning only
+      const validation = validateKeyFormat(provider, key);
+      setKeyWarning(validation.ok ? null : validation.reason ?? null);
+
       // Set directly in both store and client
       setApiKey(provider, key);
       setClientApiKey(provider, key);
@@ -208,6 +215,11 @@ export function ApiKeyInput({
           {testStatus === "ok" && <span className="text-rust text-xs ml-2">✓ Works</span>}
           {testStatus === "error" && <span className="text-red-600 text-xs ml-2">✗ {testMessage}</span>}
         </div>
+        {keyWarning && (
+          <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
+            ⚠ {keyWarning}
+          </p>
+        )}
         {saveStatus && (
           <p className="mt-2 text-sm text-rust">
             {saveStatus}

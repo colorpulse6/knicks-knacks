@@ -3,6 +3,7 @@ import { callLLMWithProviderAndModel } from "../../utils/llm/index";
 import { isModelAvailable, LLM_REGISTRY } from "../../core/llm-registry";
 import { STREAMABLE_PROVIDERS, openAIStreamToNDJSON } from "../../utils/llm/streaming";
 import { getApiKey } from "../../utils/llm/api-keys";
+import { redactSecrets } from "../../utils/llm/sanitize";
 
 const PROVIDER_STREAM_ENDPOINTS: Record<string, string> = {
   openai: "https://api.openai.com/v1/chat/completions",
@@ -24,9 +25,8 @@ export async function POST(req: NextRequest) {
     console.log("LLM API route called");
 
     const body = await req.json();
-    console.log("Request body:", JSON.stringify(body, null, 2));
 
-    const { providerId, modelId, prompt, effort, isReasoning, stream } = body;
+    const { providerId, modelId, prompt, effort, isReasoning, stream, apiKey: userKey } = body;
 
     if (!providerId || !modelId || !prompt) {
       console.log("Missing required fields:", {
@@ -56,6 +56,11 @@ export async function POST(req: NextRequest) {
     if (process.env.QWEN_API_KEY) availableApiKeys.qwen = true;
     if (process.env.XAI_API_KEY) availableApiKeys.xai = true;
 
+    // A user-supplied key also satisfies availability for the chosen provider
+    if (userKey && providerId) {
+      availableApiKeys[providerId.toLowerCase()] = true;
+    }
+
     // Check model availability
     const { available, reason } = isModelAvailable(
       providerId,
@@ -77,7 +82,7 @@ export async function POST(req: NextRequest) {
     if (stream === true && STREAMABLE_PROVIDERS.has(providerId)) {
       const endpoint = PROVIDER_STREAM_ENDPOINTS[providerId];
       const envKeyName = PROVIDER_ENV_KEY[providerId];
-      const apiKey = getApiKey(providerId, process.env[envKeyName]);
+      const apiKey = getApiKey(providerId, process.env[envKeyName], userKey);
       const modelSpec = LLM_REGISTRY.find((p) => p.id === providerId)
         ?.models.find((m) => m.id === modelId);
       const isStreamReasoning = modelSpec?.modelType === "reasoning";
@@ -97,8 +102,10 @@ export async function POST(req: NextRequest) {
       });
       if (!providerRes.ok) {
         const text = await providerRes.text().catch(() => "");
+        const safeText = redactSecrets(text.slice(0, 200));
+        console.error(`Stream provider error ${providerRes.status}: ${safeText}`);
         return NextResponse.json(
-          { error: `${providerRes.status}: ${text.slice(0, 200)}` },
+          { error: `${providerRes.status}: ${safeText}` },
           { status: providerRes.status }
         );
       }
@@ -113,7 +120,7 @@ export async function POST(req: NextRequest) {
         providerId,
         modelId,
         prompt,
-        { effort, isReasoning }
+        { effort, isReasoning, userKey }
       );
 
       console.log("LLM response successful");
@@ -123,19 +130,15 @@ export async function POST(req: NextRequest) {
       throw llmErr; // Re-throw to be caught by the outer catch
     }
   } catch (err: any) {
-    console.error("Error in API route:", err);
-    const errorMessage = err.message || "Unknown error";
+    const errorMessage = redactSecrets(err.message || "Unknown error");
     const errorStack = err.stack || "";
-    console.error("Error details:", {
-      message: errorMessage,
-      stack: errorStack,
-    });
+    console.error("Error in API route:", errorMessage);
 
     return NextResponse.json(
       {
         error: errorMessage,
         errorType: err.name || typeof err,
-        stack: process.env.NODE_ENV === "development" ? errorStack : undefined,
+        stack: process.env.NODE_ENV === "development" ? redactSecrets(errorStack) : undefined,
       },
       { status: 500 }
     );

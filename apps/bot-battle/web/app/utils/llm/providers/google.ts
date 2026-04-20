@@ -7,11 +7,13 @@ import { handleApiError } from "../utils";
 export async function callGeminiAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "gemini-1.0-pro" // Default model if not specified
+  modelId: string = "gemini-1.0-pro", // Default model if not specified
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("gemini", process.env.GEMINI_API_KEY);
+    // Note: Google uses query-param auth (?key=...) — userKey takes highest priority
+    const apiKey = getApiKey("google", process.env.GEMINI_API_KEY, userKey);
 
     // Extract the base model name without version for API URL
     // (e.g., "gemini-1.5-pro-latest" → "gemini-1.5-pro")

@@ -6,6 +6,7 @@ export interface LLMRequestBody {
   prompt: string;
   effort?: "low" | "medium" | "high";
   stream?: boolean;
+  apiKey?: string;
 }
 
 export interface StreamHandlers {

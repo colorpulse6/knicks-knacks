@@ -9,7 +9,8 @@ export async function callAnthropicAPI(
   prompt: string,
   signal?: AbortSignal,
   modelId: string = "claude-3-haiku-20240307", // Default model if not specified
-  options?: { effort?: Effort; isReasoning?: boolean }
+  options?: { effort?: Effort; isReasoning?: boolean },
+  userKey?: string
 ): Promise<{
   response: string;
   thinking?: string;
@@ -17,7 +18,7 @@ export async function callAnthropicAPI(
 }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("anthropic", process.env.ANTHROPIC_API_KEY);
+    const apiKey = getApiKey("anthropic", process.env.ANTHROPIC_API_KEY, userKey);
 
     const isReasoning = options?.isReasoning && options?.effort;
     const budgetTokens = isReasoning

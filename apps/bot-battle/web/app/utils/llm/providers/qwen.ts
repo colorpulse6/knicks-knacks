@@ -7,11 +7,12 @@ import { handleApiError } from "../utils";
 export async function callQwenAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "qwen3-235b-a22b" // Default model if not specified
+  modelId: string = "qwen3-235b-a22b", // Default model if not specified
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available
-    const apiKey = getApiKey("qwen", process.env.QWEN_API_KEY);
+    const apiKey = getApiKey("qwen", process.env.QWEN_API_KEY, userKey);
 
     const start = performance.now();
 

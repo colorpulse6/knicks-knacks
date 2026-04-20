@@ -61,35 +61,39 @@ export function getClientApiKeys(): Record<string, boolean> {
   );
 }
 
-// Helper to get the appropriate API key, prioritizing user-provided ones
-export function getApiKey(provider: string, serverKey?: string): string {
+// Returns the raw client-side key for a provider, or null if not set.
+// Safe to call from client; always returns null on the server.
+export function getClientApiKey(provider: string): string | null {
+  if (typeof window === "undefined") return null;
+  const clientApiKeys = getClientApiKeysInstance();
+  return clientApiKeys[provider.toLowerCase()] ?? null;
+}
+
+// Helper to get the appropriate API key, prioritizing user-provided ones.
+// Priority: userKey (from request body) > browser singleton > serverKey > throw
+export function getApiKey(
+  provider: string,
+  serverKey?: string,
+  userKey?: string
+): string {
   provider = provider.toLowerCase();
 
-  // In browser environment, check for client-side keys first
+  // Highest priority: explicit userKey passed in (e.g. from POST body on server)
+  if (userKey) {
+    return userKey;
+  }
+
+  // In browser environment, check for client-side keys next
   if (typeof window !== "undefined") {
     const clientApiKeys = getClientApiKeysInstance();
     const clientKey = clientApiKeys[provider];
-
     if (clientKey) {
-      // For Groq specifically, check if the key format is valid
-      if (provider === "groq" && !clientKey.startsWith("gsk_")) {
-        console.warn(
-          `Warning: The Groq API key provided doesn't match the expected format (should start with 'gsk_')`
-        );
-      }
       return clientKey;
     }
-
   }
 
   // Fall back to server key if available
   if (serverKey) {
-    // For Groq specifically, check if the key format is valid
-    if (provider === "groq" && !serverKey.startsWith("gsk_")) {
-      console.warn(
-        `Warning: The server Groq API key doesn't match the expected format (should start with 'gsk_')`
-      );
-    }
     return serverKey;
   }
 

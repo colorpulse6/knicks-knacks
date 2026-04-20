@@ -7,11 +7,12 @@ import { handleApiError } from "../utils";
 export async function callGroqAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "llama3-8b-8192" // Default model if not specified
+  modelId: string = "llama3-8b-8192", // Default model if not specified
+  userKey?: string
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   // Get API key, preferring client-provided key if available
   try {
-    const apiKey = getApiKey("groq", process.env.GROQ_API_KEY);
+    const apiKey = getApiKey("groq", process.env.GROQ_API_KEY, userKey);
 
     // Additional validation for Groq API key format
     if (!apiKey.startsWith("gsk_")) {

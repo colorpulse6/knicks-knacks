@@ -24,6 +24,9 @@ export async function callOpenAIAPI(
       body: JSON.stringify({
         model: modelId, // Use the provided modelId
         messages: [{ role: "user", content: prompt }],
+        ...(options?.isReasoning && options?.effort
+          ? { reasoning: { effort: options.effort } }
+          : {}),
       }),
       signal,
     });
@@ -48,6 +51,9 @@ export async function callOpenAIAPI(
     const outputTokens = usage.completion_tokens;
     const inputTokens = usage.prompt_tokens;
     const totalTokens = usage.total_tokens;
+    const reasoningTokens =
+      usage.completion_tokens_details?.reasoning_tokens ?? usage.reasoning_tokens;
+    const answerTokens = usage.completion_tokens;
     const tokensPerSecond =
       outputTokens && latencyMs > 0
         ? outputTokens / (latencyMs / 1000)
@@ -63,6 +69,8 @@ export async function callOpenAIAPI(
         tokensPerSecond,
         wordCount,
         charCount,
+        reasoningTokens,
+        answerTokens,
       },
     };
   } catch (error) {

@@ -16,7 +16,7 @@ const Tooltip = ({
     <div className="relative flex items-center group">
       {children}
       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-        <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 max-w-xl shadow-lg">
+        <div className="bg-ink text-paper text-xs rounded py-1 px-2 max-w-xl shadow-lg">
           {content}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
         </div>
@@ -109,7 +109,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
         </span>
         {METRIC_TOOLTIPS[key] && (
           <Tooltip content={METRIC_TOOLTIPS[key]}>
-            <HelpCircle size={14} className="text-gray-400 ml-1 cursor-help" />
+            <HelpCircle size={14} className="text-ink-soft ml-1 cursor-help" />
           </Tooltip>
         )}
       </li>
@@ -127,7 +127,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
       : "Thinking";
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+    <div className="bg-paper border border-rule rounded-sm p-4 mb-4">
       <div className="flex justify-between items-center mb-3">
         <div className="font-bold flex items-center flex-wrap gap-1">
           {model}
@@ -143,7 +143,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             type="button"
-            className="flex items-center text-sm text-blue-600 hover:underline"
+            className="flex items-center text-sm text-rust hover:underline"
             aria-expanded={isExpanded}
           >
             {isExpanded ? (
@@ -162,11 +162,11 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-ink-soft">Loading...</div>
       ) : (
         <>
           {/* Metrics panel - above the response */}
-          <div className="text-xs text-gray-700 dark:text-gray-300 mb-3 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+          <div className="text-xs text-ink-soft tabular-nums mb-3 bg-paper-sunk p-3 rounded">
             {metrics && (
               <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
                 {metrics.latencyMs !== undefined &&
@@ -228,7 +228,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
           {/* Tab bar for reasoning models */}
           {isReasoning && (
             <div
-              className="flex border-b border-gray-200 dark:border-gray-700 mb-3"
+              className="flex border-b border-rule-soft mb-3"
               role="tablist"
             >
               <button
@@ -237,8 +237,8 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
                 onClick={() => setTab("answer")}
                 className={`px-4 py-2 text-sm font-medium ${
                   tab === "answer"
-                    ? "border-b-2 border-purple-600 text-purple-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "border-b-2 border-rust text-rust font-semibold"
+                    : "text-ink-soft hover:text-ink-soft"
                 }`}
               >
                 Answer
@@ -249,8 +249,8 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
                 onClick={() => setTab("thinking")}
                 className={`px-4 py-2 text-sm font-medium ${
                   tab === "thinking"
-                    ? "border-b-2 border-purple-600 text-purple-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "border-b-2 border-rust text-rust font-semibold"
+                    : "text-ink-soft hover:text-ink-soft"
                 }`}
               >
                 {thinkingTabLabel}
@@ -260,15 +260,15 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
 
           {/* Collapsible response */}
           {isExpanded && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
+            <div className="border-t border-rule-soft pt-3 mt-2">
               {!isReasoning || tab === "answer" ? (
-                <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-96">
+                <pre className="whitespace-pre-wrap font-serif text-[14px] leading-[1.65] overflow-auto max-h-96">
                   {response}
                 </pre>
               ) : (
-                <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-96 text-gray-600 dark:text-gray-400">
+                <pre className="whitespace-pre-wrap font-serif text-[14px] leading-[1.65] overflow-auto max-h-96 text-ink-soft">
                   {thinking ?? (
-                    <span className="italic text-gray-400">
+                    <span className="italic text-ink-soft">
                       Thinking not exposed by provider
                       {reasoningTokenCount !== undefined
                         ? ` (${reasoningTokenCount} tokens used)`

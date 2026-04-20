@@ -11,12 +11,12 @@ interface Props {
 }
 
 export const EffortSelector: React.FC<Props> = ({ value, onChange }) => (
-  <label className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1">
+  <label className="text-xs text-ink-soft flex items-center gap-1">
     Effort:
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as Effort)}
-      className="text-xs border rounded px-1 py-0.5 bg-white dark:bg-gray-700"
+      className="text-xs border border-rule rounded-sm px-1 py-0.5 bg-paper text-ink"
     >
       <option value="low">low</option>
       <option value="medium">medium</option>

@@ -1,8 +1,8 @@
 import "./globals.css";
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ClientProviders } from "./providers/ClientProviders";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 export const metadata = {
   title: "BotBattle",
@@ -15,6 +15,13 @@ export const metadata = {
   },
 };
 
+const THEME_INIT = `
+try {
+  var t = localStorage.getItem("botbattle.theme");
+  if (t === "dark") document.documentElement.classList.add("dark");
+} catch (_) {}
+`.trim();
+
 export default function RootLayout({
   children,
 }: {
@@ -22,31 +29,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
+      <body className="min-h-screen bg-paper-sunk text-ink font-sans">
+        {/* Theme-init must run before React hydrates to avoid a white flash for dark-mode users.
+            Placed here (not <head>) to avoid Next.js App Router hydration warnings about manual head tags. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <ClientProviders>
-          <header className="w-full py-6 bg-gray-900 text-white flex items-center justify-center shadow mb-8 relative">
-            <div className="flex items-center">
-              <Image
-                src="/botbattle-icon.png"
-                alt="BotBattle logo"
-                width={40}
-                height={40}
-                className="mr-4"
-              />
-              <h1 className="text-2xl font-bold tracking-tight">
-                BotBattle – LLM Benchmarking
-              </h1>
-            </div>
-            <div className="absolute right-6">
-              <Link
-                href={{ pathname: "/settings" }}
-                className="px-3 py-1.5 rounded text-sm bg-gray-700 hover:bg-gray-600 transition-colors"
-              >
-                API Settings
+          <div className="max-w-[1100px] mx-auto px-7">
+            <header className="flex justify-between items-baseline pt-5 pb-4 border-b border-rule">
+              <Link href="/" className="font-serif text-[22px] font-bold tracking-tight no-underline text-ink">
+                BotBattle<span className="text-rust">.</span>
               </Link>
-            </div>
-          </header>
-          <main className="container mx-auto py-8 px-4">{children}</main>
+              <nav className="flex gap-5 text-xs uppercase tracking-[0.08em] text-ink-soft">
+                <Link href="/" className="pb-1 no-underline text-inherit hover:text-ink">Benchmark</Link>
+                <Link href="/settings" className="pb-1 no-underline text-inherit hover:text-ink">API Keys</Link>
+              </nav>
+              <ThemeToggle />
+            </header>
+            <main className="py-6">{children}</main>
+          </div>
         </ClientProviders>
       </body>
     </html>

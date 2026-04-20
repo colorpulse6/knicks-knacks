@@ -18,6 +18,7 @@ import {
   Gift,
 } from "lucide-react"; // For icons
 import { useApiKeyStore } from "../providers/ApiKeyProvider";
+import { ModelBadge } from "./ModelBadge";
 
 // Helper function to check if a provider has any free models
 const providerHasFreeModels = (provider: LLMProviderSpec): boolean => {
@@ -246,6 +247,7 @@ export function ModelSelector({ selected, onChange }: ModelSelectorProps) {
                           <span className="font-semibold text-sm">
                             {model.displayName}
                           </span>
+                          <ModelBadge status={model.status} modelType={model.modelType} />
                           {!isAvailable && (
                             <Lock
                               size={16}

@@ -7,7 +7,8 @@ import { handleApiError } from "../utils";
 export async function callAnthropicAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "claude-3-haiku-20240307" // Default model if not specified
+  modelId: string = "claude-3-haiku-20240307", // Default model if not specified
+  options?: { effort?: "low" | "medium" | "high"; isReasoning?: boolean }
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available

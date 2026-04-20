@@ -31,12 +31,18 @@ import {
   callXAIAPI,
 } from "./providers";
 
+export interface LLMCallOptions {
+  signal?: AbortSignal;
+  effort?: "low" | "medium" | "high";
+  isReasoning?: boolean;
+}
+
 // Main function to call any LLM with providerId and modelId
 export async function callLLMWithProviderAndModel(
   providerId: string,
   modelId: string,
   prompt: string,
-  signal?: AbortSignal
+  options?: LLMCallOptions
 ): Promise<LLMCallResult> {
   // Validate that the providerId and modelId combination exists in the registry
   const modelSpec = getModelSpec(providerId, modelId);
@@ -46,6 +52,13 @@ export async function callLLMWithProviderAndModel(
       "model_not_found"
     );
   }
+
+  const signal = options?.signal;
+  const effort = options?.effort;
+  const isReasoning =
+    options?.isReasoning ?? modelSpec.modelType === "reasoning";
+
+  const reasoningOptions = { effort, isReasoning };
 
   let result: {
     response: string;
@@ -57,11 +70,16 @@ export async function callLLMWithProviderAndModel(
     switch (providerId.toLowerCase()) {
       case "openai":
         // Call OpenAI API with the specific model
-        result = await callOpenAIAPI(prompt, signal, modelId);
+        result = await callOpenAIAPI(prompt, signal, modelId, reasoningOptions);
         break;
       case "anthropic":
         // Call Anthropic API directly with the specific model
-        result = await callAnthropicAPI(prompt, signal, modelId);
+        result = await callAnthropicAPI(
+          prompt,
+          signal,
+          modelId,
+          reasoningOptions
+        );
         break;
       case "groq":
         // Call Groq API with the specific model
@@ -85,7 +103,7 @@ export async function callLLMWithProviderAndModel(
         break;
       case "xai":
         // Call xAI API directly
-        result = await callXAIAPI(prompt, signal, modelId);
+        result = await callXAIAPI(prompt, signal, modelId, reasoningOptions);
         break;
       default:
         throw new APIError(
@@ -137,7 +155,7 @@ export async function callLLM(
       mapping.providerId,
       mapping.modelId,
       prompt,
-      signal
+      { signal }
     );
   } catch (err: any) {
     // For backward compatibility, return error in response rather than throwing

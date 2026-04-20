@@ -52,8 +52,13 @@ function isString(value: any): value is string {
 async function fetchLLMResponse(
   selectedModel: SelectedLLM,
   prompt: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  effort?: "low" | "medium" | "high"
 ) {
+  const provider = LLM_REGISTRY.find((p) => p.id === selectedModel.providerId);
+  const spec = provider?.models.find((m) => m.id === selectedModel.modelId);
+  const isReasoning = spec?.modelType === "reasoning";
+
   const res = await fetch("/api/llm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -61,6 +66,7 @@ async function fetchLLMResponse(
       providerId: selectedModel.providerId,
       modelId: selectedModel.modelId,
       prompt,
+      ...(isReasoning && effort ? { effort } : {}),
     }),
     signal,
   });
@@ -105,6 +111,9 @@ export default function Page() {
   const [isComparativeLoading, setIsComparativeLoading] = useState(false);
   const [openComparativeAnalysis, setOpenComparativeAnalysis] = useState(false);
   const [showMetricsComparison, setShowMetricsComparison] = useState(false);
+  const [effortPerModel, setEffortPerModel] = useState<
+    Record<string, "low" | "medium" | "high">
+  >({});
 
   // Check if the user has any API keys set
   const apiKeys = useApiKeyStore((state) => state.apiKeys);
@@ -146,7 +155,13 @@ export default function Page() {
     // Process each model individually instead of waiting for all to complete
     models.forEach(async (model) => {
       try {
-        const res = await fetchLLMResponse(model, usedPrompt);
+        const modelKey = getModelKey(model);
+        const res = await fetchLLMResponse(
+          model,
+          usedPrompt,
+          undefined,
+          effortPerModel[modelKey] ?? "medium"
+        );
 
         // Update just this model's result, preserving other models' states
         setResponses((prevResponses) => ({
@@ -449,6 +464,14 @@ export default function Page() {
             // Check if response is a string and if it starts with the warning symbol
             const isTokenError =
               isString(response) && response.startsWith("⚠️");
+            // Look up the model spec for this key
+            const [mkProviderId, mkModelId] = modelKey.split(":");
+            const mkProvider = LLM_REGISTRY.find(
+              (p) => p.id === mkProviderId
+            );
+            const mkSpec = mkProvider?.models.find(
+              (m) => m.id === mkModelId
+            );
             return (
               <div
                 key={modelKey}
@@ -458,8 +481,20 @@ export default function Page() {
               >
                 <LLMResponsePanel
                   model={displayName}
+                  modelType={mkSpec?.modelType}
+                  status={mkSpec?.status}
+                  supportsReasoningEffort={mkSpec?.supportsReasoningEffort}
+                  effort={effortPerModel[modelKey] ?? "medium"}
+                  onEffortChange={(e) =>
+                    setEffortPerModel((prev) => ({ ...prev, [modelKey]: e }))
+                  }
                   isLoading={loading}
                   response={renderResponseContent(response)}
+                  thinking={
+                    typeof metrics?.thinking === "string"
+                      ? metrics.thinking
+                      : undefined
+                  }
                   metrics={metrics}
                 />
               </div>

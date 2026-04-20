@@ -7,7 +7,8 @@ import { handleApiError } from "../utils";
 export async function callOpenAIAPI(
   prompt: string,
   signal?: AbortSignal,
-  modelId: string = "gpt-3.5-turbo" // Default model if not specified
+  modelId: string = "gpt-5.4-mini", // Default model if not specified
+  options?: { effort?: "low" | "medium" | "high"; isReasoning?: boolean }
 ): Promise<{ response: string; metrics: Record<string, number | undefined> }> {
   try {
     // Get API key, preferring client-provided key if available

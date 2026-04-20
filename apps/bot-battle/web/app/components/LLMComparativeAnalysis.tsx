@@ -31,7 +31,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Content
           className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
-          bg-gray-50 dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-2xl 
+          bg-paper rounded-lg shadow-lg p-6 w-full max-w-2xl
           max-h-[90vh] overflow-y-auto z-50 focus:outline-none"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
@@ -41,7 +41,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="absolute top-4 right-4 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="absolute top-4 right-4 p-1 rounded-md hover:bg-paper-sunk"
                 aria-label="Close"
               >
                 <X size={20} />
@@ -49,7 +49,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
             </Dialog.Close>
           </div>
 
-          <div className="text-xs text-gray-600 dark:text-gray-300 mb-4">
+          <div className="text-xs text-ink-soft mb-4">
             We will compare and critique all LLM responses for this prompt,
             highlighting strengths and weaknesses.
           </div>
@@ -60,16 +60,16 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
             </div>
           ) : isLoading ? (
             <div className="space-y-4 animate-pulse">
-              <div className="h-6 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-6 w-1/2 bg-paper-sunk rounded"></div>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
+                <div className="h-4 bg-paper-sunk rounded w-full"></div>
+                <div className="h-4 bg-paper-sunk rounded w-5/6"></div>
+                <div className="h-4 bg-paper-sunk rounded w-4/6"></div>
               </div>
-              <div className="h-6 w-1/3 bg-gray-200 dark:bg-gray-700 rounded mt-6"></div>
+              <div className="h-6 w-1/3 bg-paper-sunk rounded mt-6"></div>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                <div className="h-4 bg-paper-sunk rounded w-full"></div>
+                <div className="h-4 bg-paper-sunk rounded w-5/6"></div>
               </div>
             </div>
           ) : analysis ? (
@@ -79,7 +79,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
                 components={{
                   h2: ({ node, ...props }) => (
                     <h2
-                      className="text-lg font-semibold mt-6 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700"
+                      className="text-lg font-semibold mt-6 mb-3 pb-2 border-b border-rule"
                       {...props}
                     />
                   ),
@@ -111,11 +111,11 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
                         {rank === 1 || isFirstPlace ? (
                           <Trophy className="h-5 w-5 text-yellow-500 flex-shrink-0" />
                         ) : rank === 2 || isSecondPlace ? (
-                          <Medal className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <Medal className="h-5 w-5 text-ink-soft flex-shrink-0" />
                         ) : rank === 3 || isThirdPlace ? (
                           <Award className="h-5 w-5 text-amber-600 flex-shrink-0" />
                         ) : (
-                          <Star className="h-5 w-5 text-gray-300 flex-shrink-0" />
+                          <Star className="h-5 w-5 text-ink-soft flex-shrink-0" />
                         )}
                         <span>{children}</span>
                       </li>
@@ -135,7 +135,7 @@ export const LLMComparativeAnalysis: React.FC<LLMComparativeAnalysisProps> = ({
               </ReactMarkdown>
             </div>
           ) : (
-            <div className="text-gray-400 italic">
+            <div className="text-ink-soft italic">
               No comparative analysis yet.
             </div>
           )}

@@ -233,12 +233,12 @@ export function CostCalculator({
   };
 
   return (
-    <div className="mb-6 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50">
+    <div className="mb-6 border rounded-lg p-3 bg-paper-sunk">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-sm font-medium flex items-center">
           Cost Estimator
           <span
-            className="ml-1 text-gray-500 dark:text-gray-400 inline-flex items-center"
+            className="ml-1 text-ink-soft inline-flex items-center"
             title="This is an estimate based on approximate token counts. Actual costs may vary."
           >
             <Info size={14} />
@@ -253,7 +253,7 @@ export function CostCalculator({
           <button
             onClick={recalculateWithGroq}
             disabled={isCalculating || !prompt.trim()}
-            className="text-xs px-2 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-1 disabled:opacity-50 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-colors"
+            className="text-xs px-2 py-1 rounded-md bg-ink hover:bg-ink-soft text-paper flex items-center gap-1 disabled:opacity-50 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-colors"
             title="Use Groq to get a more accurate token count"
           >
             {isCalculating ? (
@@ -270,7 +270,7 @@ export function CostCalculator({
           </button>
           <button
             onClick={() => setIsVisible(!isVisible)}
-            className="text-xs text-blue-600 dark:text-blue-400"
+            className="text-xs text-rust"
           >
             {isVisible ? "Hide Details" : "Show Details"}
           </button>
@@ -292,7 +292,7 @@ export function CostCalculator({
 
       {isVisible && (
         <>
-          <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+          <div className="text-xs text-ink-soft mb-2">
             Estimated tokens: {tokensInfo.inputTokens} input + ~
             {tokensInfo.estimatedOutputTokens} output
             {tokensInfo.explanation && (
@@ -303,14 +303,14 @@ export function CostCalculator({
           <div className="space-y-2">
             {costEstimates.map((est, index) => (
               <div key={index} className="flex justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300">
+                <span className="text-ink-soft">
                   {est.modelDisplayName}
                 </span>
                 <span
                   className={
                     est.free
                       ? "text-green-600 dark:text-green-400"
-                      : "text-gray-700 dark:text-gray-300"
+                      : "text-ink-soft"
                   }
                 >
                   {est.free ? "Free" : formatCost(est.totalCost)}

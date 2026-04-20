@@ -300,13 +300,13 @@ export default function Page() {
   return (
     <>
       {!hasApiKeys && (
-        <div className="mb-6 p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400 rounded-md">
+        <div className="mb-6 p-4 border-l-4 border-rule bg-paper-sunk rounded-md">
           <div className="flex items-start">
             <div className="flex-grow">
-              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
+              <h3 className="text-sm font-medium text-ink">
                 Using fallback API keys
               </h3>
-              <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+              <p className="text-sm text-ink-soft mt-1">
                 You&apos;re currently using shared API keys with rate limits.
                 For better performance, you can
                 <Link
@@ -365,7 +365,7 @@ export default function Page() {
                     runComparativeAnalysis();
                   }
                 }}
-                className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 rounded"
+                className="px-3 py-1 text-sm bg-rust-tint rounded"
               >
                 Show Comprehensive Analysis
               </button>

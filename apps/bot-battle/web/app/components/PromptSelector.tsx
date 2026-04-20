@@ -49,7 +49,7 @@ export function PromptSelector({ value, onChange }: PromptSelectorProps) {
     <div className="mb-4">
       <label className="block font-medium mb-1">Prompt Template</label>
       <select
-        className="w-full border rounded px-3 py-2 bg-white dark:bg-neutral-dark"
+        className="w-full border rounded px-3 py-2 bg-paper"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >

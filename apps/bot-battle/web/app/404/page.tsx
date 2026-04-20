@@ -10,7 +10,7 @@ export default function Custom404() {
       </p>
       <Link
         href="/"
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        className="px-4 py-2 bg-ink hover:bg-ink-soft text-paper rounded transition-colors"
       >
         Return Home
       </Link>

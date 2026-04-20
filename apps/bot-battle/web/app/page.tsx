@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { PromptSelector } from "./components/PromptSelector";
 import { PromptInput } from "./components/PromptInput";
 import { ModelSelector, SelectedLLM } from "./components/ModelSelector";
@@ -119,6 +119,8 @@ export default function Page() {
   const apiKeys = useApiKeyStore((state) => state.apiKeys);
   const hasApiKeys = Object.keys(apiKeys).length > 0;
 
+  const resultsRef = useRef<HTMLDivElement>(null);
+
   // Handler for model selection changes
   const handleModelChange = (newModels: SelectedLLM[]) => {
     console.log("Models changed to:", newModels);
@@ -151,6 +153,11 @@ export default function Page() {
         ])
       )
     );
+
+    // Scroll to results so user sees loading cards populate
+    requestAnimationFrame(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
     // Process each model individually instead of waiting for all to complete
     models.forEach(async (model) => {
@@ -457,7 +464,10 @@ export default function Page() {
             </div>
           </>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div
+          ref={resultsRef}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 scroll-mt-6"
+        >
           {Object.keys(responses).map((modelKey) => {
             const { loading, response, metrics, displayName } =
               responses[modelKey];

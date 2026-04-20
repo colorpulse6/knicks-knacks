@@ -68,3 +68,31 @@ describe("LLMResponsePanel", () => {
     expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 });
+
+describe("LLMResponsePanel — loading/streaming states", () => {
+  it("renders the skeleton when isLoading and no response yet", () => {
+    const { container } = render(
+      <LLMResponsePanel model="x" isLoading modelType="standard" />
+    );
+    expect(container.querySelectorAll("[data-skeleton-bar]")).toHaveLength(3);
+  });
+
+  it("renders a caret when isStreaming and response has content", () => {
+    const { container } = render(
+      <LLMResponsePanel
+        model="x"
+        modelType="standard"
+        isStreaming
+        response="partial"
+      />
+    );
+    expect(container.querySelector("[data-caret]")).toBeInTheDocument();
+  });
+
+  it("does not render a caret when streaming is done", () => {
+    const { container } = render(
+      <LLMResponsePanel model="x" modelType="standard" response="done" />
+    );
+    expect(container.querySelector("[data-caret]")).toBeNull();
+  });
+});

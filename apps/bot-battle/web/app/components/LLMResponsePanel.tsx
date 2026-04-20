@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 import { ModelBadge } from "./ModelBadge";
 import { EffortSelector } from "./EffortSelector";
+import { ResponseSkeleton } from "./ResponseSkeleton";
 
 const Tooltip = ({
   content,
@@ -33,6 +34,7 @@ interface LLMResponsePanelProps {
   effort?: "low" | "medium" | "high";
   onEffortChange?: (e: "low" | "medium" | "high") => void;
   isLoading?: boolean;
+  isStreaming?: boolean;
   response?: string | React.ReactNode;
   thinking?: string;
   metrics?: Record<string, string | number | undefined>;
@@ -88,6 +90,7 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
   effort,
   onEffortChange,
   isLoading,
+  isStreaming,
   response,
   thinking,
   metrics = {},
@@ -161,8 +164,8 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
         )}
       </div>
 
-      {isLoading ? (
-        <div className="text-ink-soft">Loading...</div>
+      {isLoading && !response ? (
+        <ResponseSkeleton />
       ) : (
         <>
           {/* Metrics panel - above the response */}
@@ -264,6 +267,13 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
               {!isReasoning || tab === "answer" ? (
                 <pre className="whitespace-pre-wrap font-serif text-[14px] leading-[1.65] overflow-auto max-h-96">
                   {response}
+                  {isStreaming && response && (
+                    <span
+                      data-caret
+                      aria-hidden
+                      className="inline-block w-[2px] h-[1.1em] bg-rust align-text-bottom ml-[1px] animate-[caret_1s_steps(1)_infinite]"
+                    />
+                  )}
                 </pre>
               ) : (
                 <pre className="whitespace-pre-wrap font-serif text-[14px] leading-[1.65] overflow-auto max-h-96 text-ink-soft">
@@ -274,6 +284,13 @@ export const LLMResponsePanel: React.FC<LLMResponsePanelProps> = ({
                         ? ` (${reasoningTokenCount} tokens used)`
                         : ""}
                     </span>
+                  )}
+                  {isStreaming && thinking && (
+                    <span
+                      data-caret
+                      aria-hidden
+                      className="inline-block w-[2px] h-[1.1em] bg-rust align-text-bottom ml-[1px] animate-[caret_1s_steps(1)_infinite]"
+                    />
                   )}
                 </pre>
               )}

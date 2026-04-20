@@ -18,6 +18,8 @@ export function ApiKeyInput({
   const [inputValue, setInputValue] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "ok" | "error">("idle");
+  const [testMessage, setTestMessage] = useState<string>("");
   const setApiKey = useApiKeyStore((state) => state.setApiKey);
   const clearApiKey = useApiKeyStore((state) => state.clearApiKey);
   const apiKey = useApiKeyStore((state) => state.getApiKey(provider));
@@ -71,6 +73,28 @@ export function ApiKeyInput({
       setTimeout(() => setSaveStatus(null), 3000); // Clear message after 3 seconds
     }
   };
+
+  async function runTest(keyToTest: string) {
+    setTestStatus("testing");
+    try {
+      const res = await fetch("/api/providers/test-key", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider, key: keyToTest }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setTestStatus("ok");
+        setTestMessage("");
+      } else {
+        setTestStatus("error");
+        setTestMessage(json.error ?? "Unknown error");
+      }
+    } catch (e: any) {
+      setTestStatus("error");
+      setTestMessage(e?.message ?? "Network error");
+    }
+  }
 
   if (apiKey) {
     return (
@@ -130,6 +154,16 @@ export function ApiKeyInput({
               Force Sync Key
             </button>
           )}
+          <button
+            type="button"
+            disabled={testStatus === "testing"}
+            onClick={() => runTest(apiKey)}
+            className="text-xs px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            {testStatus === "testing" ? "Testing…" : "Test"}
+          </button>
+          {testStatus === "ok" && <span className="text-green-600 text-xs ml-2">✓ Works</span>}
+          {testStatus === "error" && <span className="text-red-600 text-xs ml-2">✗ {testMessage}</span>}
         </div>
         {saveStatus && (
           <p className="mt-2 text-sm text-green-600 dark:text-green-400">
@@ -156,12 +190,24 @@ export function ApiKeyInput({
           placeholder={`Enter your ${label} API key`}
           className="w-full p-2 border rounded dark:bg-neutral-700 dark:border-neutral-600"
         />
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-md font-medium text-white bg-blue-600 hover:bg-blue-700 transition"
-        >
-          Save Key for Session
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-md font-medium text-white bg-blue-600 hover:bg-blue-700 transition"
+          >
+            Save Key for Session
+          </button>
+          <button
+            type="button"
+            disabled={testStatus === "testing"}
+            onClick={() => runTest(inputValue.trim())}
+            className="text-xs px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            {testStatus === "testing" ? "Testing…" : "Test"}
+          </button>
+          {testStatus === "ok" && <span className="text-green-600 text-xs ml-2">✓ Works</span>}
+          {testStatus === "error" && <span className="text-red-600 text-xs ml-2">✗ {testMessage}</span>}
+        </div>
         {saveStatus && (
           <p className="mt-2 text-sm text-green-600 dark:text-green-400">
             {saveStatus}

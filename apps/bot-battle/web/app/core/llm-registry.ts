@@ -734,7 +734,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/llama-3.2-3b-instruct",
+        id: "@cf/meta/llama-3.2-3b-instruct",
         displayName: "Llama 3.2 3B",
         contextWindow: 131072,
         cost: {
@@ -754,7 +754,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/deepseek-r1-distill-qwen-32b",
+        id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
         displayName: "DeepSeek R1 Distill Qwen 32B",
         contextWindow: 131072,
         cost: {
@@ -774,7 +774,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/gemma-4-26b-a4b-it",
+        id: "@cf/google/gemma-4-26b-a4b-it",
         displayName: "Gemma 4 26B",
         contextWindow: 131072,
         cost: {
@@ -794,7 +794,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/glm-4.7-flash",
+        id: "@cf/zai-org/glm-4.7-flash",
         displayName: "GLM 4.7 Flash",
         contextWindow: 131072,
         cost: {
@@ -814,7 +814,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/granite-4.0-h-micro",
+        id: "@cf/ibm-granite/granite-4.0-h-micro",
         displayName: "IBM Granite 4.0 Micro",
         contextWindow: 32768,
         cost: {
@@ -834,7 +834,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/hermes-2-pro-mistral-7b",
+        id: "@hf/nousresearch/hermes-2-pro-mistral-7b",
         displayName: "Nous Hermes 2 Pro",
         contextWindow: 32768,
         cost: {

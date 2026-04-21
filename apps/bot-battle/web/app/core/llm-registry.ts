@@ -585,40 +585,40 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
     providerWebsite: "https://cerebras.ai",
     models: [
       {
-        id: "llama-3.3-70b",
-        displayName: "Llama 3.3 70B",
+        id: "gpt-oss-120b",
+        displayName: "GPT-OSS 120B",
         contextWindow: 128000,
         cost: {
           inputPerMillionTokens: 0,
           outputPerMillionTokens: 0,
           currency: "USD",
           notes:
-            "Free via BotBattle's shared Cerebras key. Cerebras list price: $0.85/$1.20 per 1M tokens. Free tier: 30 RPM / 60K TPM, no credit card required. ~1,000 tok/sec on Cerebras silicon.",
+            "Free via BotBattle's shared Cerebras key. Free tier: 30 RPM / 60K TPM, no credit card required. ~1,000 tok/sec on Cerebras silicon. OpenAI's open-source 120B model.",
         },
         costType: "appKeyPermissive",
         capabilities: ["text", "code", "json", "tool_use"],
         description:
-          "Meta's Llama 3.3 70B served on Cerebras' fast inference hardware at ~1,000 tokens/sec. Free via BotBattle's shared key — no API key needed.",
+          "OpenAI's open-source 120B model served on Cerebras' fast inference hardware. Free via BotBattle's shared key — no API key needed.",
         status: "current",
         modelType: "standard",
         supportsReasoningEffort: false,
         lastVerified: "2026-04-21",
       },
       {
-        id: "llama-4-scout-17b-16e-instruct",
-        displayName: "Llama 4 Scout",
+        id: "qwen-3-235b-2507",
+        displayName: "Qwen 3 235B",
         contextWindow: 128000,
         cost: {
           inputPerMillionTokens: 0,
           outputPerMillionTokens: 0,
           currency: "USD",
           notes:
-            "Free via BotBattle's shared Cerebras key. Free tier: 30 RPM / 60K TPM, no credit card required. ~1,000 tok/sec on Cerebras silicon. Meta's newest Llama 4 variant.",
+            "Free via BotBattle's shared Cerebras key. Free tier: 30 RPM / 60K TPM, no credit card required. ~1,000 tok/sec on Cerebras silicon. Alibaba's 235B flagship.",
         },
         costType: "appKeyPermissive",
-        capabilities: ["text", "code", "json", "tool_use"],
+        capabilities: ["text", "code", "json", "tool_use", "long_context"],
         description:
-          "Meta's Llama 4 Scout served on Cerebras' fast inference hardware. Free via BotBattle's shared key — no API key needed.",
+          "Alibaba's Qwen 3 235B served on Cerebras' fast inference hardware. Free via BotBattle's shared key — no API key needed.",
         status: "current",
         modelType: "standard",
         supportsReasoningEffort: false,
@@ -694,20 +694,20 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "@cf/moonshot/kimi-k2.5",
-        displayName: "Kimi K2.5",
-        contextWindow: 256000,
+        id: "@cf/moonshotai/kimi-k2.6",
+        displayName: "Kimi K2.6",
+        contextWindow: 262100,
         cost: {
           inputPerMillionTokens: 0,
           outputPerMillionTokens: 0,
           currency: "USD",
           notes:
-            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server. 1T-parameter MoE with 32B active.",
         },
         costType: "appKeyPermissive",
         capabilities: ["text", "code", "json", "tool_use", "long_context"],
         description:
-          "Moonshot AI's Kimi K2.5 frontier-scale model with a 256K context window, served on Cloudflare's edge network. App-key only — no user key needed.",
+          "Moonshot AI's Kimi K2.6 — 1T-parameter MoE model (32B active) with a 262K context window, served on Cloudflare's edge network. App-key only — no user key needed.",
         status: "current",
         modelType: "standard",
         supportsReasoningEffort: false,

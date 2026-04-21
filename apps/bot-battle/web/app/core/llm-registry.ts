@@ -536,6 +536,26 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-20",
       },
       {
+        id: "openai/gpt-oss-20b",
+        displayName: "GPT-OSS 20B",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Groq key. Groq list price: varies. Shared rate limit: 30 RPM / 14,400 req/day. ~1,000 tok/sec on Groq hardware.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "OpenAI's open-source 20B served on Groq at ~1,000 tokens/sec. Pairs with GPT-OSS 120B for same-family size comparison. Free via BotBattle's shared key.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
         id: "llama-3.3-70b-versatile",
         displayName: "Llama 3.3 70B",
         contextWindow: 131072,
@@ -708,6 +728,126 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         capabilities: ["text", "code", "json", "tool_use", "long_context"],
         description:
           "Moonshot AI's Kimi K2.6 — 1T-parameter MoE model (32B active) with a 262K context window, served on Cloudflare's edge network. App-key only — no user key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/llama-3.2-3b-instruct",
+        displayName: "Llama 3.2 3B",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json"],
+        description:
+          "Meta's Llama 3.2 3B — tiny model for speed/cost-sensitive comparisons. Free via BotBattle's shared key.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/deepseek-r1-distill-qwen-32b",
+        displayName: "DeepSeek R1 Distill Qwen 32B",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "reasoning"],
+        description:
+          "DeepSeek R1 distilled into a Qwen 32B backbone. Strong reasoning at small size. Free via BotBattle's shared key.",
+        status: "current",
+        modelType: "reasoning",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/gemma-4-26b-a4b-it",
+        displayName: "Gemma 4 26B",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json"],
+        description:
+          "Google's open-source Gemma 4 26B model, served on Cloudflare's edge. Free via BotBattle's shared key.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/glm-4.7-flash",
+        displayName: "GLM 4.7 Flash",
+        contextWindow: 131072,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json"],
+        description:
+          "Zhipu AI's GLM 4.7 Flash — Chinese research lab's multilingual open-source model. Free via BotBattle's shared key.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/granite-4.0-h-micro",
+        displayName: "IBM Granite 4.0 Micro",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json"],
+        description:
+          "IBM's enterprise-focused open-source Granite 4.0 micro variant. Free via BotBattle's shared key.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/hermes-2-pro-mistral-7b",
+        displayName: "Nous Hermes 2 Pro",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Nous Research's Hermes 2 Pro — a Mistral 7B fine-tune optimized for function calling. Free via BotBattle's shared key.",
         status: "current",
         modelType: "standard",
         supportsReasoningEffort: false,

@@ -585,7 +585,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
     providerWebsite: "https://cerebras.ai",
     models: [
       {
-        id: "llama3.3-70b",
+        id: "llama-3.3-70b",
         displayName: "Llama 3.3 70B",
         contextWindow: 128000,
         cost: {
@@ -599,6 +599,26 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         capabilities: ["text", "code", "json", "tool_use"],
         description:
           "Meta's Llama 3.3 70B served on Cerebras' fast inference hardware at ~1,000 tokens/sec. Free via BotBattle's shared key — no API key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "llama-4-scout-17b-16e-instruct",
+        displayName: "Llama 4 Scout",
+        contextWindow: 128000,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Cerebras key. Free tier: 30 RPM / 60K TPM, no credit card required. ~1,000 tok/sec on Cerebras silicon. Meta's newest Llama 4 variant.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Meta's Llama 4 Scout served on Cerebras' fast inference hardware. Free via BotBattle's shared key — no API key needed.",
         status: "current",
         modelType: "standard",
         supportsReasoningEffort: false,

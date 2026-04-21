@@ -8,3 +8,5 @@ export { callMistralAPI } from "./mistral";
 export { callQwenAPI } from "./qwen";
 export { callDeepSeekAPI } from "./deepseek";
 export { callXAIAPI } from "./xai";
+export { callCerebrasAPI } from "./cerebras";
+export { callCloudflareAPI } from "./cloudflare";

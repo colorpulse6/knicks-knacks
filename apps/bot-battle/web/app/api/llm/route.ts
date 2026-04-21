@@ -11,6 +11,7 @@ const PROVIDER_STREAM_ENDPOINTS: Record<string, string> = {
   deepseek: "https://api.deepseek.com/v1/chat/completions",
   groq: "https://api.groq.com/openai/v1/chat/completions",
   mistral: "https://api.mistral.ai/v1/chat/completions",
+  cerebras: "https://api.cerebras.ai/v1/chat/completions",
 };
 const PROVIDER_ENV_KEY: Record<string, string> = {
   openai: "OPENAI_API_KEY",
@@ -18,6 +19,7 @@ const PROVIDER_ENV_KEY: Record<string, string> = {
   deepseek: "DEEPSEEK_API_KEY",
   groq: "GROQ_API_KEY",
   mistral: "MISTRAL_API_KEY",
+  cerebras: "CEREBRAS_API_KEY",
 };
 
 export async function POST(req: NextRequest) {
@@ -55,6 +57,9 @@ export async function POST(req: NextRequest) {
     if (process.env.DEEPSEEK_API_KEY) availableApiKeys.deepseek = true;
     if (process.env.QWEN_API_KEY) availableApiKeys.qwen = true;
     if (process.env.XAI_API_KEY) availableApiKeys.xai = true;
+    if (process.env.CEREBRAS_API_KEY) availableApiKeys.cerebras = true;
+    // Cloudflare requires both a token AND an account ID; both must be present
+    if (process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID) availableApiKeys.cloudflare = true;
 
     // A user-supplied key also satisfies availability for the chosen provider
     if (userKey && providerId) {

@@ -170,6 +170,24 @@ export default function SettingsPage() {
             description="Used for premium Qwen models including Qwen3 235B and other Qwen models. Get your API key from the Alibaba Cloud DashScope console."
           />
         </section>
+
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Cerebras</h3>
+          <ApiKeyInput
+            provider="cerebras"
+            label="Cerebras"
+            description="Used for Llama 3.3 70B and Llama 3.1 8B served on Cerebras' fast inference hardware (~1,000 tok/sec). Free tier available — no credit card required. Get your API key from cloud.cerebras.ai."
+          />
+        </section>
+
+        <section className="bg-paper border border-rule rounded-sm p-5 mb-4">
+          <h3 className="font-serif text-base font-bold mb-3">Cloudflare Workers AI</h3>
+          <ApiKeyInput
+            provider="cloudflare"
+            label="Cloudflare (API Token)"
+            description="Used for Llama 3.3 70B, Qwen 2.5 Coder, and Kimi K2.5 on Cloudflare's global network. Note: this provider also requires CLOUDFLARE_ACCOUNT_ID set server-side — entering a token here alone is not sufficient for personal deployments."
+          />
+        </section>
       </div>
 
       <div className="mt-10 pb-10">

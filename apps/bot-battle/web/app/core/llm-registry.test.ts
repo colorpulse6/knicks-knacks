@@ -35,6 +35,7 @@ describe("LLM_REGISTRY curation invariants", () => {
   const ALLOWED_PROVIDER_IDS = [
     "openai", "anthropic", "google", "xai",
     "deepseek", "mistral", "qwen", "groq",
+    "cerebras", "cloudflare",
   ];
 
   it("only includes allowed providers", () => {
@@ -80,6 +81,6 @@ describe("LLM_REGISTRY curation invariants", () => {
   it("registry size is in curated range", () => {
     const count = LLM_REGISTRY.reduce((sum, p) => sum + p.models.length, 0);
     expect(count).toBeGreaterThanOrEqual(12);
-    expect(count).toBeLessThanOrEqual(25);
+    expect(count).toBeLessThanOrEqual(30);
   });
 });

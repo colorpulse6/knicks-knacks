@@ -4,6 +4,7 @@ export const STREAMABLE_PROVIDERS = new Set([
   "deepseek",
   "groq",
   "mistral",
+  "cerebras",
 ]);
 
 interface OpenAIStreamDelta {

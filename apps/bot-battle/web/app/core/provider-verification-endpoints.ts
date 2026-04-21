@@ -42,4 +42,16 @@ export const PROVIDER_VERIFICATION: Record<string, ProviderVerificationSpec> = {
     method: "GET",
     authHeader: (k) => ({ Authorization: `Bearer ${k}` }),
   },
+  cerebras: {
+    url: "https://api.cerebras.ai/v1/models",
+    method: "GET",
+    authHeader: (k) => ({ Authorization: `Bearer ${k}` }),
+  },
+  cloudflare: {
+    // Verifies the API token only (account-ID is a server-side env var, not user-supplied).
+    // The /user/tokens/verify endpoint confirms the token is valid without needing an account ID.
+    url: "https://api.cloudflare.com/client/v4/user/tokens/verify",
+    method: "GET",
+    authHeader: (k) => ({ Authorization: `Bearer ${k}` }),
+  },
 };

@@ -28,9 +28,9 @@ async function collectNDJSON(stream: ReadableStream<Uint8Array>): Promise<string
 }
 
 describe("STREAMABLE_PROVIDERS", () => {
-  it("includes the 5 OpenAI-compatible providers", () => {
+  it("includes all OpenAI-compatible streaming providers", () => {
     expect(STREAMABLE_PROVIDERS).toEqual(
-      new Set(["openai", "xai", "deepseek", "groq", "mistral"])
+      new Set(["openai", "xai", "deepseek", "groq", "mistral", "cerebras"])
     );
   });
 });

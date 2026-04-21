@@ -297,7 +297,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           notes:
             "Text input: $0.75/M; Audio input: $3.00/M or $0.005/min; Image/Video: $1.00/M or $0.002/min. Text output: $4.50/M; Audio output: $12.00/M or $0.018/min. Real-time audio/dialogue model — Live API integration differs from standard chat API. Launched ~March 26, 2026.",
         },
-        costType: "appKeyPermissive",
+        costType: "userKeyRequired",
         capabilities: [
           "text",
           "image",
@@ -308,7 +308,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
           "multilingual",
         ],
         description:
-          "Google's low-latency real-time dialogue model supporting audio-to-audio and multimodal inputs. Uses the Live API, not standard chat API. Free via BotBattle's shared key.",
+          "Google's low-latency real-time dialogue model supporting audio-to-audio and multimodal inputs. Uses the Live API, not standard chat API. Requires your own Google AI API key.",
         status: "preview",
         modelType: "standard",
         supportsReasoningEffort: false,
@@ -574,6 +574,124 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         modelType: "reasoning",
         supportsReasoningEffort: false,
         lastVerified: "2026-04-20",
+      },
+    ],
+  },
+  {
+    id: "cerebras",
+    displayName: "Cerebras",
+    apiKeyProviderName: "Cerebras",
+    apiKeyLink: "https://cloud.cerebras.ai/platform/",
+    providerWebsite: "https://cerebras.ai",
+    models: [
+      {
+        id: "llama3.3-70b",
+        displayName: "Llama 3.3 70B",
+        contextWindow: 128000,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Cerebras key. Cerebras list price: $0.85/$1.20 per 1M tokens. Free tier: 30 RPM / 60K TPM, no credit card required. ~1,000 tok/sec on Cerebras silicon.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Meta's Llama 3.3 70B served on Cerebras' fast inference hardware at ~1,000 tokens/sec. Free via BotBattle's shared key — no API key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "llama3.1-8b",
+        displayName: "Llama 3.1 8B",
+        contextWindow: 128000,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's shared Cerebras key. Cerebras list price: $0.10/$0.10 per 1M tokens. Free tier: 30 RPM / 60K TPM, no credit card required. Fastest model on Cerebras silicon.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json"],
+        description:
+          "Meta's Llama 3.1 8B served on Cerebras' hardware — the fastest inference option on the platform. Free via BotBattle's shared key — no API key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+    ],
+  },
+  {
+    id: "cloudflare",
+    displayName: "Cloudflare Workers AI",
+    apiKeyProviderName: "Cloudflare",
+    apiKeyLink: "https://dash.cloudflare.com/profile/api-tokens",
+    providerWebsite: "https://developers.cloudflare.com/workers-ai/",
+    models: [
+      {
+        id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        displayName: "Llama 3.3 70B (FP8 Fast)",
+        contextWindow: 128000,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Meta's Llama 3.3 70B quantized to FP8 precision and optimized for fast inference on Cloudflare's global network. App-key only — no user key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/qwen/qwen2.5-coder-32b-instruct",
+        displayName: "Qwen 2.5 Coder 32B",
+        contextWindow: 32768,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use"],
+        description:
+          "Alibaba's Qwen 2.5 Coder 32B — a code-specialist model served on Cloudflare's global edge. Strong at code generation, completion, and debugging. App-key only.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
+      },
+      {
+        id: "@cf/moonshot/kimi-k2.5",
+        displayName: "Kimi K2.5",
+        contextWindow: 256000,
+        cost: {
+          inputPerMillionTokens: 0,
+          outputPerMillionTokens: 0,
+          currency: "USD",
+          notes:
+            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server.",
+        },
+        costType: "appKeyPermissive",
+        capabilities: ["text", "code", "json", "tool_use", "long_context"],
+        description:
+          "Moonshot AI's Kimi K2.5 frontier-scale model with a 256K context window, served on Cloudflare's edge network. App-key only — no user key needed.",
+        status: "current",
+        modelType: "standard",
+        supportsReasoningEffort: false,
+        lastVerified: "2026-04-21",
       },
     ],
   },

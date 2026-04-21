@@ -29,6 +29,8 @@ import {
   callQwenAPI,
   callDeepSeekAPI,
   callXAIAPI,
+  callCerebrasAPI,
+  callCloudflareAPI,
 } from "./providers";
 
 export interface LLMCallOptions {
@@ -108,6 +110,14 @@ export async function callLLMWithProviderAndModel(
       case "xai":
         // Call xAI API directly
         result = await callXAIAPI(prompt, signal, modelId, reasoningOptions, userKey);
+        break;
+      case "cerebras":
+        // Call Cerebras API (OpenAI-compatible, fast inference)
+        result = await callCerebrasAPI(prompt, signal, modelId, { userKey, effort, isReasoning });
+        break;
+      case "cloudflare":
+        // Call Cloudflare Workers AI (app-key only, requires server env vars)
+        result = await callCloudflareAPI(prompt, signal, modelId);
         break;
       default:
         throw new APIError(

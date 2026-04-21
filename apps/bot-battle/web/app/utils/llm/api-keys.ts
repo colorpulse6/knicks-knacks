@@ -17,6 +17,8 @@ export function getClientApiKeysInstance(): Record<string, string | null> {
       mistral: null,
       qwen: null,
       deepseek: null,
+      cerebras: null,
+      cloudflare: null,
     };
     console.log("📦 Created new clientApiKeys instance");
   }

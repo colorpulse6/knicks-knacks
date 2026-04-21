@@ -625,7 +625,7 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         lastVerified: "2026-04-21",
       },
       {
-        id: "qwen-3-235b-2507",
+        id: "qwen-3-235b-a22b-instruct-2507",
         displayName: "Qwen 3 235B",
         contextWindow: 128000,
         cost: {
@@ -708,26 +708,6 @@ export const LLM_REGISTRY: LLMProviderSpec[] = [
         capabilities: ["text", "code", "json", "tool_use"],
         description:
           "Alibaba's Qwen 2.5 Coder 32B — a code-specialist model served on Cloudflare's global edge. Strong at code generation, completion, and debugging. App-key only.",
-        status: "current",
-        modelType: "standard",
-        supportsReasoningEffort: false,
-        lastVerified: "2026-04-21",
-      },
-      {
-        id: "@cf/moonshotai/kimi-k2.6",
-        displayName: "Kimi K2.6",
-        contextWindow: 262100,
-        cost: {
-          inputPerMillionTokens: 0,
-          outputPerMillionTokens: 0,
-          currency: "USD",
-          notes:
-            "Free via BotBattle's server deployment. Cloudflare free tier: 10,000 Neurons/day. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars on the server. 1T-parameter MoE with 32B active.",
-        },
-        costType: "appKeyPermissive",
-        capabilities: ["text", "code", "json", "tool_use", "long_context"],
-        description:
-          "Moonshot AI's Kimi K2.6 — 1T-parameter MoE model (32B active) with a 262K context window, served on Cloudflare's edge network. App-key only — no user key needed.",
         status: "current",
         modelType: "standard",
         supportsReasoningEffort: false,

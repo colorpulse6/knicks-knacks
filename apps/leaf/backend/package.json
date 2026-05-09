@@ -12,7 +12,7 @@
     "prestart": "yarn build",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .js,.ts",
-    "test": "node --test"
+    "test": "node --test -r ts-node/register test/**/*.test.ts"
   },
   "keywords": [
     "books",

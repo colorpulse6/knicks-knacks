@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { useAddBook } from '../hooks/useAddBook';
 import { searchBooks, getCoverUrl, OpenLibraryDoc } from '../services/openLibrary';
 import useTheme from '../hooks/useTheme';
 import { BookInput, fetchBooks } from '../services/api';
-import { useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function AddBookScreen() {
   const { themeObj } = useTheme();
@@ -14,6 +26,9 @@ export default function AddBookScreen() {
   const [coverUrl, setCoverUrl] = useState('');
   const [openLibraryId, setOpenLibraryId] = useState('');
   const [selectedBook, setSelectedBook] = useState<BookInput | null>(null);
+  const [searchResults, setSearchResults] = useState<OpenLibraryDoc[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const { mutate: addBook, isPending } = useAddBook(() => {
     setTitle('');
     setAuthor('');
@@ -24,34 +39,48 @@ export default function AddBookScreen() {
     setSelectedBook(null);
   });
 
-  // Open Library search state
-  const [searchResults, setSearchResults] = useState<OpenLibraryDoc[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-
-  // Fetch current books for duplicate check
   const { data: books = [] } = useQuery({
     queryKey: ['books'],
     queryFn: fetchBooks,
   });
 
-  const handleSearch = async (nextTitle?: string, nextAuthor?: string) => {
-    const t = typeof nextTitle === 'string' ? nextTitle : title;
-    const a = typeof nextAuthor === 'string' ? nextAuthor : author;
-    if (!t && !a) {
+  useEffect(() => {
+    const trimmedTitle = title.trim();
+    const trimmedAuthor = author.trim();
+
+    if (!trimmedTitle && !trimmedAuthor) {
       setSearchResults([]);
+      setSearchLoading(false);
       return;
     }
-    setSearchLoading(true);
-    try {
-      const data = await searchBooks({ title: t, author: a, limit: 10 });
-      setSearchResults(data.docs || []);
-    } catch (err) {
-      console.error('Open Library search error:', err);
-      setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
+
+    if (
+      selectedBook &&
+      selectedBook.title === trimmedTitle &&
+      selectedBook.author === trimmedAuthor
+    ) {
+      return;
     }
-  };
+
+    setSearchLoading(true);
+    const searchTimer = setTimeout(async () => {
+      try {
+        const data = await searchBooks({
+          title: trimmedTitle,
+          author: trimmedAuthor,
+          limit: 10,
+        });
+        setSearchResults(data.docs || []);
+      } catch (err) {
+        console.error('Open Library search error:', err);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(searchTimer);
+  }, [author, selectedBook, title]);
 
   const mapDocToBookInput = (doc: OpenLibraryDoc): BookInput => ({
     title: doc.title,
@@ -70,6 +99,9 @@ export default function AddBookScreen() {
     language: (doc as any).language?.[0],
     series: (doc as any).series,
     goodreads_id: (doc as any).goodreads_id,
+    status: 'want_to_read',
+    pages_read: 0,
+    percent_complete: 0,
   });
 
   const handleSelectBook = (doc: OpenLibraryDoc) => {
@@ -83,136 +115,214 @@ export default function AddBookScreen() {
   };
 
   const handleAddBook = () => {
-    // Only require title and author for manual add
-    if (!title || !author) {
-      alert('Please enter a title and author, or select a book from search results.');
+    if (!title.trim() || !author.trim()) {
+      Alert.alert('Missing Details', 'Enter a title and author, or select a result.');
       return;
     }
+
     if (selectedBook) {
       addBook(selectedBook);
-    } else {
-      // Send a full BookInput object, even if some fields are undefined
-      addBook({
-        title,
-        author,
-        cover_url: coverUrl || undefined,
-        open_library_id: openLibraryId || undefined,
-        subtitle: undefined,
-        author_key: undefined,
-        description: undefined,
-        isbn_10: undefined,
-        isbn_13: undefined,
-        publish_date: undefined,
-        publisher: undefined,
-        page_count: undefined,
-        subjects: undefined,
-        language: undefined,
-        series: undefined,
-        goodreads_id: undefined,
-      });
+      return;
     }
+
+    addBook({
+      title: title.trim(),
+      author: author.trim(),
+      cover_url: coverUrl || undefined,
+      open_library_id: openLibraryId || undefined,
+      status: 'want_to_read',
+      pages_read: 0,
+      percent_complete: 0,
+    });
+  };
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    setSelectedBook(null);
+  };
+
+  const handleAuthorChange = (value: string) => {
+    setAuthor(value);
+    setSelectedBook(null);
   };
 
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: themeObj.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={64} // adjust as needed for header
+      keyboardVerticalOffset={64}
     >
-      <View style={{ width: '100%' }}>
+      <Text style={[styles.header, { color: themeObj.text }]}>Add Book</Text>
+      <View style={[styles.panel, { backgroundColor: themeObj.card, borderColor: themeObj.border }]}>
         <TextInput
-          style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
+          style={[
+            styles.input,
+            { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text },
+          ]}
           placeholder="Title"
           placeholderTextColor={themeObj.textSecondary}
           value={title}
-          onChangeText={t => {
-            setTitle(t);
-            handleSearch(t, author);
-          }}
+          onChangeText={handleTitleChange}
         />
         <TextInput
-          style={[styles.input, { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text }]}
+          style={[
+            styles.input,
+            { borderColor: themeObj.border, backgroundColor: themeObj.background, color: themeObj.text },
+          ]}
           placeholder="Author"
           placeholderTextColor={themeObj.textSecondary}
           value={author}
-          onChangeText={a => {
-            setAuthor(a);
-            handleSearch(title, a);
-          }}
+          onChangeText={handleAuthorChange}
         />
-        {/* Autocomplete/Search Results */}
-        {searchLoading && <ActivityIndicator style={{marginBottom: 12}} />}
+        {selectedBook && (
+          <View style={[styles.selectedPill, { backgroundColor: themeObj.muted }]}>
+            <Ionicons name="checkmark-circle" size={18} color={themeObj.primary} />
+            <Text style={[styles.selectedText, { color: themeObj.text }]}>Selected from Open Library</Text>
+          </View>
+        )}
       </View>
+
+      {searchLoading && <ActivityIndicator color={themeObj.primary} style={{ marginBottom: 12 }} />}
+
       {searchResults.length > 0 && (title.trim() !== '' || author.trim() !== '') && (
         <FlatList
           data={searchResults.slice(0, 5)}
-          keyExtractor={item => item.key}
+          keyExtractor={(item) => item.key}
           renderItem={({ item }) => {
-            // Check if this book is already in the user's list
-            const alreadyAdded = books.some((b: BookInput) =>
-              (item.key && b.open_library_id && b.open_library_id === item.key.replace('/works/', '')) ||
-              (Array.isArray(item.isbn) && b.isbn_13 && item.isbn.includes(b.isbn_13)) ||
-              (b.title === item.title && b.author === (item.author_name?.[0] || ''))
+            const alreadyAdded = books.some((book: BookInput) =>
+              (item.key && book.open_library_id && book.open_library_id === item.key.replace('/works/', '')) ||
+              (Array.isArray(item.isbn) && book.isbn_13 && item.isbn.includes(book.isbn_13)) ||
+              (book.title === item.title && book.author === (item.author_name?.[0] || '')),
             );
+
             return (
               <TouchableOpacity
-                style={[styles.searchItem, alreadyAdded && { opacity: 0.5 }]}
+                style={[
+                  styles.searchItem,
+                  { backgroundColor: themeObj.card, borderColor: themeObj.border },
+                  alreadyAdded && { opacity: 0.5 },
+                ]}
                 onPress={() => !alreadyAdded && handleSelectBook(item)}
                 disabled={alreadyAdded}
               >
                 {item.cover_i ? (
-                  <Image source={{ uri: getCoverUrl(item.cover_i, 'S') }} style={{ width: 30, height: 45, borderRadius: 4, marginRight: 12 }} />
+                  <Image source={{ uri: getCoverUrl(item.cover_i, 'S') }} style={styles.resultCover} />
                 ) : (
-                  <View style={{ width: 30, height: 45, borderRadius: 4, backgroundColor: themeObj.card, marginRight: 12 }} />
+                  <View style={[styles.resultCover, { backgroundColor: themeObj.muted }]}>
+                    <Ionicons name="book-outline" size={18} color={themeObj.primary} />
+                  </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.searchTitle}>{item.title}</Text>
-                  <Text style={styles.searchAuthor}>{item.author_name?.[0]}</Text>
+                  <Text style={[styles.searchTitle, { color: themeObj.text }]} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                  <Text style={[styles.searchAuthor, { color: themeObj.textSecondary }]} numberOfLines={1}>
+                    {item.author_name?.[0]}
+                  </Text>
                 </View>
-                {alreadyAdded && (
-                  <Ionicons name="checkmark-circle" size={22} color="green" style={{ marginLeft: 6 }} />
+                {alreadyAdded ? (
+                  <Ionicons name="checkmark-circle" size={22} color={themeObj.accent} style={{ marginLeft: 6 }} />
+                ) : (
+                  <Ionicons name="add-circle-outline" size={22} color={themeObj.primary} style={{ marginLeft: 6 }} />
                 )}
               </TouchableOpacity>
             );
           }}
-          style={{ maxHeight: 300, width: '100%' }}
+          style={styles.resultsList}
           keyboardShouldPersistTaps="handled"
-          ListHeaderComponent={null}
-          ListFooterComponent={null}
         />
       )}
-      <Button title={isPending ? 'Adding...' : 'Add Book'} onPress={handleAddBook} disabled={isPending} color={themeObj.primary} />
+
+      <TouchableOpacity
+        style={[styles.addButton, { backgroundColor: themeObj.primary }]}
+        onPress={handleAddBook}
+        disabled={isPending}
+      >
+        <Ionicons name="add" size={20} color="#12100d" />
+        <Text style={styles.addButtonText}>{isPending ? 'Adding' : 'Add to Library'}</Text>
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'stretch',
+    flex: 1,
     justifyContent: 'flex-start',
     padding: 20,
   },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+  header: {
+    fontSize: 36,
+    fontWeight: '800',
     marginBottom: 16,
+  },
+  panel: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 14,
+  },
+  input: {
+    borderRadius: 8,
+    borderWidth: 1,
     fontSize: 16,
+    marginBottom: 12,
+    padding: 12,
+    width: '100%',
+  },
+  selectedPill: {
+    alignItems: 'center',
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  selectedText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  resultsList: {
+    maxHeight: 330,
+    width: '100%',
   },
   searchItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    marginBottom: 10,
+    padding: 10,
+  },
+  resultCover: {
+    alignItems: 'center',
+    borderRadius: 4,
+    height: 52,
+    justifyContent: 'center',
+    marginRight: 12,
+    width: 36,
   },
   searchTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   searchAuthor: {
     fontSize: 14,
+    marginTop: 2,
+  },
+  addButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginTop: 8,
+    paddingVertical: 14,
+  },
+  addButtonText: {
+    color: '#12100d',
+    fontSize: 16,
+    fontWeight: '800',
   },
 });

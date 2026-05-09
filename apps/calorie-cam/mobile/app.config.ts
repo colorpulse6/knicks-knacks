@@ -52,6 +52,9 @@ export default (): ExpoConfig => {
     ],
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
+      privacyPolicyUrl: process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL,
+      supportEmail: process.env.EXPO_PUBLIC_SUPPORT_EMAIL,
+      termsUrl: process.env.EXPO_PUBLIC_TERMS_URL,
       eas: {
         projectId: easProjectId,
       },

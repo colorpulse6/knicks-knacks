@@ -23,6 +23,8 @@ const API_URL =
       : API_URLS.production;
 
 // --- BookInput type for strong typing across the app ---
+export type BookStatus = 'want_to_read' | 'reading' | 'finished' | 'paused';
+
 export type BookInput = {
   title: string;
   subtitle?: string;
@@ -40,12 +42,24 @@ export type BookInput = {
   language?: string;
   series?: string;
   goodreads_id?: string;
+  status?: BookStatus;
+  pages_read?: number;
+  percent_complete?: number;
 };
 
 export type BookRecord = BookInput & {
   id: string;
   user_id: string;
   created_at: string;
+  status: BookStatus;
+  pages_read: number;
+  percent_complete: number;
+};
+
+export type BookUpdateInput = {
+  status?: BookStatus;
+  pagesRead?: number;
+  percentComplete?: number;
 };
 
 /**
@@ -86,6 +100,26 @@ export async function addBook(book: BookInput) {
     console.error('Failed to add book:', res.status, text, 'URL:', url);
     throw new Error('Failed to add book');
   }
+  return res.json();
+}
+
+export async function updateBook(id: string, update: BookUpdateInput): Promise<BookRecord> {
+  const user_id = await getDeviceUserId();
+  const url = `${API_URL}/books/${encodeURIComponent(id)}`;
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ...update, user_id }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Failed to update book:', res.status, text, 'URL:', url);
+    throw new Error('Failed to update book');
+  }
+
   return res.json();
 }
 

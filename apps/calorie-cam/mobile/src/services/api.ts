@@ -1,4 +1,4 @@
-import { FoodAnalysisResult } from "../types";
+import { FoodAnalysisResult, FoodLog, FoodLogUpdateInput } from "../types";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { getDeviceUserId } from "../utils/deviceUser";
@@ -76,7 +76,7 @@ export const uploadFoodImage = async (
  * Fetches the food logs from the API
  * @returns Array of food log entries
  */
-export const getFoodLogs = async () => {
+export const getFoodLogs = async (): Promise<FoodLog[]> => {
   try {
     const userId = await getDeviceUserId();
     const response = await fetch(
@@ -90,6 +90,73 @@ export const getFoodLogs = async () => {
     return await response.json();
   } catch (error) {
     console.error("Error fetching food logs:", error);
+    throw error;
+  }
+};
+
+export const updateFoodLog = async (
+  id: string,
+  payload: FoodLogUpdateInput
+): Promise<FoodLog> => {
+  try {
+    const userId = await getDeviceUserId();
+    const response = await fetch(
+      `${API_URL}/food-logs/${encodeURIComponent(id)}?userId=${encodeURIComponent(userId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      let errorDetails = `Server responded with status: ${response.status}`;
+      try {
+        const errorBody = await response.json();
+        errorDetails = errorBody.error || errorBody.message || errorDetails;
+      } catch {
+        // Ignore non-JSON error bodies.
+      }
+      throw new Error(errorDetails);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating food log:", error);
+    throw error;
+  }
+};
+
+export const deleteFoodLog = async (id: string): Promise<{ message: string }> => {
+  try {
+    const userId = await getDeviceUserId();
+    const response = await fetch(
+      `${API_URL}/food-logs/${encodeURIComponent(id)}?userId=${encodeURIComponent(userId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      let errorDetails = `Server responded with status: ${response.status}`;
+      try {
+        const errorBody = await response.json();
+        errorDetails = errorBody.error || errorBody.message || errorDetails;
+      } catch {
+        // Ignore non-JSON error bodies.
+      }
+      throw new Error(errorDetails);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting food log:", error);
     throw error;
   }
 };

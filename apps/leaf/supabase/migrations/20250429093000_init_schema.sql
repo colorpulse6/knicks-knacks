@@ -27,6 +27,9 @@ create table books (
   language text,
   series text,
   goodreads_id text,
+  status text default 'want_to_read' check (status in ('want_to_read', 'reading', 'finished', 'paused')),
+  pages_read int default 0 check (pages_read >= 0),
+  percent_complete float default 0 check (percent_complete >= 0 and percent_complete <= 100),
   created_at timestamptz default timezone('utc', now())
 );
 

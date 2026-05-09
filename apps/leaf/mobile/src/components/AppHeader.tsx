@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import useTheme from '../hooks/useTheme';
 
 export default function AppHeader() {
+  const { themeObj } = useTheme();
+
   return (
-    <View style={styles.header}>
-      <Image
-        source={{ uri: 'https://img.icons8.com/emoji/48/000000/leaf-fluttering-in-wind.png' }}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.title}>Leaf</Text>
+    <View style={[styles.header, { backgroundColor: themeObj.background, borderBottomColor: themeObj.border }]}>
+      <View style={[styles.mark, { backgroundColor: themeObj.card, borderColor: themeObj.border }]}>
+        <Ionicons name="leaf-outline" size={20} color={themeObj.primary} />
+      </View>
+      <Text style={[styles.title, { color: themeObj.text }]}>Leaf</Text>
     </View>
   );
 }
@@ -18,22 +20,24 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
     paddingTop: 48,
-    paddingBottom: 16,
-    backgroundColor: '#eafbe7',
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#b4e2c3',
   },
-  logo: {
-    width: 36,
-    height: 36,
+  mark: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 38,
+    justifyContent: 'center',
     marginRight: 10,
+    width: 38,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#388e3c',
-    letterSpacing: 2,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 0,
   },
 });

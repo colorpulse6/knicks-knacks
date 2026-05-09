@@ -1,10 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity, Alert } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchBooks, deleteBook } from '../services/api';
-import useTheme from '../hooks/useTheme';
-import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteBook, fetchBooks, BookRecord, BookStatus } from '../services/api';
+import useTheme from '../hooks/useTheme';
 
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -20,89 +28,151 @@ interface BooksListScreenProps {
   navigation: BooksListScreenNavigationProp;
 }
 
+const statusOrder: BookStatus[] = ['reading', 'want_to_read', 'paused', 'finished'];
+
+const statusLabels: Record<BookStatus, string> = {
+  reading: 'Reading',
+  want_to_read: 'On Deck',
+  paused: 'Paused',
+  finished: 'Finished',
+};
+
+const statusDescriptions: Record<BookStatus, string> = {
+  reading: 'Books currently in motion',
+  want_to_read: 'A shelf for what comes next',
+  paused: 'Set aside without losing the thread',
+  finished: 'Completed reads',
+};
+
 export default function BooksListScreen({ navigation }: BooksListScreenProps) {
   const { themeObj } = useTheme();
-  const [expandedYears, setExpandedYears] = useState<{ [year: string]: boolean }>({});
+  const [expandedSections, setExpandedSections] = useState<Record<BookStatus, boolean>>({
+    reading: true,
+    want_to_read: true,
+    paused: false,
+    finished: false,
+  });
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const {
-    data: books,
+    data: books = [],
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<BookRecord[]>({
     queryKey: ['books'],
-    queryFn: fetchBooks, // No user id argument
+    queryFn: fetchBooks,
   });
-
-  useEffect(() => {
-    if (books && books.length > 0) {
-      const currentYear = dayjs().format('YYYY');
-      setExpandedYears((prev) => {
-        // Only set if it's not already set (e.g., user toggled)
-        if (prev[currentYear]) return prev;
-        return { ...prev, [currentYear]: true };
-      });
-    }
-  }, [books]);
 
   const queryClient = useQueryClient();
   const { mutate: removeBook, isPending: isDeleting } = useMutation({
     mutationFn: async ({ id, user_id }: { id: string; user_id: string }) => {
-      try {
-        return await deleteBook(id, user_id);
-      } catch (err) {
-        console.error('Delete mutation error:', err);
-        throw err;
-      }
+      return deleteBook(id, user_id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] });
     },
-    onError: (error) => {
-      Alert.alert('Failed to delete', `Could not delete book.\n${error instanceof Error ? error.message : ''}`);
+    onError: (deleteError) => {
+      Alert.alert(
+        'Failed to delete',
+        `Could not delete book.\n${deleteError instanceof Error ? deleteError.message : ''}`,
+      );
     },
   });
 
-  // Group books by year and then by month
-  const groupedBooks = books?.reduce((acc: any, book: any) => {
-    const date = dayjs(book.created_at);
-    const year = date.format('YYYY');
-    const month = date.format('MMMM');
-    if (!acc[year]) acc[year] = {};
-    if (!acc[year][month]) acc[year][month] = [];
-    acc[year][month].push(book);
-    return acc;
-  }, {}) || {};
+  const groupedBooks = statusOrder.map((status) => ({
+    status,
+    books: books.filter((book) => (book.status || 'want_to_read') === status),
+  }));
 
-  const toggleYear = (year: string) => {
-    setExpandedYears((prev) => ({ ...prev, [year]: !prev[year] }));
+  const toggleSection = (status: BookStatus) => {
+    setExpandedSections((current) => ({
+      ...current,
+      [status]: !current[status],
+    }));
   };
 
-  // Handler for delete with confirmation
-  const handleDelete = (id: string, bookUserId: string, title: string) => {
+  const handleDelete = (book: BookRecord) => {
     Alert.alert(
       'Delete Book',
-      `Are you sure you want to delete "${title}"? This action cannot be undone!`,
+      `Delete "${book.title}" from your library?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            setPendingDeleteId(id);
-            removeBook({ id, user_id: bookUserId }, { onSettled: () => setPendingDeleteId(null) });
+            setPendingDeleteId(book.id);
+            removeBook(
+              { id: book.id, user_id: book.user_id },
+              { onSettled: () => setPendingDeleteId(null) },
+            );
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
+
+  const renderProgress = (book: BookRecord) => {
+    const percent = Math.max(0, Math.min(100, book.percent_complete || 0));
+    return (
+      <View style={styles.progressWrap}>
+        <View style={[styles.progressTrack, { backgroundColor: themeObj.muted }]}>
+          <View
+            style={[
+              styles.progressFill,
+              { backgroundColor: themeObj.primary, width: `${percent}%` },
+            ]}
+          />
+        </View>
+        <Text style={[styles.progressText, { color: themeObj.textSecondary }]}>
+          {percent}% complete
+        </Text>
+      </View>
+    );
+  };
+
+  const renderBook = (book: BookRecord) => (
+    <TouchableOpacity
+      key={book.id}
+      style={[styles.bookItem, { backgroundColor: themeObj.card, borderColor: themeObj.border }]}
+      onPress={() => navigation.navigate('BookDetails', { book })}
+      activeOpacity={0.85}
+    >
+      {book.cover_url ? (
+        <Image source={{ uri: book.cover_url }} style={styles.coverImg} />
+      ) : (
+        <View style={[styles.coverPlaceholder, { backgroundColor: themeObj.muted }]}>
+          <Ionicons name="book-outline" size={24} color={themeObj.primary} />
+        </View>
+      )}
+      <View style={styles.bookCopy}>
+        <Text style={[styles.bookTitle, { color: themeObj.text }]} numberOfLines={2}>
+          {book.title}
+        </Text>
+        <Text style={[styles.author, { color: themeObj.textSecondary }]} numberOfLines={1}>
+          {book.author}
+        </Text>
+        {renderProgress(book)}
+      </View>
+      <TouchableOpacity
+        onPress={() => handleDelete(book)}
+        style={[styles.deleteButton, { backgroundColor: themeObj.muted }]}
+        disabled={isDeleting || pendingDeleteId === book.id}
+        accessibilityLabel="Delete book"
+      >
+        <Ionicons name="trash-outline" size={18} color={themeObj.text} />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
 
   if (isLoading) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: themeObj.background }]}>
         <ActivityIndicator size="large" color={themeObj.primary} />
-        <Text style={[styles.loadingText, { color: themeObj.textSecondary }]}>Loading your books...</Text>
+        <Text style={[styles.loadingText, { color: themeObj.textSecondary }]}>
+          Loading your library...
+        </Text>
       </View>
     );
   }
@@ -110,70 +180,73 @@ export default function BooksListScreen({ navigation }: BooksListScreenProps) {
   if (error) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: themeObj.background }]}>
-        <Text style={[styles.errorText, { color: themeObj.accent }]}>Failed to load books.</Text>
+        <Text style={[styles.errorText, { color: themeObj.primary }]}>
+          Failed to load books.
+        </Text>
       </View>
     );
   }
 
-  // Render grouped books by year and month
   return (
-    <View style={{ flex: 1, backgroundColor: themeObj.background }}>
+    <View style={[styles.container, { backgroundColor: themeObj.background }]}>
+      <Text style={[styles.header, { color: themeObj.text }]}>Library</Text>
       <FlatList
-        data={Object.keys(groupedBooks).sort((a, b) => Number(b) - Number(a))}
-        keyExtractor={year => year}
-        renderItem={({ item: year }) => (
-          <View>
-            <TouchableOpacity onPress={() => toggleYear(year)} style={{ padding: 12, backgroundColor: themeObj.card, borderBottomWidth: 1, borderColor: themeObj.border }}>
-              <Text style={{ color: themeObj.text, fontWeight: 'bold', fontSize: 18 }}>{year} {expandedYears[year] ? '▲' : '▼'}</Text>
-            </TouchableOpacity>
-            {expandedYears[year] && (
-              <View style={{ paddingLeft: 12 }}>
-                {Object.keys(groupedBooks[year]).sort((a, b) => dayjs(b, 'MMMM').month() - dayjs(a, 'MMMM').month()).map(month => (
-                  <View key={month} style={{ marginBottom: 12 }}>
-                    <Text style={{ color: themeObj.textSecondary, fontWeight: '600', fontSize: 16, marginTop: 8 }}>{month}</Text>
-                    {groupedBooks[year][month].map((item: any) => (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={[styles.bookItem, { backgroundColor: themeObj.card, borderColor: themeObj.border }]}
-                        onPress={() => navigation.navigate('BookDetails', { book: item })}
-                        activeOpacity={0.85}
-                      >
-                        {item.cover_url ? (
-                          <Image source={{ uri: item.cover_url }} style={styles.coverImg} />
-                        ) : null}
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.title, { color: themeObj.text }]}>{item.title}</Text>
-                          <Text style={[styles.author, { color: themeObj.textSecondary }]}>{item.author}</Text>
-                          <Text style={{ color: themeObj.textSecondary, fontSize: 12 }}>
-                            Finished on {dayjs(item.created_at).format('MMMM D, YYYY')}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => handleDelete(item.id, item.user_id, item.title)}
-                          style={{ marginLeft: 8, padding: 8 }}
-                          disabled={isDeleting || pendingDeleteId === item.id}
-                          accessibilityLabel="Delete book"
-                        >
-                          <Ionicons name="trash-outline" size={22} color="#e53935" />
-                        </TouchableOpacity>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ))}
+        data={groupedBooks}
+        keyExtractor={(section) => section.status}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <View style={styles.section}>
+            <TouchableOpacity
+              onPress={() => toggleSection(item.status)}
+              style={[styles.sectionHeader, { borderColor: themeObj.border }]}
+            >
+              <View>
+                <Text style={[styles.sectionTitle, { color: themeObj.text }]}>
+                  {statusLabels[item.status]}
+                </Text>
+                <Text style={[styles.sectionDescription, { color: themeObj.textSecondary }]}>
+                  {statusDescriptions[item.status]}
+                </Text>
               </View>
+              <View style={styles.sectionRight}>
+                <Text style={[styles.sectionCount, { color: themeObj.primary }]}>
+                  {item.books.length}
+                </Text>
+                <Ionicons
+                  name={expandedSections[item.status] ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={themeObj.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+            {expandedSections[item.status] && (
+              item.books.length > 0 ? (
+                item.books.map(renderBook)
+              ) : (
+                <Text style={[styles.emptyShelf, { color: themeObj.textSecondary }]}>
+                  No books here yet.
+                </Text>
+              )
             )}
           </View>
         )}
-        ListEmptyComponent={<Text style={{ color: themeObj.textSecondary, textAlign: 'center', marginTop: 32 }}>No books found.</Text>}
+        ListEmptyComponent={
+          <Text style={[styles.emptyText, { color: themeObj.textSecondary }]}>
+            No books found.
+          </Text>
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centerContainer: {
+  container: {
     flex: 1,
+  },
+  centerContainer: {
     alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
   },
   loadingText: {
@@ -182,35 +255,112 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
+    fontWeight: '700',
     marginTop: 12,
-    fontWeight: 'bold',
+  },
+  header: {
+    fontSize: 36,
+    fontWeight: '800',
+    paddingHorizontal: 20,
+    paddingTop: 18,
+  },
+  listContent: {
+    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  section: {
+    marginBottom: 18,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 21,
+    fontWeight: '800',
+  },
+  sectionDescription: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  sectionRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sectionCount: {
+    fontSize: 18,
+    fontWeight: '800',
   },
   bookItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    margin: 8,
-    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
+    flexDirection: 'row',
+    marginTop: 12,
+    padding: 12,
   },
   coverImg: {
-    width: 50,
-    height: 70,
     borderRadius: 4,
+    height: 86,
     marginRight: 12,
     resizeMode: 'cover',
+    width: 58,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  coverPlaceholder: {
+    alignItems: 'center',
+    borderRadius: 4,
+    height: 86,
+    justifyContent: 'center',
+    marginRight: 12,
+    width: 58,
+  },
+  bookCopy: {
+    flex: 1,
+  },
+  bookTitle: {
+    fontSize: 17,
+    fontWeight: '800',
   },
   author: {
-    fontSize: 15,
-    marginTop: 2,
+    fontSize: 14,
+    marginTop: 3,
+  },
+  progressWrap: {
+    marginTop: 10,
+  },
+  progressTrack: {
+    borderRadius: 999,
+    height: 5,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    borderRadius: 999,
+    height: '100%',
+  },
+  progressText: {
+    fontSize: 12,
+    marginTop: 5,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    borderRadius: 999,
+    height: 38,
+    justifyContent: 'center',
+    marginLeft: 10,
+    width: 38,
+  },
+  emptyShelf: {
+    fontSize: 14,
+    paddingVertical: 16,
   },
   emptyText: {
     fontSize: 16,
-    textAlign: 'center',
     marginTop: 32,
+    textAlign: 'center',
   },
 });

@@ -12,13 +12,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
 import { useTheme } from "../hooks/useTheme";
 import { useClearHistoryHandler } from "../hooks/useClearHistory";
 
+type AppExtra = {
+  privacyPolicyUrl?: string;
+  supportEmail?: string;
+  termsUrl?: string;
+};
+
 const SettingsScreen = () => {
   const { theme, toggleTheme, isLoadingTheme } = useTheme();
+  const isDark = theme === "dark";
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const appVersion = "1.0.0"; // This would be dynamic in a real app
+  const appVersion = Constants.expoConfig?.version ?? "1.0.0";
+  const appExtra = (Constants.expoConfig?.extra ?? {}) as AppExtra;
+  const supportEmail = appExtra.supportEmail || "support@caloriecam.com";
 
   const toggleNotifications = () => {
     setNotificationsEnabled(!notificationsEnabled);
@@ -50,7 +60,26 @@ const SettingsScreen = () => {
   };
 
   const contactSupport = () => {
-    Linking.openURL("mailto:support@caloriecam.com");
+    Linking.openURL(`mailto:${supportEmail}`);
+  };
+
+  const openExternalLink = (url: string | undefined, label: string) => {
+    if (!url) {
+      Alert.alert(
+        `${label} not configured`,
+        "Add this link in the app config before publishing.",
+      );
+      return;
+    }
+
+    Linking.openURL(url);
+  };
+
+  const exportData = () => {
+    Alert.alert(
+      "Export Data",
+      "History export is not available yet. Your logs remain stored for this device account.",
+    );
   };
 
   const renderSettingItem = (
@@ -76,7 +105,7 @@ const SettingsScreen = () => {
           <Ionicons
             name={icon}
             size={24}
-            color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+            color={isDark ? "#ffa387" : "#ef6f4d"}
             style={styles.icon}
           />
           <Text
@@ -153,7 +182,21 @@ const SettingsScreen = () => {
             Data
           </Text>
           {renderSettingItem("Clear History", "trash", clearHistory)}
-          {renderSettingItem("Export Data", "download", () => {})}
+          {renderSettingItem("Export Data", "download", exportData)}
+        </View>
+
+        <View style={[styles.section, theme === "dark" && styles.sectionDark]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              theme === "dark" && styles.sectionTitleDark,
+            ]}
+          >
+            Nutrition
+          </Text>
+          <Text style={[styles.disclaimer, isDark && styles.disclaimerDark]}>
+            CalorieCam estimates nutrition from photos. Results can be wrong and are not medical advice.
+          </Text>
         </View>
 
         <View style={[styles.section, theme === "dark" && styles.sectionDark]}>
@@ -166,8 +209,12 @@ const SettingsScreen = () => {
             Support
           </Text>
           {renderSettingItem("Contact Us", "mail", contactSupport)}
-          {renderSettingItem("Privacy Policy", "document-text", () => {})}
-          {renderSettingItem("Terms of Service", "document", () => {})}
+          {renderSettingItem("Privacy Policy", "document-text", () =>
+            openExternalLink(appExtra.privacyPolicyUrl, "Privacy Policy")
+          )}
+          {renderSettingItem("Terms of Service", "document", () =>
+            openExternalLink(appExtra.termsUrl, "Terms of Service")
+          )}
         </View>
 
         <View style={styles.footer}>
@@ -188,20 +235,21 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#f7f3ed",
   },
   containerDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "#10131b",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 16,
-    color: "#4f46e5",
+    fontSize: 34,
+    fontWeight: "800",
+    marginBottom: 12,
+    marginTop: 8,
+    paddingHorizontal: 18,
+    color: "#171923",
   },
   titleDark: {
-    color: "#c7d2fe", // Lighter indigo for dark mode
+    color: "#f8fafc",
   },
   scrollView: {
     flex: 1,
@@ -209,19 +257,15 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
     backgroundColor: "white",
-    borderRadius: 12,
+    borderColor: "#e7e1d8",
+    borderRadius: 8,
+    borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3.84,
-    elevation: 2,
-    marginHorizontal: 16,
+    marginHorizontal: 18,
   },
   sectionDark: {
-    backgroundColor: "#1f2937", // Dark background for sections
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
+    backgroundColor: "#171923",
+    borderColor: "#2d3340",
   },
   sectionTitle: {
     fontSize: 16,
@@ -243,7 +287,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f3f4f6",
   },
   settingItemDark: {
-    borderBottomColor: "#374151", // Darker border for dark mode
+    borderBottomColor: "#2d3340",
   },
   settingItemLeft: {
     flexDirection: "row",
@@ -257,7 +301,17 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   settingTitleDark: {
-    color: "#f9fafb", // Light text for dark mode
+    color: "#f9fafb",
+  },
+  disclaimer: {
+    color: "#4d5562",
+    fontSize: 14,
+    lineHeight: 20,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  disclaimerDark: {
+    color: "#a7afbd",
   },
   footer: {
     alignItems: "center",

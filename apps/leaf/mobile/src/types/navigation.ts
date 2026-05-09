@@ -1,7 +1,9 @@
 // Shared navigation types for stack and tab navigation
+import type { BookRecord } from '../services/api';
+
 export type RootStackParamList = {
   BooksList: undefined;
-  BookDetails: { book: any };
+  BookDetails: { book: BookRecord };
 };
 
 export type RootTabParamList = {

@@ -52,12 +52,12 @@ function AppContent() {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: "#4f46e5",
-          tabBarInactiveTintColor: "gray",
+          tabBarActiveTintColor: "#ef6f4d",
+          tabBarInactiveTintColor: theme === "dark" ? "#8b95a6" : "#7a6b5f",
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
-            borderTopColor: theme === "dark" ? "#374151" : "#e5e7eb",
+            backgroundColor: theme === "dark" ? "#171923" : "#ffffff",
+            borderTopColor: theme === "dark" ? "#2d3340" : "#e7e1d8",
           },
         })}
       >

@@ -1,25 +1,26 @@
 import React, { createContext, useState, ReactNode } from 'react';
-import { Appearance } from 'react-native';
 
 // Define theme objects directly in the context (like calorie-cam)
 const lightTheme = {
-  background: '#fff',
-  card: '#f6f6f6',
-  text: '#222',
-  textSecondary: '#666',
-  primary: '#4CAF50',
-  accent: '#8BC34A',
-  border: '#e0e0e0',
+  background: '#f4efe5',
+  card: '#fffaf1',
+  text: '#1b1713',
+  textSecondary: '#6f6558',
+  primary: '#b7792b',
+  accent: '#5f7f61',
+  border: '#ded3c3',
+  muted: '#ebe1d2',
 };
 
 const darkTheme = {
-  background: '#222',
-  card: '#333',
-  text: '#fff',
-  textSecondary: '#ccc',
-  primary: '#8BC34A',
-  accent: '#4CAF50',
-  border: '#444',
+  background: '#12100d',
+  card: '#211b16',
+  text: '#f7efe3',
+  textSecondary: '#c7b9a7',
+  primary: '#d7a75b',
+  accent: '#879f72',
+  border: '#3c3128',
+  muted: '#2a231d',
 };
 
 export type Theme = 'light' | 'dark';
@@ -35,8 +36,7 @@ const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 export default ThemeContext;
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const colorScheme = Appearance.getColorScheme();
-  const [theme, setTheme] = useState<Theme>(colorScheme === 'dark' ? 'dark' : 'light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));

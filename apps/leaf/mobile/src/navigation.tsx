@@ -9,6 +9,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "react-native";
 import type { RootStackParamList } from "./types/navigation"; // Adjusted path
+import useTheme from "./hooks/useTheme";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,6 +32,8 @@ function BooksStack() {
 }
 
 export default function AppNavigation() {
+  const { themeObj } = useTheme();
+
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -49,8 +52,12 @@ export default function AppNavigation() {
               <Ionicons name={iconName as any} size={size} color={color} />
             );
           },
-          tabBarActiveTintColor: "#4CAF50",
-          tabBarInactiveTintColor: "gray",
+          tabBarActiveTintColor: themeObj.primary,
+          tabBarInactiveTintColor: themeObj.textSecondary,
+          tabBarStyle: {
+            backgroundColor: themeObj.background,
+            borderTopColor: themeObj.border,
+          },
           tabBarLabel: ({ focused, color }) => {
             let label = "";
             if (route.name === "AddBook") {

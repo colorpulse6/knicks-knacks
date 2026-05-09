@@ -3,7 +3,9 @@ import multer from "multer";
 import {
   analyzeFood,
   clearFoodLogs,
+  deleteFoodLog,
   getFoodLogs,
+  updateFoodLog,
 } from "../controllers/food.controller";
 
 const router = Router();
@@ -21,7 +23,11 @@ router.post("/upload-food-image", upload.single("image") as any, analyzeFood);
 // Route for fetching food logs
 router.get("/food-logs", getFoodLogs);
 
-// Add route for deleting food logs
+// Route for editing or deleting a single food log
+router.patch("/food-logs/:id", updateFoodLog);
+router.delete("/food-logs/:id", deleteFoodLog);
+
+// Route for deleting all food logs for the current device user
 router.delete("/food-logs", clearFoodLogs);
 
 export default router;

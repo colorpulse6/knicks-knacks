@@ -4,6 +4,12 @@ import OpenAI from "openai";
 import { z } from "zod";
 import dotenv from "dotenv";
 import { getRequiredUserId } from "../utils/userScope";
+import {
+  FoodLogRow,
+  getScopedFoodLogFilter,
+  parseFoodLogUpdate,
+  withSignedImageUrls,
+} from "../utils/foodLogs";
 
 dotenv.config();
 
@@ -36,6 +42,64 @@ function sendUserIdError(res: Response, error: unknown): boolean {
     return true;
   }
   return false;
+}
+
+function sendBadRequestError(res: Response, error: unknown): boolean {
+  if (error instanceof z.ZodError) {
+    res.status(400).json({ error: error.issues[0]?.message ?? "Invalid request" });
+    return true;
+  }
+
+  if (
+    error instanceof Error &&
+    (/food log update/i.test(error.message) ||
+      /at least one field/i.test(error.message))
+  ) {
+    res.status(400).json({ error: error.message });
+    return true;
+  }
+
+  return false;
+}
+
+async function createSignedFoodImageUrl(path: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("food-images")
+    .createSignedUrl(path, 60 * 60);
+
+  if (error) {
+    console.error("Error creating signed food image URL:", error);
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
+function getStoredImagePath(log: {
+  image_path?: string | null;
+  image_url?: string | null;
+}): string | null {
+  if (log.image_path) {
+    return log.image_path;
+  }
+
+  if (log.image_url && !/^https?:\/\//i.test(log.image_url)) {
+    return log.image_url;
+  }
+
+  return null;
+}
+
+async function removeStoredFoodImages(paths: string[]): Promise<void> {
+  if (paths.length === 0) {
+    return;
+  }
+
+  const { error } = await supabase.storage.from("food-images").remove(paths);
+
+  if (error) {
+    console.error("Error removing food images from storage:", error);
+  }
 }
 
 async function ensureUser(userId: string): Promise<void> {
@@ -142,36 +206,41 @@ export const analyzeFood = async (
 
     await ensureUser(userId);
 
-    // Get the public URL of the uploaded image
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("food-images").getPublicUrl(filename);
-
     // Store the food log entry in Supabase
-    const { error: logError } = await supabase
+    const { data: createdLog, error: logError } = await supabase
       .from("food_logs")
       .insert([
         {
           user_id: userId,
-          image_url: publicUrl,
+          image_url: filename,
+          image_path: filename,
           food_name: nutritionData.foodName,
           calories: nutritionData.calories,
           proteins: nutritionData.proteins,
           fats: nutritionData.fats,
           carbs: nutritionData.carbs,
         },
-      ]);
+      ])
+      .select("*")
+      .single();
 
     if (logError) {
       console.error("Error storing food log:", logError);
+      await removeStoredFoodImages([filename]);
       res.status(500).json({ error: "Error storing food log data" });
       return;
     }
 
+    const [signedLog] = await withSignedImageUrls(
+      [createdLog as FoodLogRow],
+      createSignedFoodImageUrl,
+    );
+
     res.status(200).json({
       success: true,
       data: nutritionData,
-      imageUrl: publicUrl,
+      imageUrl: signedLog.image_url,
+      log: signedLog,
     });
   } catch (error) {
     console.error("Error analyzing food:", error);
@@ -210,7 +279,12 @@ export const getFoodLogs = async (
       return;
     }
 
-    res.status(200).json(data || []);
+    const signedLogs = await withSignedImageUrls(
+      (data || []) as FoodLogRow[],
+      createSignedFoodImageUrl,
+    );
+
+    res.status(200).json(signedLogs);
   } catch (error) {
     console.error("Error fetching food logs:", error);
     res.status(500).json({ error: "Failed to fetch food logs" });
@@ -234,6 +308,20 @@ export const clearFoodLogs = async (
       throw error;
     }
 
+    const { data: existingLogs, error: selectError } = await supabase
+      .from("food_logs")
+      .select("image_path,image_url")
+      .eq("user_id", userId);
+
+    if (selectError) {
+      console.error("Supabase select error:", selectError);
+      throw new Error("Failed to load food logs for deletion.");
+    }
+
+    const storagePaths = (existingLogs || [])
+      .map(getStoredImagePath)
+      .filter((path): path is string => Boolean(path));
+
     const { error } = await supabase
       .from("food_logs")
       .delete()
@@ -245,6 +333,8 @@ export const clearFoodLogs = async (
       throw new Error("Failed to delete food logs from database.");
     }
 
+    await removeStoredFoodImages(storagePaths);
+
     // Successfully deleted
     // Respond with 200 and a message, or 204 No Content
     res.status(200).json({ message: "Food history cleared successfully." });
@@ -255,5 +345,118 @@ export const clearFoodLogs = async (
     const message =
       error instanceof Error ? error.message : "Failed to clear food history";
     res.status(500).json({ message });
+  }
+};
+
+export const deleteFoodLog = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    let userId: string;
+    try {
+      userId = getRequiredUserId(req);
+    } catch (error) {
+      if (sendUserIdError(res, error)) return;
+      throw error;
+    }
+
+    let scopedFilter: ReturnType<typeof getScopedFoodLogFilter>;
+    try {
+      scopedFilter = getScopedFoodLogFilter(req.params.id, userId);
+    } catch (error) {
+      if (sendBadRequestError(res, error)) return;
+      throw error;
+    }
+
+    const { data: existingLog, error: selectError } = await supabase
+      .from("food_logs")
+      .select("image_path,image_url")
+      .match(scopedFilter)
+      .maybeSingle();
+
+    if (selectError) {
+      console.error("Supabase select error:", selectError);
+      res.status(500).json({ error: "Failed to load food log" });
+      return;
+    }
+
+    if (!existingLog) {
+      res.status(404).json({ error: "Food log not found" });
+      return;
+    }
+
+    const { error: deleteError } = await supabase
+      .from("food_logs")
+      .delete()
+      .match(scopedFilter);
+
+    if (deleteError) {
+      console.error("Supabase delete error:", deleteError);
+      res.status(500).json({ error: "Failed to delete food log" });
+      return;
+    }
+
+    const storagePath = getStoredImagePath(existingLog);
+    await removeStoredFoodImages(storagePath ? [storagePath] : []);
+
+    res.status(200).json({ message: "Food log deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting food log:", error);
+    res.status(500).json({ error: "Failed to delete food log" });
+  }
+};
+
+export const updateFoodLog = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    let userId: string;
+    try {
+      userId = getRequiredUserId(req);
+    } catch (error) {
+      if (sendUserIdError(res, error)) return;
+      throw error;
+    }
+
+    let scopedFilter: ReturnType<typeof getScopedFoodLogFilter>;
+    let updatePayload: ReturnType<typeof parseFoodLogUpdate>;
+
+    try {
+      scopedFilter = getScopedFoodLogFilter(req.params.id, userId);
+      updatePayload = parseFoodLogUpdate(req.body);
+    } catch (error) {
+      if (sendBadRequestError(res, error)) return;
+      throw error;
+    }
+
+    const { data: updatedLog, error: updateError } = await supabase
+      .from("food_logs")
+      .update(updatePayload)
+      .match(scopedFilter)
+      .select("*")
+      .maybeSingle();
+
+    if (updateError) {
+      console.error("Supabase update error:", updateError);
+      res.status(500).json({ error: "Failed to update food log" });
+      return;
+    }
+
+    if (!updatedLog) {
+      res.status(404).json({ error: "Food log not found" });
+      return;
+    }
+
+    const [signedLog] = await withSignedImageUrls(
+      [updatedLog as FoodLogRow],
+      createSignedFoodImageUrl,
+    );
+
+    res.status(200).json(signedLog);
+  } catch (error) {
+    console.error("Error updating food log:", error);
+    res.status(500).json({ error: "Failed to update food log" });
   }
 };

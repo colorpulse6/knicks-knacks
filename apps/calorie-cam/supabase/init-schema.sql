@@ -10,6 +10,7 @@ create table if not exists food_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references users(id) on delete cascade,
   image_url text not null,
+  image_path text,
   food_name text,
   calories integer,
   proteins numeric(5,2),
@@ -20,13 +21,8 @@ create table if not exists food_logs (
 
 -- Create storage bucket for food images
 insert into storage.buckets (id, name, public) 
-values ('food-images', 'food-images', true)
+values ('food-images', 'food-images', false)
 on conflict (id) do nothing;
-
--- Set up storage policy to allow public access to food images
-create policy "Food images are publicly accessible"
-  on storage.objects for select
-  using (bucket_id = 'food-images');
 
 -- Set up storage policy to allow authenticated uploads
 create policy "Users can upload food images"
@@ -49,4 +45,4 @@ create policy "Users can add their own food logs"
 -- Policy to allow anonymous uploads
 create policy "Allow anonymous uploads"
   on food_logs for insert
-  with check (user_id is null); 
+  with check (user_id is null);

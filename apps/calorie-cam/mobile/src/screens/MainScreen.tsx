@@ -7,21 +7,27 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCameraHandler } from "../hooks/useCameraHandler";
 import { useMutationHandler } from "../hooks/useMutationHandler";
 import NutritionCard from "../components/NutritionCard";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FoodAnalysisResult } from "../types";
+import { FoodAnalysisResult, FoodLogUpdateInput } from "../types";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { RootTabParamList } from "../App";
 import { useTheme } from "../hooks/useTheme";
 import { CameraView } from "expo-camera"; // Import CameraView
+import { updateFoodLog } from "../services/api";
 
 type MainScreenProps = BottomTabScreenProps<RootTabParamList, "Camera">;
 
 const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   const { theme } = useTheme(); // Get the current theme
+  const isDark = theme === "dark";
+  const queryClient = useQueryClient();
   const [analysisResult, setAnalysisResult] = useState<FoodAnalysisResult | null>(null);
 
   // Use camera handler hook
@@ -44,6 +50,43 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     // Removed useQueryClient and invalidateQueries here, as it is handled in useMutationHandler
   });
 
+  const updateResultMutation = useMutation({
+    mutationFn: async (payload: FoodLogUpdateInput) => {
+      const logId = analysisResult?.log?.id;
+
+      if (!logId) {
+        throw new Error("No saved food log is available to update.");
+      }
+
+      return updateFoodLog(logId, payload);
+    },
+    onSuccess: (updatedLog) => {
+      setAnalysisResult((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          imageUrl: updatedLog.image_url || current.imageUrl,
+          log: updatedLog,
+          data: {
+            ...current.data,
+            foodName: updatedLog.food_name,
+            calories: updatedLog.calories,
+            proteins: updatedLog.proteins,
+            fats: updatedLog.fats,
+            carbs: updatedLog.carbs,
+          },
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ["foodLogs"] });
+    },
+    onError: (error: Error) => {
+      Alert.alert("Update failed", error.message || "Unable to update the food log.");
+    },
+  });
+
   // Reset the state to take another picture
   const reset = () => {
     resetCamera();
@@ -60,11 +103,11 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     // Permissions are still loading
     return (
       <View
-        style={[styles.container, theme === "dark" && styles.containerDark]}
+        style={[styles.container, isDark && styles.containerDark]}
       >
         <ActivityIndicator
           size="large"
-          color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+          color={isDark ? "#ffa387" : "#ef6f4d"}
         />
       </View>
     );
@@ -74,12 +117,12 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
     // Permissions are not granted yet
     return (
       <View
-        style={[styles.container, theme === "dark" && styles.containerDark]}
+        style={[styles.container, isDark && styles.containerDark]}
       >
         <Text
           style={[
             styles.permissionText,
-            theme === "dark" && styles.permissionTextDark,
+            isDark && styles.permissionTextDark,
           ]}
         >
           We need your permission to show the camera
@@ -96,30 +139,47 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView
-      style={[styles.container, theme === "dark" && styles.containerDark]}
+      style={[styles.container, isDark && styles.containerDark]}
     >
-      <Text style={[styles.title, theme === "dark" && styles.titleDark]}>
-        CalorieCam
-      </Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.eyebrow, isDark && styles.eyebrowDark]}>
+            CalorieCam
+          </Text>
+          <Text style={[styles.title, isDark && styles.titleDark]}>
+            Camera
+          </Text>
+        </View>
+        <TouchableOpacity
+          accessibilityLabel="View history"
+          style={[styles.headerButton, isDark && styles.headerButtonDark]}
+          onPress={viewHistory}
+        >
+          <Ionicons name="list-outline" size={22} color={isDark ? "#f8fafc" : "#171923"} />
+        </TouchableOpacity>
+      </View>
 
       {!capturedImage ? (
         <View style={styles.cameraContainer}>
           <CameraView style={styles.camera} facing={cameraType} ref={cameraRef}>
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={pickImage}>
-                <Text style={styles.buttonText}>Gallery</Text>
+                <Ionicons name="images-outline" size={18} color="#171923" />
+                <Text style={styles.secondaryActionText}>Gallery</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.captureButton]}
                 onPress={takePicture}
               >
+                <Ionicons name="camera" size={20} color="#ffffff" />
                 <Text style={styles.buttonText}>Capture</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.button}
                 onPress={toggleCameraType}
               >
-                <Text style={styles.buttonText}>Flip</Text>
+                <Ionicons name="sync-outline" size={18} color="#171923" />
+                <Text style={styles.secondaryActionText}>Flip</Text>
               </TouchableOpacity>
             </View>
           </CameraView>
@@ -128,7 +188,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
         <ScrollView
           style={[
             styles.resultContainer,
-            theme === "dark" && styles.resultContainerDark,
+            isDark && styles.resultContainerDark,
           ]}
         >
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
@@ -137,12 +197,12 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
             <View style={styles.loadingContainer}>
               <ActivityIndicator
                 size="large"
-                color={theme === "dark" ? "#c7d2fe" : "#4f46e5"}
+                color={isDark ? "#ffa387" : "#ef6f4d"}
               />
               <Text
                 style={[
                   styles.loadingText,
-                  theme === "dark" && styles.loadingTextDark,
+                  isDark && styles.loadingTextDark,
                 ]}
               >
                 Analyzing your food...
@@ -150,11 +210,17 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
             </View>
           ) : analysisMutation.isSuccess && analysisResult ? (
             <>
-              <NutritionCard result={analysisResult} />
+              <NutritionCard
+                result={analysisResult}
+                editable={Boolean(analysisResult.log)}
+                isSaving={updateResultMutation.isPending}
+                onSave={(payload) => updateResultMutation.mutateAsync(payload)}
+              />
               <TouchableOpacity
                 style={styles.historyButton}
                 onPress={viewHistory}
               >
+                <Ionicons name="list-outline" size={18} color="#ffffff" />
                 <Text style={styles.buttonText}>View History</Text>
               </TouchableOpacity>
             </>
@@ -165,6 +231,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
           )}
 
           <TouchableOpacity style={styles.resetButton} onPress={reset}>
+            <Ionicons name="camera-outline" size={18} color="#171923" />
             <Text style={styles.resetButtonText}>Take Another Photo</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -176,28 +243,59 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#f7f3ed",
   },
   containerDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "#10131b",
+  },
+  header: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  eyebrow: {
+    color: "#ef6f4d",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  eyebrowDark: {
+    color: "#ffa387",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 16,
-    color: "#4f46e5",
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#171923",
   },
   titleDark: {
-    color: "#c7d2fe",
+    color: "#f8fafc",
+  },
+  headerButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#e7e1d8",
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  headerButtonDark: {
+    backgroundColor: "#171923",
+    borderColor: "#2d3340",
   },
   cameraContainer: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
-    margin: 16,
+    marginHorizontal: 18,
+    marginBottom: 18,
+    borderColor: "#e7e1d8",
+    borderWidth: 1,
   },
   camera: {
     flex: 1,
@@ -206,37 +304,46 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 20,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    padding: 14,
+    backgroundColor: "rgba(16,19,27,0.72)",
+    gap: 10,
   },
   button: {
-    backgroundColor: "#4f46e5",
-    padding: 15,
-    borderRadius: 50,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    width: 100,
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
   },
   captureButton: {
-    backgroundColor: "#14b8a6",
+    backgroundColor: "#ef6f4d",
+    flex: 1.25,
   },
   buttonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: "#ffffff",
+    fontWeight: "800",
+  },
+  secondaryActionText: {
+    color: "#171923",
+    fontWeight: "800",
   },
   previewImage: {
     width: "100%",
     height: 300,
-    borderRadius: 12,
+    borderRadius: 8,
     marginBottom: 16,
   },
   resultContainer: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f9fafb",
+    paddingHorizontal: 18,
+    backgroundColor: "#f7f3ed",
   },
   resultContainerDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "#10131b",
   },
   loadingContainer: {
     alignItems: "center",
@@ -246,10 +353,10 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: "#4f46e5",
+    color: "#4d5562",
   },
   loadingTextDark: {
-    color: "#c7d2fe",
+    color: "#d7dde8",
   },
   errorText: {
     color: "red",
@@ -258,22 +365,28 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   resetButton: {
-    backgroundColor: "#f59e0b",
+    backgroundColor: "#f2eee8",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
     marginVertical: 20,
   },
   resetButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: "#171923",
+    fontWeight: "800",
     fontSize: 16,
   },
   historyButton: {
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#171923",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
     marginTop: 10,
     marginBottom: 20,
   },
@@ -287,7 +400,7 @@ const styles = StyleSheet.create({
     color: "#f9fafb",
   },
   permissionButton: {
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#ef6f4d",
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 8,

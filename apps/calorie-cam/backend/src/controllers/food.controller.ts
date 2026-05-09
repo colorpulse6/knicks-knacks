@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { z } from "zod";
 import dotenv from "dotenv";
+import { getRequiredUserId } from "../utils/userScope";
 
 dotenv.config();
 
@@ -29,6 +30,24 @@ const NutritionResponseSchema = z.object({
 
 type NutritionResponse = z.infer<typeof NutritionResponseSchema>;
 
+function sendUserIdError(res: Response, error: unknown): boolean {
+  if (error instanceof Error && error.message.includes("userId")) {
+    res.status(400).json({ error: error.message });
+    return true;
+  }
+  return false;
+}
+
+async function ensureUser(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("users")
+    .upsert([{ id: userId }], { onConflict: "id" });
+
+  if (error) {
+    throw new Error(`Failed to initialize user: ${error.message}`);
+  }
+}
+
 /**
  * Analyzes a food image using GPT-4o and stores results in Supabase
  */
@@ -42,7 +61,14 @@ export const analyzeFood = async (
       return;
     }
 
-    const userId = req.body.userId || null; // Optional user ID
+    let userId: string;
+    try {
+      userId = getRequiredUserId(req);
+    } catch (error) {
+      if (sendUserIdError(res, error)) return;
+      throw error;
+    }
+
     const imageBuffer = req.file.buffer;
     const base64Image = imageBuffer.toString("base64");
 
@@ -98,10 +124,10 @@ export const analyzeFood = async (
 
     // Generate a unique filename for the image in Supabase storage
     const timestamp = Date.now();
-    const filename = `food_image_${timestamp}.jpg`;
+    const filename = `${userId}/food_image_${timestamp}.jpg`;
 
     // Upload the image to Supabase storage
-    const { data: storageData, error: storageError } = await supabase.storage
+    const { error: storageError } = await supabase.storage
       .from("food-images")
       .upload(filename, imageBuffer, {
         contentType: "image/jpeg",
@@ -114,13 +140,15 @@ export const analyzeFood = async (
       return;
     }
 
+    await ensureUser(userId);
+
     // Get the public URL of the uploaded image
     const {
       data: { publicUrl },
     } = supabase.storage.from("food-images").getPublicUrl(filename);
 
     // Store the food log entry in Supabase
-    const { data: logData, error: logError } = await supabase
+    const { error: logError } = await supabase
       .from("food_logs")
       .insert([
         {
@@ -159,18 +187,20 @@ export const getFoodLogs = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.query.userId as string | undefined;
+    let userId: string;
+    try {
+      userId = getRequiredUserId(req);
+    } catch (error) {
+      if (sendUserIdError(res, error)) return;
+      throw error;
+    }
 
     // Query to get food logs
-    let query = supabase
+    const query = supabase
       .from("food_logs")
       .select("*")
+      .eq("user_id", userId)
       .order("logged_at", { ascending: false });
-
-    // If userId is provided, filter by user
-    if (userId) {
-      query = query.eq("user_id", userId);
-    }
 
     const { data, error } = await query;
 
@@ -196,18 +226,18 @@ export const clearFoodLogs = async (
   res: Response
 ): Promise<void> => {
   try {
-    // Optional: Implement user ID check if you want to clear only for a logged-in user
-    // const userId = req.user?.id; // Assuming you have user info attached via middleware
-    // if (!userId) {
-    //   res.status(401).json({ message: 'Unauthorized' });
-    //   return;
-    // }
+    let userId: string;
+    try {
+      userId = getRequiredUserId(req);
+    } catch (error) {
+      if (sendUserIdError(res, error)) return;
+      throw error;
+    }
 
     const { error } = await supabase
       .from("food_logs")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000"); // Example: delete all rows (adjust filter as needed)
-    // .eq('user_id', userId); // Example: delete only for the authenticated user
+      .eq("user_id", userId);
 
     if (error) {
       console.error("Supabase delete error:", error);

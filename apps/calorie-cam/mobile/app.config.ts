@@ -1,7 +1,8 @@
-import "dotenv/config";
 import { ExpoConfig } from "expo/config";
 
 export default (): ExpoConfig => {
+  const easProjectId = process.env.EAS_PROJECT_ID;
+
   return {
     name: "CalorieCam",
     slug: "calorie-cam",
@@ -18,14 +19,15 @@ export default (): ExpoConfig => {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.your-org.caloriecam",
+      bundleIdentifier: process.env.EXPO_PUBLIC_IOS_BUNDLE_IDENTIFIER,
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
-      package: "com.your_org.caloriecam",
+      blockedPermissions: ["android.permission.RECORD_AUDIO"],
+      package: process.env.EXPO_PUBLIC_ANDROID_PACKAGE,
     },
     web: {
       favicon: "./assets/favicon.png",
@@ -36,6 +38,7 @@ export default (): ExpoConfig => {
         {
           cameraPermission:
             "Allow CalorieCam to access your camera to take photos of food for analysis.",
+          recordAudioAndroid: false,
         },
       ],
       [
@@ -49,17 +52,15 @@ export default (): ExpoConfig => {
     ],
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
-      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
       eas: {
-        projectId: process.env.EAS_PROJECT_ID || "your-eas-project-id",
+        projectId: easProjectId,
       },
     },
     runtimeVersion: {
       policy: "appVersion",
     },
-    updates: {
-      url: "https://u.expo.dev/your-eas-project-id",
-    },
+    ...(easProjectId
+      ? { updates: { url: `https://u.expo.dev/${easProjectId}` } }
+      : {}),
   };
 };

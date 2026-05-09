@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchBooks, deleteBook } from '../services/api';
 import useTheme from '../hooks/useTheme';
@@ -29,8 +29,6 @@ export default function BooksListScreen({ navigation }: BooksListScreenProps) {
     data: books,
     isLoading,
     error,
-    refetch,
-    isRefetching,
   } = useQuery({
     queryKey: ['books'],
     queryFn: fetchBooks, // No user id argument
@@ -50,7 +48,6 @@ export default function BooksListScreen({ navigation }: BooksListScreenProps) {
   const queryClient = useQueryClient();
   const { mutate: removeBook, isPending: isDeleting } = useMutation({
     mutationFn: async ({ id, user_id }: { id: string; user_id: string }) => {
-      console.log('Attempting to delete book with id:', id, 'user_id:', user_id);
       try {
         return await deleteBook(id, user_id);
       } catch (err) {
@@ -61,7 +58,7 @@ export default function BooksListScreen({ navigation }: BooksListScreenProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] });
     },
-    onError: (error, vars) => {
+    onError: (error) => {
       Alert.alert('Failed to delete', `Could not delete book.\n${error instanceof Error ? error.message : ''}`);
     },
   });

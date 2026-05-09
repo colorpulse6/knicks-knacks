@@ -10,7 +10,6 @@ import HistoryScreen from "./screens/HistoryScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import SplashScreen from "./components/SplashScreen";
 import { Ionicons } from "@expo/vector-icons";
-import * as Font from "expo-font";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useTheme } from "./hooks/useTheme";
 

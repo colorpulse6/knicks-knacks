@@ -25,7 +25,7 @@ const darkTheme = {
 export type Theme = 'light' | 'dark';
 export type AppTheme = typeof lightTheme;
 
-interface ThemeContextProps {
+export interface ThemeContextProps {
   theme: Theme;
   themeObj: AppTheme;
   toggleTheme: () => void;

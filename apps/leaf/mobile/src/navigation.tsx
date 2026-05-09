@@ -7,7 +7,7 @@ import BooksListScreen from "./screens/BooksListScreen";
 import BookDetailsScreen from "./screens/BookDetailsScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet } from "react-native";
+import { Text } from "react-native";
 import type { RootStackParamList } from "./types/navigation"; // Adjusted path
 
 const Tab = createBottomTabNavigator();

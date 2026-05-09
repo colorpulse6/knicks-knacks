@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { getWorksByAuthor, getCoverUrl, getCoverUrlByOlid } from '../services/openLibrary';
+import { getWorksByAuthor, getCoverUrlByOlid } from '../services/openLibrary';
 import useTheme from '../hooks/useTheme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
@@ -26,7 +26,7 @@ export default function BookDetailsScreen({ route, navigation }: BookDetailsScre
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     }
-  }, [book.author, book.language]);
+  }, [book.author, book.language, book.title, navigation]);
 
   return (
     <FlatList

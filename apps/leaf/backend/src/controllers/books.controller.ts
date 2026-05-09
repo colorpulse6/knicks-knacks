@@ -3,10 +3,11 @@ import { supabase } from '../supabaseClient';
 
 export const getBooks: RequestHandler = async (req: Request, res:Response) => {
   const userId = req.query.user_id as string | undefined;
-  let query = supabase.from('books').select('*');
-  if (userId) {
-    query = query.eq('user_id', userId);
+  if (!userId) {
+    res.status(400).json({ error: 'user_id is required' });
+    return;
   }
+  const query = supabase.from('books').select('*').eq('user_id', userId);
   const { data, error } = await query;
   if (error) {
     res.status(500).json({ error: error.message });
@@ -85,7 +86,6 @@ export const addBook: RequestHandler = async (req: Request, res: Response) => {
 export const deleteBook: RequestHandler = async (req:Request, res:Response) => {
   const { id } = req.params;
   const { user_id } = req.body;
-  console.log('[deleteBook controller] id param:', id, 'user_id:', user_id);
   if (!id || !user_id) {
     res.status(400).json({ error: 'Book id and user_id are required' });
     return;
@@ -96,7 +96,6 @@ export const deleteBook: RequestHandler = async (req:Request, res:Response) => {
     .eq('id', id)
     .eq('user_id', user_id)
     .select();
-  console.log('[deleteBook controller] delete result:', { data, error });
   if (error) {
     res.status(500).json({ error: error.message });
     return;

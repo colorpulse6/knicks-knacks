@@ -7,26 +7,18 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useCameraHandler } from "../hooks/useCameraHandler";
 import { useMutationHandler } from "../hooks/useMutationHandler";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { uploadFoodImage } from "../services/api";
 import NutritionCard from "../components/NutritionCard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FoodAnalysisResult } from "../types";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
-import { RootTabParamList } from "../../App";
+import type { RootTabParamList } from "../App";
 import { useTheme } from "../hooks/useTheme";
 import { CameraView } from "expo-camera"; // Import CameraView
 
 type MainScreenProps = BottomTabScreenProps<RootTabParamList, "Camera">;
-
-// Define query keys
-const queryKeys = {
-  foodLogs: ["foodLogs"],
-};
 
 const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   const { theme } = useTheme(); // Get the current theme
@@ -35,7 +27,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ navigation }) => {
   // Use camera handler hook
   const {
     capturedImage,
-    setCapturedImage,
     cameraType,
     toggleCameraType,
     cameraRef,

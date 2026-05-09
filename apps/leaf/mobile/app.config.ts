@@ -1,6 +1,8 @@
 import { ExpoConfig } from "expo/config";
 
 export default (): ExpoConfig => {
+    const easProjectId = process.env.EAS_PROJECT_ID;
+
     return {
         name: "Leaf",
         slug: "leaf",
@@ -13,20 +15,18 @@ export default (): ExpoConfig => {
             resizeMode: "contain",
             backgroundColor: "#ffffff"
         },
-        experiments: {
-            newArch: true, // Enable the New Architecture
-        },
+        newArchEnabled: true,
         assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
-            bundleIdentifier: "com.your-org.leaf"
+            bundleIdentifier: process.env.EXPO_PUBLIC_IOS_BUNDLE_IDENTIFIER
         },
         android: {
             adaptiveIcon: {
                 foregroundImage: "./assets/adaptive-icon.png",
                 backgroundColor: "#ffffff"
             },
-            package: "com.your_org.leaf"
+            package: process.env.EXPO_PUBLIC_ANDROID_PACKAGE
         },
         web: {
             favicon: "./assets/favicon.png"
@@ -34,19 +34,14 @@ export default (): ExpoConfig => {
         extra: {
             apiUrl: process.env.EXPO_PUBLIC_API_URL,
             eas: {
-                projectId: process.env.EAS_PROJECT_ID || "your-leaf-project-id",
+                projectId: easProjectId,
             },
         },
         runtimeVersion: {
             policy: "appVersion",
         },
-        updates: {
-            url: "https://u.expo.dev/your-leaf-project-id",
-        },
-        doctor: {
-            reactNativeDirectoryCheck: {
-                listUnknownPackages: false
-            }
-        },
+        ...(easProjectId
+            ? { updates: { url: `https://u.expo.dev/${easProjectId}` } }
+            : {}),
     };
 };

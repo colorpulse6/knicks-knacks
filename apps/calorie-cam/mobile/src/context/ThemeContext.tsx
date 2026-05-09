@@ -6,7 +6,7 @@ import { useColorScheme, View, StyleSheet } from "react-native";
 export const DARK_MODE_KEY = "@app:darkModeEnabled";
 
 // Define the Theme Context type
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: "light" | "dark";
   toggleTheme: () => void;
   isLoadingTheme: boolean;
@@ -63,7 +63,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         DARK_MODE_KEY,
         JSON.stringify(newTheme === "dark")
       );
-      console.log("Theme preference saved:", newTheme);
     } catch (error) {
       console.error("Failed to save theme preference:", error);
       // Revert state if save failed

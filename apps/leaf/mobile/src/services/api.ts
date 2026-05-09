@@ -4,34 +4,23 @@ import { getDeviceUserId } from '../utils/deviceUser';
 
 // API URL configuration
 const isDevelopment = __DEV__;
+const apiUrlFromConfig = Constants.expoConfig?.extra?.apiUrl;
 const API_URLS = {
   development: {
     android: 'http://10.0.2.2:4000', // Update port if needed
     ios: 'http://localhost:4000',
-    physical: 'http://192.168.136.109:4000', // Update with your local IP and port
   },
-  production: 'https://knick-knacks-leaf-production.up.railway.app', // Update with your production URL
+  production: 'https://knick-knacks-leaf-production.up.railway.app',
 };
 
-let API_URL: string;
-if (isDevelopment) {
-  const isExpoGoOrStandalone =
-    Constants.executionEnvironment === 'storeClient' ||
-    Constants.executionEnvironment === 'standalone';
-    
-  const isPhysicalDeviceEnvironment =
-    isExpoGoOrStandalone || !Constants.executionEnvironment;
-  if (isPhysicalDeviceEnvironment) {
-    API_URL = API_URLS.development.physical;
-  } else {
-    API_URL =
-      Platform.OS === 'android'
+const API_URL =
+  typeof apiUrlFromConfig === 'string' && apiUrlFromConfig.length > 0
+    ? apiUrlFromConfig
+    : isDevelopment
+      ? Platform.OS === 'android'
         ? API_URLS.development.android
-        : API_URLS.development.ios;
-  }
-} else {
-  API_URL = API_URLS.production;
-}
+        : API_URLS.development.ios
+      : API_URLS.production;
 
 // --- BookInput type for strong typing across the app ---
 export type BookInput = {
@@ -53,12 +42,18 @@ export type BookInput = {
   goodreads_id?: string;
 };
 
+export type BookRecord = BookInput & {
+  id: string;
+  user_id: string;
+  created_at: string;
+};
+
 /**
  * Fetches books from the API.
  *
  * @returns {Promise<Object[]>} A promise resolving to an array of book objects.
  */
-export async function fetchBooks() {
+export async function fetchBooks(): Promise<BookRecord[]> {
   const user_id = await getDeviceUserId();
   const url = `${API_URL}/books?user_id=${encodeURIComponent(user_id)}`;
   const res = await fetch(url);
@@ -77,7 +72,6 @@ export async function fetchBooks() {
  * @returns {Promise<Object>} A promise resolving to the added book object.
  */
 export async function addBook(book: BookInput) {
-  console.log("ADDING BOOK", book)
   const user_id = await getDeviceUserId();
   const url = `${API_URL}/books`;
   const res = await fetch(url, {
@@ -102,7 +96,7 @@ export async function addBook(book: BookInput) {
  * @param {string} user_id - The user_id of the book owner.
  * @returns {Promise<boolean>} A promise resolving to true if the book was deleted successfully.
  */
-export async function deleteBook(id: string, user_id: string) {
+export async function deleteBook(id: string, user_id: string): Promise<boolean> {
   const url = `${API_URL}/books/${id}`;
   const res = await fetch(url, {
     method: 'DELETE',
@@ -110,7 +104,6 @@ export async function deleteBook(id: string, user_id: string) {
     body: JSON.stringify({ user_id }),
   });
   const text = await res.text();
-  console.log('[deleteBook] URL:', url, 'Status:', res.status, 'Response:', text);
   if (!res.ok) {
     console.error('Failed to delete book:', res.status, text);
     throw new Error('Failed to delete book');

@@ -15,10 +15,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../hooks/useTheme";
 import { useClearHistoryHandler } from "../hooks/useClearHistory";
 
-const queryKeys = {
-  foodLogs: ["foodLogs"],
-};
-
 const SettingsScreen = () => {
   const { theme, toggleTheme, isLoadingTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);

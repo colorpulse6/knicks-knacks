@@ -3,12 +3,9 @@ import { View, Text, TextInput, Button, StyleSheet, KeyboardAvoidingView, Platfo
 import { useAddBook } from '../hooks/useAddBook';
 import { searchBooks, getCoverUrl, OpenLibraryDoc } from '../services/openLibrary';
 import useTheme from '../hooks/useTheme';
-import { BookInput } from '../services/api';
+import { BookInput, fetchBooks } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
-import { fetchBooks } from '../services/api';
 import { Ionicons } from '@expo/vector-icons';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || process.env.API_URL;
 
 export default function AddBookScreen() {
   const { themeObj } = useTheme();
@@ -91,7 +88,6 @@ export default function AddBookScreen() {
       alert('Please enter a title and author, or select a book from search results.');
       return;
     }
-    console.log("SELECTED BOOK", selectedBook)
     if (selectedBook) {
       addBook(selectedBook);
     } else {

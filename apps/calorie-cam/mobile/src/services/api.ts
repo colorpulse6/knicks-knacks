@@ -1,59 +1,31 @@
 import { FoodAnalysisResult } from "../types";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { getDeviceUserId } from "../utils/deviceUser";
 
 // Determine if we're running in development mode
 const isDevelopment = __DEV__;
 
 // API URL configuration
+const apiUrlFromConfig = Constants.expoConfig?.extra?.apiUrl;
+
 const API_URLS = {
-  // For simulator/emulator, use localhost
   development: {
-    // Android emulator needs 10.0.2.2 to access host machine's localhost
     android: "http://10.0.2.2:3000/api",
-    // iOS simulator can use localhost directly
     ios: "http://localhost:3000/api",
-    // For physical devices in development, use your computer's local IP address
-    // Replace with your actual local IP address when testing on physical devices
-    physical: "http://192.168.2.106:3000/api", // Update this with your actual IP
   },
-  // Production endpoint
   production: "https://calorie-cam-production.up.railway.app/api",
 };
 
 // Determine the appropriate API URL based on environment and platform
-let API_URL: string;
-if (isDevelopment) {
-  // Check if running in Expo Go ('storeClient') or as a standalone build
-  const isExpoGoOrStandalone =
-    Constants.executionEnvironment === "storeClient" ||
-    Constants.executionEnvironment === "standalone";
-
-  // Determine if it's likely a physical device environment
-  // This includes Expo Go, standalone builds, or cases where executionEnvironment might be undefined
-  const isPhysicalDeviceEnvironment =
-    isExpoGoOrStandalone || !Constants.executionEnvironment; // Fallback for older versions or edge cases
-
-  if (isPhysicalDeviceEnvironment) {
-    // Use the local network IP for physical devices (including Expo Go)
-    API_URL = API_URLS.development.physical;
-  } else {
-    // Otherwise, assume simulator/emulator and use platform-specific localhost address
-    API_URL =
-      Platform.OS === "android"
+const API_URL =
+  typeof apiUrlFromConfig === "string" && apiUrlFromConfig.length > 0
+    ? apiUrlFromConfig
+    : isDevelopment
+      ? Platform.OS === "android"
         ? API_URLS.development.android
-        : API_URLS.development.ios;
-  }
-} else {
-  // In production, always use the production URL
-  API_URL = API_URLS.production;
-}
-
-console.log(
-  `Using API URL: ${API_URL} (${
-    isDevelopment ? "development" : "production"
-  } mode on ${Platform.OS}, env: ${Constants.executionEnvironment})` // Added env for debugging
-);
+        : API_URLS.development.ios
+      : API_URLS.production;
 
 /**
  * Uploads a food image for analysis
@@ -66,6 +38,7 @@ export const uploadFoodImage = async (
   try {
     // Create form data for the image
     const formData = new FormData();
+    const userId = await getDeviceUserId();
 
     // Get filename from URI
     const uriParts = imageUri.split("/");
@@ -77,6 +50,7 @@ export const uploadFoodImage = async (
       name: fileName,
       type: "image/jpeg",
     } as any);
+    formData.append("userId", userId);
 
     // Send the request to the server
     const response = await fetch(`${API_URL}/upload-food-image`, {
@@ -84,7 +58,6 @@ export const uploadFoodImage = async (
       body: formData,
       headers: {
         Accept: "application/json",
-        "Content-Type": "multipart/form-data",
       },
     });
 
@@ -105,7 +78,10 @@ export const uploadFoodImage = async (
  */
 export const getFoodLogs = async () => {
   try {
-    const response = await fetch(`${API_URL}/food-logs`);
+    const userId = await getDeviceUserId();
+    const response = await fetch(
+      `${API_URL}/food-logs?userId=${encodeURIComponent(userId)}`
+    );
 
     if (!response.ok) {
       throw new Error(`Server responded with status: ${response.status}`);
@@ -125,14 +101,16 @@ export const getFoodLogs = async () => {
  */
 export const clearFoodLogs = async (): Promise<{ message: string }> => {
   try {
-    // TODO: Add authentication headers if needed
-    const response = await fetch(`${API_URL}/food-logs`, {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        // 'Authorization': `Bearer YOUR_TOKEN_HERE` // If auth is needed
-      },
-    });
+    const userId = await getDeviceUserId();
+    const response = await fetch(
+      `${API_URL}/food-logs?userId=${encodeURIComponent(userId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
 
     if (!response.ok) {
       // Try to parse error message from server if possible
@@ -140,7 +118,7 @@ export const clearFoodLogs = async (): Promise<{ message: string }> => {
       try {
         const errorBody = await response.json();
         errorDetails = errorBody.message || errorDetails;
-      } catch (parseError) {
+      } catch {
         // Ignore if response body is not JSON
       }
       throw new Error(errorDetails);

@@ -17,7 +17,7 @@ const NutritionCard: React.FC<NutritionCardProps> = ({ result }) => {
       <View
         style={[styles.container, theme === "dark" && styles.containerDark]}
       >
-        <Text style={styles.notFoodTitle}>That's not food! 🧐</Text>
+        <Text style={styles.notFoodTitle}>{"That's not food! 🧐"}</Text>
         <Text
           style={[
             styles.notFoodMessage,

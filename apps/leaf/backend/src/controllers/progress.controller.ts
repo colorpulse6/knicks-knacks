@@ -3,8 +3,12 @@ import { supabase } from '../supabaseClient';
 
 export const getProgress = async (req: Request, res: Response) => {
   const { user_id, book_id } = req.query;
-  let query = supabase.from('progress').select('*');
-  if (user_id) query = query.eq('user_id', user_id);
+  if (!user_id) {
+    res.status(400).json({ error: 'user_id is required' });
+    return;
+  }
+
+  let query = supabase.from('progress').select('*').eq('user_id', user_id);
   if (book_id) query = query.eq('book_id', book_id);
   const { data, error } = await query;
   if (error) {
@@ -17,6 +21,11 @@ export const getProgress = async (req: Request, res: Response) => {
 
 export const upsertProgress = async (req: Request, res: Response) => {
   const { user_id, book_id, pages_read, chapters_read, percent_complete } = req.body;
+  if (!user_id || !book_id) {
+    res.status(400).json({ error: 'user_id and book_id are required' });
+    return;
+  }
+
   const { data, error } = await supabase
     .from('progress')
     .upsert([

@@ -29,11 +29,11 @@ const RegexInput: React.FC<RegexInputProps> = ({
   }, [pattern]);
 
   return (
-    <form className="flex w-full flex-col gap-2" onSubmit={onSubmit}>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="font-medium text-gray-700 dark:text-gray-300">
-            Pattern
+    <form className="regex-form" onSubmit={onSubmit}>
+      <div className="regex-form__fields">
+        <label className="regex-field regex-field--pattern">
+          <span className="regex-field__label">
+            <span aria-hidden="true">01</span> Pattern
           </span>
           <input
             ref={patternInputRef}
@@ -41,31 +41,31 @@ const RegexInput: React.FC<RegexInputProps> = ({
             value={pattern}
             onChange={(event) => onPatternChange(event.target.value)}
             placeholder="^[a-z]+$"
-            className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900"
+            className="regex-field__input"
             spellCheck={false}
             autoFocus
           />
         </label>
-        <label className="flex flex-col gap-1 sm:w-24">
-          <span className="font-medium text-gray-700 dark:text-gray-300">
-            Flags
+        <label className="regex-field regex-field--flags">
+          <span className="regex-field__label">
+            <span aria-hidden="true">02</span> Flags
           </span>
           <input
             type="text"
             value={flags}
             onChange={(event) => onFlagsChange(event.target.value)}
             placeholder="gim"
-            className="rounded border border-gray-300 bg-white px-4 py-2 text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900"
+            className="regex-field__input"
             spellCheck={false}
           />
         </label>
       </div>
-      <p className="text-xs text-gray-600 dark:text-gray-400">
-        Enter the pattern without surrounding slash delimiters. Slashes typed
-        in the pattern field remain literal content.
+      <p className="regex-form__hint">
+        Enter the pattern without surrounding slash delimiters. Slashes typed in
+        the pattern field remain literal content.
       </p>
       {showWarning && (
-        <div className="text-yellow-600 bg-yellow-100 border border-yellow-300 rounded px-2 py-1 text-xs mt-1">
+        <div className="terminal-notice terminal-notice--warning">
           <b>Heads up:</b> It looks like your regex contains double backslashes
           (e.g., <code>\\w</code>, <code>\\.</code>, <code>\\d</code>, etc.).
           <br />
@@ -73,7 +73,7 @@ const RegexInput: React.FC<RegexInputProps> = ({
             \w
           </code>, <code>\.</code>, <code>\d</code>).
           <br />
-          <span className="font-mono">
+          <span>
             Tip: Try replacing double backslashes with a single backslash for
             regex tokens (e.g., <code>\\w</code> → <code>\w</code>,{" "}
             <code>\\.</code> → <code>\.</code>).
@@ -83,9 +83,9 @@ const RegexInput: React.FC<RegexInputProps> = ({
       <button
         type="submit"
         disabled={disabled}
-        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+        className="terminal-button terminal-button--primary"
       >
-        Explain regex
+        <span aria-hidden="true">RUN</span> Explain regex
       </button>
     </form>
   );

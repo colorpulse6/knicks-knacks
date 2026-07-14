@@ -93,7 +93,7 @@ export default function RegexWorkbench() {
   };
 
   return (
-    <section id="workbench" aria-label="Regex workbench" className="space-y-6">
+    <section id="workbench" aria-label="Regex workbench" className="workbench">
       <CommonPatterns examples={examples} onSelect={selectExample} />
       <RegexInput
         pattern={pattern}
@@ -110,10 +110,12 @@ export default function RegexWorkbench() {
         patternInputRef={patternInputRef}
         disabled={isLoading}
       />
-      <p className="text-xs text-gray-600 dark:text-gray-400">
-        Privacy: your pattern is sent to Groq when you request an AI summary.
+      <p className="workbench__privacy">
+        <span aria-hidden="true">i</span>
+        Local tools stay in this browser. Your pattern is sent to Groq only when
+        you request an AI summary.
       </p>
-      <div role="status" aria-live="polite" className="min-h-5 text-sm">
+      <div role="status" aria-live="polite" className="workbench__status">
         {status}
       </div>
       <ExplanationDisplay summary={summary} loading={isLoading} error={error} />

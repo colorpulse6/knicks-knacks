@@ -10,15 +10,13 @@ export default function CommonPatterns({
   onSelect: (example: RegexExample) => void;
 }) {
   return (
-    <div className="mb-4">
-      <div className="font-semibold mb-1 text-gray-700 dark:text-gray-300">
-        Common Patterns:
-      </div>
-      <div className="flex flex-wrap gap-2">
+    <div className="pattern-picker">
+      <div className="pattern-picker__label">QUICK LOAD</div>
+      <div className="pattern-picker__controls">
         {examples.map((example) => (
           <button
             key={example.slug}
-            className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-xs hover:bg-blue-200 dark:hover:bg-blue-900 transition"
+            className="pattern-picker__button"
             title={example.description}
             onClick={() => onSelect(example)}
             type="button"

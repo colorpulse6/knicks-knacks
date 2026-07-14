@@ -14,23 +14,20 @@ const ExplanationDisplay: React.FC<ExplanationDisplayProps> = ({
   return (
     <section
       aria-label="AI summary"
-      className="min-h-[64px] bg-gray-50 dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700 text-base text-gray-900 dark:text-gray-100 shadow-sm transition-colors"
+      className="result-panel result-panel--summary"
     >
       {loading ? (
-        <span className="animate-pulse text-blue-500">
-          Generating AI summary…
-        </span>
+        <span className="terminal-pulse">Generating AI summary…</span>
       ) : error ? (
-        <div
-          role="alert"
-          className="text-red-600 bg-red-100 border border-red-300 rounded px-2 py-1 text-sm"
-        >
+        <div role="alert" className="terminal-notice terminal-notice--error">
           {error}
         </div>
       ) : summary ? (
         <p>{summary}</p>
       ) : (
-        <span className="text-gray-400">AI summary will appear here.</span>
+        <span className="result-panel__empty">
+          <span aria-hidden="true">//</span> AI summary will appear here.
+        </span>
       )}
     </section>
   );

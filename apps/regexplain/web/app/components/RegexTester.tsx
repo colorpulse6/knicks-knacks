@@ -19,9 +19,9 @@ const highlightMatches = (input: string, matches: RegExpMatchArray[]) => {
       parts.push(input.slice(lastIndex, start));
     }
     parts.push(
-      <mark key={i} className="bg-yellow-200 dark:bg-yellow-700 rounded px-1">
+      <mark key={i} className="match-highlight">
         {input.slice(start, end)}
-      </mark>
+      </mark>,
     );
     lastIndex = end;
   });
@@ -55,35 +55,36 @@ const RegexTester: React.FC<RegexTesterProps> = ({ pattern, flags }) => {
   }, [flags, pattern, sample]);
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700 flex flex-col gap-2">
-      <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Test your regex:
+    <div className="result-panel regex-tester">
+      <label className="result-panel__heading">
+        <span>Test your regex</span>
+        <span className="result-panel__badge">LOCAL</span>
       </label>
       <input
         type="text"
         value={sample}
         onChange={(e) => setSample(e.target.value)}
         placeholder="Enter a sample string"
-        className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        className="regex-field__input"
         aria-label="Sample string"
       />
-      <div className="mt-2 min-h-[2em] text-base text-gray-900 dark:text-gray-100">
+      <div className="regex-tester__output">
         {sample && pattern ? (
           result.error ? (
-            <span className="text-red-500">
+            <span className="terminal-error-text">
               Invalid regex: {result.error}
             </span>
           ) : (
             <span>{highlightMatches(sample, result.matches ?? [])}</span>
           )
         ) : (
-          <span className="text-gray-400">
+          <span className="result-panel__empty">
             Matches will be highlighted here.
           </span>
         )}
       </div>
       {result.matches && (
-        <div className="text-xs text-gray-500 mt-2">
+        <div className="regex-tester__count">
           {result.matches.length} match
           {result.matches.length === 1 ? "" : "es"} found.
           {result.matches[0] && result.matches[0].length > 1 && (

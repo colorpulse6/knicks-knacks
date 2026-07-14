@@ -241,19 +241,17 @@ export default function RegexBreakdown({
   const descriptionId = "selected-token-description";
 
   return (
-    <section
-      aria-label="Local syntax map"
-      className="mt-2 rounded border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
-    >
-      <div className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
-        Local syntax map
+    <section aria-label="Local syntax map" className="result-panel syntax-map">
+      <div className="result-panel__heading">
+        <span>Local syntax map</span>
+        <span className="result-panel__badge">DETERMINISTIC</span>
       </div>
       {result.error && (
-        <div className="mb-2 rounded border border-red-300 bg-red-100 px-2 py-1 text-xs text-red-600">
+        <div className="terminal-notice terminal-notice--error">
           <b>Invalid regex:</b> {result.error}
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="syntax-map__tokens">
         {result.tokens.length > 0 ? (
           result.tokens.map((token, index) => {
             const isActive = activeIndex === index;
@@ -264,7 +262,7 @@ export default function RegexBreakdown({
                 aria-label={`Token ${index + 1}: ${token.raw}`}
                 aria-pressed={isActive}
                 aria-describedby={isActive ? descriptionId : undefined}
-                className="rounded bg-blue-100 px-2 py-1 text-sm text-blue-900 dark:bg-blue-900 dark:text-blue-100"
+                className="syntax-token"
                 onClick={() => setActiveIndex(index)}
               >
                 {token.raw}
@@ -272,7 +270,7 @@ export default function RegexBreakdown({
             );
           })
         ) : (
-          <span className="text-sm text-gray-400">
+          <span className="result-panel__empty">
             Enter a pattern to inspect its syntax locally.
           </span>
         )}
@@ -281,7 +279,7 @@ export default function RegexBreakdown({
         id={descriptionId}
         role="region"
         aria-label="Selected token description"
-        className="mt-3 min-h-6 text-sm text-gray-700 dark:text-gray-300"
+        className="syntax-map__description"
       >
         {selectedToken
           ? `${selectedToken.raw}: ${selectedToken.description}`

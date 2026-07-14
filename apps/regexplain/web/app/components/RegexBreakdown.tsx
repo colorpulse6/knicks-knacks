@@ -45,7 +45,7 @@ const REGEX_TOKENS: Record<string, string> = {
   ":": "Colon",
 };
 
-function tokenize(pattern: string): RegexToken[] {
+function sourceTokenize(pattern: string): RegexToken[] {
   const tokens: RegexToken[] = [];
 
   for (let index = 0; index < pattern.length; index += 1) {
@@ -60,6 +60,23 @@ function tokenize(pattern: string): RegexToken[] {
     }
 
     if (character === "\\" && index + 1 < pattern.length) {
+      const propertyPrefix = pattern.slice(index, index + 3);
+      if (propertyPrefix === "\\p{" || propertyPrefix === "\\P{") {
+        const propertyEnd = pattern.indexOf("}", index + 3);
+        if (propertyEnd !== -1) {
+          const property = pattern.slice(index, propertyEnd + 1);
+          tokens.push({
+            raw: property,
+            description:
+              propertyPrefix === "\\P{"
+                ? "Negated Unicode property escape"
+                : "Unicode property escape",
+          });
+          index = propertyEnd;
+          continue;
+        }
+      }
+
       const sequence = pattern.slice(index, index + 2);
       tokens.push({
         raw: sequence,
@@ -78,8 +95,7 @@ function tokenize(pattern: string): RegexToken[] {
   return tokens;
 }
 
-function astTokenize(pattern: string, flags: string): RegexToken[] {
-  const regex = new RegExp(pattern, flags);
+function astTokenize(regex: RegExp): RegexToken[] {
   const ast = parse(regex);
   const tokens: RegexToken[] = [];
 
@@ -180,7 +196,7 @@ function astTokenize(pattern: string, flags: string): RegexToken[] {
   }
 
   walk(ast);
-  return tokens.length > 0 ? tokens : tokenize(pattern);
+  return tokens;
 }
 
 export default function RegexBreakdown({
@@ -194,13 +210,25 @@ export default function RegexBreakdown({
   }>(() => {
     if (!pattern) return { tokens: [], error: null };
 
+    let regex: RegExp;
     try {
-      return { tokens: astTokenize(pattern, flags), error: null };
+      regex = new RegExp(pattern, flags);
     } catch (error) {
       return {
-        tokens: tokenize(pattern),
+        tokens: sourceTokenize(pattern),
         error: error instanceof Error ? error.message : "Invalid regex",
       };
+    }
+
+    try {
+      const astTokens = astTokenize(regex);
+      const astSource = astTokens.map((token) => token.raw).join("");
+      return {
+        tokens: astSource === pattern ? astTokens : sourceTokenize(pattern),
+        error: null,
+      };
+    } catch {
+      return { tokens: sourceTokenize(pattern), error: null };
     }
   }, [flags, pattern]);
 

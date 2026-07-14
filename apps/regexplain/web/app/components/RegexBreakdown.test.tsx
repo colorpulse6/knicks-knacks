@@ -4,7 +4,64 @@ import { describe, expect, it } from "vitest";
 
 import RegexBreakdown from "./RegexBreakdown";
 
+function renderedTokenSource(): string {
+  return screen
+    .getAllByRole("button", { name: /token/i })
+    .map((button) => button.textContent ?? "")
+    .join("");
+}
+
 describe("RegexBreakdown", () => {
+  it.each([
+    ["indices flag", "a", "d"],
+    ["Unicode sets flag", "[a&&b]", "v"],
+  ])(
+    "keeps a complete map for a runtime-valid pattern using the %s",
+    (_case, pattern, flags) => {
+      expect(() => new RegExp(pattern, flags)).not.toThrow();
+
+      render(<RegexBreakdown pattern={pattern} flags={flags} />);
+
+      expect(screen.queryByText("Invalid regex:")).not.toBeInTheDocument();
+      expect(renderedTokenSource()).toBe(pattern);
+    },
+  );
+
+  it("preserves a Unicode property escape as one meaningful token", () => {
+    const pattern = "\\p{Letter}+";
+    expect(() => new RegExp(pattern, "u")).not.toThrow();
+
+    render(<RegexBreakdown pattern={pattern} flags="u" />);
+
+    expect(screen.queryByText("Invalid regex:")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Token 1: \\p{Letter}" }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Token 2: +" })).toBeVisible();
+    expect(renderedTokenSource()).toBe(pattern);
+  });
+
+  it("preserves literal slashes exactly as entered", () => {
+    const pattern = "/a/i";
+    expect(() => new RegExp(pattern)).not.toThrow();
+
+    render(<RegexBreakdown pattern={pattern} flags="" />);
+
+    expect(renderedTokenSource()).toBe(pattern);
+    expect(
+      screen.getAllByRole("button", { name: /token \d+: \/$/i }),
+    ).toHaveLength(2);
+  });
+
+  it("still reports patterns rejected by the JavaScript runtime", () => {
+    expect(() => new RegExp("[")).toThrow();
+
+    render(<RegexBreakdown pattern="[" flags="" />);
+
+    expect(screen.getByText("Invalid regex:")).toBeVisible();
+    expect(renderedTokenSource()).toBe("[");
+  });
+
   it("keeps literal and quantifier details in the local syntax map", () => {
     render(<RegexBreakdown pattern="^a+$" flags="i" />);
 

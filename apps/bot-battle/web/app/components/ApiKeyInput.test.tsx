@@ -36,6 +36,19 @@ describe("ApiKeyInput — Test connection", () => {
     expect(input).toHaveAttribute("type", "password");
   });
 
+  it("explains that testing and benchmarks send the selected key through BotBattle", () => {
+    render(<ApiKeyInput provider="openai" label="OpenAI" />);
+
+    expect(
+      screen.getByText(
+        /test a key or run a benchmark.*through BotBattle's API to the provider/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/sent directly from your browser to the LLM provider/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows success after POSTing to /api/providers/test-key and receiving ok:true", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,

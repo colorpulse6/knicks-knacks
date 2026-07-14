@@ -46,4 +46,14 @@ describe("homepage SEO content", () => {
 
     expect(container.querySelector('a[href="/settings"]')).not.toBeNull();
   });
+
+  it("distinguishes browser storage from key transmission", () => {
+    const text = visibleText(renderHomeSeoContent());
+
+    expect(text).toMatch(/stored in browser memory or localStorage/i);
+    expect(text).toMatch(
+      /test a key or run a benchmark.*through BotBattle's API to the provider/i,
+    );
+    expect(text).not.toMatch(/keys stay browser-side/i);
+  });
 });

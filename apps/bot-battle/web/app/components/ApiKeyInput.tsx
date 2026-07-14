@@ -252,7 +252,8 @@ export function ApiKeyInput({
             : "• Closing this tab or refreshing the page will clear the key."}
         </p>
         <p>
-          • Your key is sent directly from your browser to the LLM provider.
+          • When you test a key or run a benchmark, the selected key is sent
+          through BotBattle&apos;s API to the provider.
         </p>
         <p>
           • For enhanced security, consider using keys with limited permissions.

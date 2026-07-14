@@ -64,7 +64,10 @@ export default function SettingsPage() {
         Add your own API keys to use with Bot Battle.
         {isPersistenceEnabled
           ? " Your keys are stored in your browser's localStorage and will persist between sessions until you clear them."
-          : " Your keys are stored only in your browser's memory for this session and are never saved to our servers or local storage."}
+          : " Your keys are kept in your browser's memory for this session and are not stored between sessions."}
+        {" "}
+        When you test a key or run a benchmark, the selected key is sent
+        through BotBattle&apos;s API to the provider.
       </p>
 
       {/* Debug information - can be removed in production */}

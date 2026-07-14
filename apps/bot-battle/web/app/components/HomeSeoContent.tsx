@@ -59,11 +59,13 @@ export function HomeExplainer() {
       </ol>
       <p className="mt-4 max-w-3xl text-sm leading-6 text-ink-soft">
         Some models use shared free-tier access; others require your own
-        provider keys. Keys stay browser-side according to your{" "}
+        provider keys. Keys are stored in browser memory or localStorage
+        according to your{" "}
         <Link href="/settings" className="font-medium text-rust underline">
           settings mode
         </Link>
-        .
+        . When you test a key or run a benchmark, the selected key is sent
+        through BotBattle&apos;s API to the provider.
       </p>
     </section>
   );

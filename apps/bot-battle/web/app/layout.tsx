@@ -1,18 +1,36 @@
 import "./globals.css";
 import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ClientProviders } from "./providers/ClientProviders";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { SITE, SITE_URL } from "./config/site";
 
-export const metadata = {
-  title: "BotBattle",
-  description: "Benchmark and analyze responses from multiple LLM APIs.",
+export const metadata: Metadata = {
+  metadataBase: SITE_URL,
+  applicationName: SITE.name,
+  title: {
+    default: SITE.name,
+    template: `%s | ${SITE.name}`,
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/botbattle-icon.png", type: "image/png" },
+      {
+        url: "/botbattle-icon.png",
+        sizes: "1024x1024",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/botbattle-icon.png",
+        sizes: "1024x1024",
+        type: "image/png",
+      },
     ],
   },
+  manifest: "/manifest.webmanifest",
 };
 
 const THEME_INIT = `

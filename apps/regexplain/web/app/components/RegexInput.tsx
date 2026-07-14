@@ -1,42 +1,71 @@
 import React, { useEffect, useState } from "react";
 
 interface RegexInputProps {
-  value: string;
-  onChange: (v: string) => void;
-  onExplain: () => void;
+  pattern: string;
+  flags: string;
+  onPatternChange: (value: string) => void;
+  onFlagsChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  patternInputRef?: React.Ref<HTMLInputElement>;
   disabled?: boolean;
 }
 
 // Only match double backslashes before a regex-relevant character
-const DOUBLE_BACKSLASH_REGEX = /\\\\[a-zA-Z0-9.*+?^${}()|[\]\\]/g;
+const DOUBLE_BACKSLASH_REGEX = /\\\\[a-zA-Z0-9.*+?^${}()|[\]\\]/;
 
 const RegexInput: React.FC<RegexInputProps> = ({
-  value,
-  onChange,
-  onExplain,
+  pattern,
+  flags,
+  onPatternChange,
+  onFlagsChange,
+  onSubmit,
+  patternInputRef,
   disabled,
 }) => {
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    setShowWarning(DOUBLE_BACKSLASH_REGEX.test(value));
-  }, [value]);
+    setShowWarning(DOUBLE_BACKSLASH_REGEX.test(pattern));
+  }, [pattern]);
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Enter regex pattern (e.g. ^[a-z]+$)"
-        className="flex-1 px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-        disabled={disabled}
-        spellCheck={false}
-        autoFocus
-        aria-label="Regex input"
-      />
+    <form className="regex-form" onSubmit={onSubmit}>
+      <div className="regex-form__fields">
+        <label className="regex-field regex-field--pattern">
+          <span className="regex-field__label">
+            <span aria-hidden="true">01</span> Pattern
+          </span>
+          <input
+            ref={patternInputRef}
+            type="text"
+            value={pattern}
+            onChange={(event) => onPatternChange(event.target.value)}
+            placeholder="^[a-z]+$"
+            className="regex-field__input"
+            spellCheck={false}
+            autoFocus
+          />
+        </label>
+        <label className="regex-field regex-field--flags">
+          <span className="regex-field__label">
+            <span aria-hidden="true">02</span> Flags
+          </span>
+          <input
+            type="text"
+            value={flags}
+            onChange={(event) => onFlagsChange(event.target.value)}
+            placeholder="gim"
+            className="regex-field__input"
+            spellCheck={false}
+          />
+        </label>
+      </div>
+      <p className="regex-form__hint">
+        Enter the pattern without surrounding slash delimiters. Slashes typed in
+        the pattern field remain literal content.
+      </p>
       {showWarning && (
-        <div className="text-yellow-600 bg-yellow-100 border border-yellow-300 rounded px-2 py-1 text-xs mt-1">
+        <div className="terminal-notice terminal-notice--warning">
           <b>Heads up:</b> It looks like your regex contains double backslashes
           (e.g., <code>\\w</code>, <code>\\.</code>, <code>\\d</code>, etc.).
           <br />
@@ -44,7 +73,7 @@ const RegexInput: React.FC<RegexInputProps> = ({
             \w
           </code>, <code>\.</code>, <code>\d</code>).
           <br />
-          <span className="font-mono">
+          <span>
             Tip: Try replacing double backslashes with a single backslash for
             regex tokens (e.g., <code>\\w</code> → <code>\w</code>,{" "}
             <code>\\.</code> → <code>\.</code>).
@@ -52,13 +81,13 @@ const RegexInput: React.FC<RegexInputProps> = ({
         </div>
       )}
       <button
-        onClick={onExplain}
-        disabled={disabled || !value.trim()}
-        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+        type="submit"
+        disabled={disabled}
+        className="terminal-button terminal-button--primary"
       >
-        Explain
+        <span aria-hidden="true">RUN</span> Explain regex
       </button>
-    </div>
+    </form>
   );
 };
 

@@ -1,12 +1,13 @@
 import React from "react";
 
+import { compileGlobalRegex } from "../lib/regex";
+
 interface RegexTesterProps {
-  regex: string;
+  pattern: string;
+  flags: string;
 }
 
-const highlightMatches = (input: string, regex: RegExp) => {
-  if (!input) return input;
-  const matches = [...input.matchAll(regex)];
+const highlightMatches = (input: string, matches: RegExpMatchArray[]) => {
   if (matches.length === 0) return input;
   let lastIndex = 0;
   const parts: React.ReactNode[] = [];
@@ -18,9 +19,9 @@ const highlightMatches = (input: string, regex: RegExp) => {
       parts.push(input.slice(lastIndex, start));
     }
     parts.push(
-      <mark key={i} className="bg-yellow-200 dark:bg-yellow-700 rounded px-1">
+      <mark key={i} className="match-highlight">
         {input.slice(start, end)}
-      </mark>
+      </mark>,
     );
     lastIndex = end;
   });
@@ -30,61 +31,65 @@ const highlightMatches = (input: string, regex: RegExp) => {
   return parts;
 };
 
-const RegexTester: React.FC<RegexTesterProps> = ({ regex }) => {
+const RegexTester: React.FC<RegexTesterProps> = ({ pattern, flags }) => {
   const [sample, setSample] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
-  const [matches, setMatches] = React.useState<RegExpMatchArray[] | null>(null);
+  const result = React.useMemo<{
+    matches: RegExpMatchArray[] | null;
+    error: string | null;
+  }>(() => {
+    if (!pattern || !sample) {
+      return { matches: null, error: null };
+    }
 
-  React.useEffect(() => {
-    setError(null);
-    setMatches(null);
-    if (!regex || !sample) return;
     try {
-      const re = new RegExp(regex, "g");
-      const found = [...sample.matchAll(re)];
-      setMatches(found);
-    } catch (e: any) {
-      setError(e.message);
+      return {
+        matches: [...sample.matchAll(compileGlobalRegex(pattern, flags))],
+        error: null,
+      };
+    } catch (error) {
+      return {
+        matches: null,
+        error: error instanceof Error ? error.message : "Invalid regex",
+      };
     }
-  }, [regex, sample]);
-
-  let highlighted: React.ReactNode = sample;
-  try {
-    if (regex && sample) {
-      highlighted = highlightMatches(sample, new RegExp(regex, "g"));
-    }
-  } catch {}
+  }, [flags, pattern, sample]);
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700 flex flex-col gap-2">
-      <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Test your regex:
+    <div className="result-panel regex-tester">
+      <label className="result-panel__heading">
+        <span>Test your regex</span>
+        <span className="result-panel__badge">LOCAL</span>
       </label>
       <input
         type="text"
         value={sample}
         onChange={(e) => setSample(e.target.value)}
         placeholder="Enter a sample string"
-        className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        className="regex-field__input"
         aria-label="Sample string"
       />
-      <div className="mt-2 min-h-[2em] text-base text-gray-900 dark:text-gray-100">
-        {sample && regex ? (
-          error ? (
-            <span className="text-red-500">Invalid regex: {error}</span>
+      <div className="regex-tester__output">
+        {sample && pattern ? (
+          result.error ? (
+            <span className="terminal-error-text">
+              Invalid regex: {result.error}
+            </span>
           ) : (
-            <span>{highlighted}</span>
+            <span>{highlightMatches(sample, result.matches ?? [])}</span>
           )
         ) : (
-          <span className="text-gray-400">
+          <span className="result-panel__empty">
             Matches will be highlighted here.
           </span>
         )}
       </div>
-      {matches && matches.length > 0 && (
-        <div className="text-xs text-gray-500 mt-2">
-          {matches.length} match{matches.length > 1 ? "es" : ""} found.
-          {matches[0].length > 1 && <> (Groups: {matches[0].length - 1})</>}
+      {result.matches && (
+        <div className="regex-tester__count">
+          {result.matches.length} match
+          {result.matches.length === 1 ? "" : "es"} found.
+          {result.matches[0] && result.matches[0].length > 1 && (
+            <> (Groups: {result.matches[0].length - 1})</>
+          )}
         </div>
       )}
     </div>

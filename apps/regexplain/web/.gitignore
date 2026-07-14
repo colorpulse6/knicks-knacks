@@ -15,6 +15,10 @@
 
 # testing
 /coverage
+/test-results/
+
+# isolated agent worktrees
+/.worktrees/
 
 # next.js
 /.next/

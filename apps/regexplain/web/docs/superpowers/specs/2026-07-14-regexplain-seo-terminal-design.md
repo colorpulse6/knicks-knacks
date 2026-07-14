@@ -72,6 +72,8 @@ Each page must include:
 - Limitations and common mistakes. The password example must explicitly say that regex alone is not a complete password-strength strategy.
 - A link that loads or returns to the homepage workbench and links to related examples.
 
+For content quality, every page must use example-specific prose rather than a shared paragraph with keywords swapped. Each page includes at least two matching strings, two non-matching strings, an explanation for every meaningful token group in its pattern, and at least one limitation unique to that use case.
+
 No arbitrary user-entered regex receives an indexable URL. This prevents a thin or unbounded page-generation system.
 
 ## Visual direction
@@ -116,13 +118,26 @@ The server-rendered HTML must contain the H1, introduction, feature explanation,
 
 A client-side `RegexWorkbench` owns:
 
-- Current regex input.
+- Current pattern and JavaScript flags input.
 - Example selection.
 - Explanation request state.
-- Deterministic breakdown and test state.
+- Deterministic syntax breakdown and test state.
 - Loading, success, validation, and remote-error presentation.
 
 Existing parsing/testing components may be retained and restyled where their behavior remains sound. The refactor should avoid rewriting working regex parsing merely for visual consistency.
+
+The two explanation layers have distinct jobs:
+
+- The Groq-backed AI panel displays one contextual plain-English summary of what the complete expression is intended to match.
+- The local deterministic parser owns the token-by-token syntax map, hover/focus details, and test behavior.
+
+The AI response never replaces or duplicates the deterministic token list. If the AI request fails, only the summary panel enters an error state; the syntax map and tester remain fully usable.
+
+### Pattern and flags contract
+
+The workbench stores `{ pattern, flags }` separately and visually renders them as `/pattern/flags`. It accepts the pattern without slash delimiters in the main field and flags in a compact adjacent field. Clicking a worked example loads both values.
+
+Supported flags are the JavaScript flags `d`, `g`, `i`, `m`, `s`, `u`, `v`, and `y`. Flags must be unique and valid for the current JavaScript runtime. Slash-delimited pasted notation is not parsed in this initial scope; a slash is treated as pattern content. This convention is stated beside the input and covered by tests.
 
 ### Shared example data
 
@@ -144,26 +159,24 @@ The homepage cards, static routes, metadata, and sitemap derive from this module
 Request:
 
 ```json
-{ "regex": "^[a-z]+$" }
+{ "pattern": "^[a-z]+$", "flags": "i" }
 ```
 
 Successful response:
 
 ```json
 {
-  "summary": "Matches a string containing one or more lowercase letters.",
-  "breakdown": [
-    { "part": "^", "explanation": "Start of the string" }
-  ]
+  "summary": "Matches a string containing one or more letters, ignoring case."
 }
 ```
 
 The route must:
 
 - Read only the server-side `GROQ_API_KEY`.
-- Reject missing, non-string, empty, and over-1,000-character input with `400`.
+- Reject a missing, non-string, empty, or over-1,000-character pattern with `400`.
+- Reject non-string, duplicate, unsupported, or runtime-incompatible flags with `400`.
 - Apply a 15-second upstream timeout.
-- Validate the provider response before returning it.
+- Ask the provider for one concise contextual summary and validate that response before returning it.
 - Return stable `4xx`/`5xx` JSON error shapes without leaking credentials, provider payloads, or stack traces.
 - Avoid logging the full user-supplied regex by default.
 
@@ -190,6 +203,12 @@ The root layout uses `metadataBase`, canonical alternates, robots directives, an
 - `BING_SITE_VERIFICATION`
 
 If a token is absent, its meta tag is omitted rather than emitting an empty value.
+
+Public identity values are fixed for implementation:
+
+- Creator: `Nic Barnes`
+- Publisher/application name: `Regexplain`
+- Source repository: `https://github.com/colorpulse6/knicks-knacks/tree/main/apps/regexplain/web`
 
 ### Discovery endpoints
 
@@ -249,6 +268,7 @@ Implementation follows test-first development for new behavior.
 - Sitemap and robots outputs contain the expected absolute URLs and policy.
 - Homepage and example metadata/JSON-LD use the canonical site configuration.
 - API request validation covers missing, empty, wrong-type, over-limit, valid, timeout, and malformed-upstream cases.
+- Pattern/flags behavior covers valid flags, duplicates, unsupported flags, runtime-incompatible combinations, and example loading.
 - Client behavior covers validation, loading, successful explanation, and recoverable failure.
 
 ### Build and browser verification
@@ -258,6 +278,7 @@ Implementation follows test-first development for new behavior.
 - Local endpoint checks confirm `200` responses and correct content types for `/`, `/robots.txt`, `/sitemap.xml`, and the manifest.
 - Rendered HTML contains the canonical link, unique titles/descriptions, social tags, JSON-LD, ordinary example links, and Buy Me a Coffee link.
 - Keyboard smoke testing covers the input, examples, explanation action, token details, tester, navigation, and support link.
+- Screenshot checks at `390x844` and `1440x900` confirm that the workbench hierarchy, terminal effects, long patterns, flags input, result states, and document content do not clip, overlap, or become unreadable.
 - A local Lighthouse run targets Performance at least 95, Accessibility at least 98, Best Practices 100, and SEO 100, supplemented by manual checks for canonical, robots, sitemap, and structured data.
 
 The existing app-local ESLint configuration failure is not silently included in this feature scope. It remains a separately reported verification limitation unless fixing it becomes necessary to execute the approved tests.

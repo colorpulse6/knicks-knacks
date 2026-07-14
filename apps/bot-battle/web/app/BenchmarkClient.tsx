@@ -263,9 +263,9 @@ export default function BenchmarkClient() {
         <div className="mb-6 p-4 border-l-4 border-rule bg-paper-sunk rounded-md">
           <div className="flex items-start">
             <div className="flex-grow">
-              <h3 className="text-sm font-medium text-ink">
+              <h2 className="text-sm font-medium text-ink">
                 Using fallback API keys
-              </h3>
+              </h2>
               <p className="text-sm text-ink-soft mt-1">
                 You&apos;re currently using shared API keys with rate limits.
                 For better performance, you can

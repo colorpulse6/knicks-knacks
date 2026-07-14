@@ -28,12 +28,13 @@ test("shows loading and submits the exact pattern and flags before a delayed suc
   const responseGate = new Promise<void>((resolve) => {
     releaseResponse = resolve;
   });
-  let requestMethod: string | undefined;
-  let requestBody: unknown;
+  const interceptedRequests: Array<{ body: unknown; method: string }> = [];
 
   await page.route("**/api/explain", async (route) => {
-    requestMethod = route.request().method();
-    requestBody = route.request().postDataJSON();
+    interceptedRequests.push({
+      body: route.request().postDataJSON(),
+      method: route.request().method(),
+    });
     await responseGate;
     await route.fulfill({
       status: 200,
@@ -50,8 +51,14 @@ test("shows loading and submits the exact pattern and flags before a delayed suc
 
   await expect(page.getByRole("status")).toHaveText("Generating AI summary…");
   await expect(explainButton(page)).toBeDisabled();
-  await expect.poll(() => requestMethod).toBe("POST");
-  expect(requestBody).toEqual({ pattern: "^[a-z]+$", flags: "i" });
+  await expect
+    .poll(() => interceptedRequests)
+    .toEqual([
+      {
+        body: { pattern: "^[a-z]+$", flags: "i" },
+        method: "POST",
+      },
+    ]);
 
   releaseResponse();
 
@@ -59,15 +66,16 @@ test("shows loading and submits the exact pattern and flags before a delayed suc
   await expect(page.getByRole("region", { name: "AI summary" })).toContainText(
     "Matches one or more ASCII letters across the whole string.",
   );
+  expect(interceptedRequests).toHaveLength(1);
 });
 
 test("retains the workbench and local tools after a stable upstream error", async ({
   page,
 }) => {
-  let requestBody: unknown;
+  const interceptedRequests: unknown[] = [];
 
   await page.route("**/api/explain", async (route) => {
-    requestBody = route.request().postDataJSON();
+    interceptedRequests.push(route.request().postDataJSON());
     await route.fulfill({
       status: 502,
       contentType: "application/json",
@@ -87,7 +95,7 @@ test("retains the workbench and local tools after a stable upstream error", asyn
   await expect(
     page.getByRole("region", { name: "AI summary" }).getByRole("alert"),
   ).toHaveText("The explanation service is temporarily unavailable.");
-  expect(requestBody).toEqual({ pattern: "a+", flags: "i" });
+  expect(interceptedRequests).toEqual([{ pattern: "a+", flags: "i" }]);
   await expect(patternInput(page)).toHaveValue("a+");
   await expect(flagsInput(page)).toHaveValue("i");
   await expect(

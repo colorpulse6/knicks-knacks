@@ -12,7 +12,7 @@ Production: [https://www.regexplain.cc/](https://www.regexplain.cc/)
 - A server-only Groq integration at `POST /api/explain`
 - Vitest, Testing Library, and jsdom for unit and component tests
 
-Browser end-to-end coverage is planned, but no Playwright configuration or specs are currently checked in.
+Production browser coverage lives in `e2e/workbench.spec.ts`. After `yarn build`, `yarn test:e2e` starts a fresh production server at `http://127.0.0.1:3010` and fails loudly if that port is already occupied. The suite intercepts AI requests, so it never calls Groq.
 
 ## Local setup
 
@@ -50,6 +50,7 @@ Run these from `apps/regexplain/web`:
 yarn dev                 # development server
 yarn test                # Vitest once
 yarn test:watch          # Vitest in watch mode
+yarn test:e2e            # Playwright against a fresh production server
 npx tsc --noEmit         # TypeScript check
 yarn build               # production build
 yarn start               # serve a completed production build

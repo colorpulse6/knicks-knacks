@@ -29,25 +29,39 @@ outward-facing actions and require separate approval from the site owner.
    separately and confirm it returns `200`; do not accept an apex-to-HTTP,
    HTTP-to-HTTPS, or other multi-hop chain.
 
-2. Confirm these deployed URLs return `200` before submitting anything:
+2. Confirm the deployed resources below before submitting anything. A `200`
+   alone is not sufficient:
 
-   - `https://www.botbattle.cc/`
-   - `https://www.botbattle.cc/robots.txt`
-   - `https://www.botbattle.cc/sitemap.xml`
+   - `https://www.botbattle.cc/` returns `200` with a `text/html` content type.
+     Its body contains the visible H1 `Compare AI models side by side` and a
+     canonical link for `https://www.botbattle.cc/`.
+   - `https://www.botbattle.cc/robots.txt` returns `200` with a `text/plain`
+     content type. Its body contains exactly
+     `Sitemap: https://www.botbattle.cc/sitemap.xml`.
+   - `https://www.botbattle.cc/sitemap.xml` returns `200` with an XML content
+     type. Its XML is well formed and contains exactly one `<loc>` element,
+     whose value is `https://www.botbattle.cc/`.
+   - `https://www.botbattle.cc/social-card` returns `200` with an `image/png`
+     content type. The downloaded file is a valid 1200 x 630 PNG.
 
 ## Google Search Console
 
 1. In Google Search Console, add `botbattle.cc` as a **Domain property**. Enter
    the bare domain, without a protocol, path, or `www`. Follow Google's
    [property ownership verification instructions](https://support.google.com/webmasters/answer/9008080).
-2. Add the DNS TXT value Google provides. Wait for DNS propagation, complete
-   verification, and **retain the TXT record after verification** so ownership
-   remains verifiable.
+2. Before any separately approved DNS mutation, record the exact TXT token and
+   the owner Google account in the monitoring log below. Add Google's TXT value
+   **alongside the existing apex TXT records**. Never overwrite or remove
+   unrelated TXT values, including mail-authentication records and other
+   service-verification tokens. Wait for DNS propagation, complete
+   verification, and **retain Google's TXT record after verification** so
+   ownership remains verifiable.
 3. Open **Sitemaps** for the verified property and submit exactly
    `https://www.botbattle.cc/sitemap.xml`. Google's
    [sitemap documentation](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)
-   explains submission and status checks. Confirm the submitted sitemap is
-   accepted and resolves to the canonical homepage.
+   explains submission and status checks. Confirm Search Console accepts the
+   sitemap and reports that its sole `<loc>` is
+   `https://www.botbattle.cc/`.
 4. After the deployment is live, inspect exactly
    `https://www.botbattle.cc/` with the
    [URL Inspection tool](https://support.google.com/webmasters/answer/9012289).
@@ -107,3 +121,28 @@ outward-facing actions and require separate approval from the site owner.
 For each check, record the date, operator, property, submitted URL, observed
 status, and any follow-up owner. Preserve the DNS TXT verification record unless
 the site owner intentionally retires the property.
+
+## Monitoring log
+
+This log is append-only. Add a new dated entry for every ownership, submission,
+day-7, and day-28 observation. Never edit or overwrite an earlier entry; if a
+prior observation needs correction, append a new entry that identifies the
+superseded entry and explains why. Before an approved DNS verification change,
+record the exact Google TXT token and owner Google account here without exposing
+account credentials.
+
+Copy this template beneath the existing entries:
+
+```markdown
+### YYYY-MM-DD - day 0, 7, or 28
+
+- Operator:
+- Property and inspected URL:
+- Google account owner and exact DNS TXT token, if applicable:
+- GSC indexing status:
+- GSC performance observation:
+- GSC crawl or sitemap issues:
+- Bing indexing status:
+- Bing Site Scan issues:
+- Action, owner, and target date:
+```

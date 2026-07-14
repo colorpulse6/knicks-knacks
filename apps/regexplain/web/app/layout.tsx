@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = buildRootMetadata();
 
 export const viewport: Viewport = {
-  colorScheme: "dark",
+  colorScheme: "light dark",
   themeColor: terminalPalette.background,
 };
 
@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#07090c] text-slate-100 antialiased selection:bg-[#b8ff3d] selection:text-[#07090c]`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#07090c] antialiased selection:bg-[#b8ff3d] selection:text-[#07090c]`}
       >
         {children}
       </body>

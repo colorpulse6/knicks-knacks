@@ -10,12 +10,9 @@ type PromptInputProps = {
 export function PromptInput({ value, onChange }: PromptInputProps) {
   return (
     <div className="bg-paper border border-rule rounded-sm p-5 mb-6">
-      <label
-        htmlFor="benchmark-prompt"
-        className="block font-serif text-base font-bold mb-3"
-      >
-        Prompt
-      </label>
+      <h2 className="font-serif text-base font-bold mb-3">
+        <label htmlFor="benchmark-prompt">Prompt</label>
+      </h2>
       <textarea
         id="benchmark-prompt"
         className="w-full min-h-[80px] bg-paper-sunk border border-rule-soft rounded-sm p-3 text-ink font-serif text-[15px] leading-[1.55] resize-y focus:outline-none focus:border-rust"

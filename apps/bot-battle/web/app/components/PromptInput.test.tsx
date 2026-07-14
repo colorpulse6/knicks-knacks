@@ -10,4 +10,12 @@ describe("PromptInput", () => {
       screen.getByRole("textbox", { name: "Prompt" }),
     ).toBeInTheDocument();
   });
+
+  it("retains Prompt as a level-two heading", () => {
+    render(<PromptInput value="" onChange={() => {}} />);
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Prompt" }),
+    ).toBeInTheDocument();
+  });
 });

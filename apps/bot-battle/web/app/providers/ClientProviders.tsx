@@ -1,26 +1,12 @@
 "use client";
 
-import React, { Suspense } from "react";
-import dynamic from "next/dynamic";
-
-// Dynamically import ApiKeyProvider to ensure it only runs on client
-const ApiKeyProvider = dynamic(
-  () =>
-    import("./ApiKeyProvider").then((mod) => ({ default: mod.ApiKeyProvider })),
-  {
-    ssr: false,
-    loading: () => <div>Loading...</div>,
-  }
-);
+import type { ReactNode } from "react";
+import { ApiKeyProvider } from "./ApiKeyProvider";
 
 interface ClientProvidersProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function ClientProviders({ children }: ClientProvidersProps) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ApiKeyProvider>{children}</ApiKeyProvider>
-    </Suspense>
-  );
+  return <ApiKeyProvider>{children}</ApiKeyProvider>;
 }

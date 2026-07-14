@@ -18,22 +18,11 @@ import { setClientApiKey, getClientApiKeys } from "../utils/llm/api-keys";
 // Create a context for the store
 export type ApiKeyStoreApi = ReturnType<typeof createApiKeyStore>;
 export const ApiKeyStoreContext = createContext<ApiKeyStoreApi | undefined>(
-  undefined
+  undefined,
 );
 
 export interface ApiKeyProviderProps {
   children: ReactNode;
-}
-
-// Create a single store instance outside the component to avoid recreation
-let globalStore: ApiKeyStoreApi | null = null;
-
-function getOrCreateStore(): ApiKeyStoreApi {
-  if (!globalStore) {
-    globalStore = createApiKeyStore(initApiKeyStore());
-    console.log("📦 API key store created");
-  }
-  return globalStore;
 }
 
 export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
@@ -41,19 +30,15 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
   const [isHydrated, setIsHydrated] = useState(false);
   // Keep track of initial sync state
   const [hasCompletedInitialSync, setHasCompletedInitialSync] = useState(false);
-  // Store instance state
-  const [store] = useState<ApiKeyStoreApi>(() => {
-    // Only create store on client side, return a dummy store for SSR
-    if (typeof window === "undefined") {
-      return createApiKeyStore({ apiKeys: {} });
-    }
-    return getOrCreateStore();
-  });
+  // Start with the same empty state on the server and initial client render.
+  const [store] = useState<ApiKeyStoreApi>(() => createApiKeyStore());
 
-  // Set hydration state on mount
+  // Restore persisted keys only after hydration so they never enter server HTML.
   useEffect(() => {
+    const persistedState = initApiKeyStore();
+    store.setState({ apiKeys: persistedState.apiKeys });
     setIsHydrated(true);
-  }, []);
+  }, [store]);
 
   // Sync API keys with LLM utilities when they change
   const apiKeys = useStore(store, (state) => state.apiKeys);
@@ -67,7 +52,7 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
     // Set each client API key when component mounts
     Object.entries(apiKeys).forEach(([provider, key]) => {
       console.log(
-        `Setting ${provider} key on mount: ${key ? "available" : "null"}`
+        `Setting ${provider} key on mount: ${key ? "available" : "null"}`,
       );
       setClientApiKey(provider, key);
     });

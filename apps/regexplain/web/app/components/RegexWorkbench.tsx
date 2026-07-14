@@ -61,7 +61,6 @@ export default function RegexWorkbench() {
 
     const requestGeneration = requestGenerationRef.current + 1;
     requestGenerationRef.current = requestGeneration;
-    const activeElementAtSubmission = document.activeElement;
     setIsLoading(true);
     setSummary(null);
     setError(null);
@@ -82,9 +81,6 @@ export default function RegexWorkbench() {
           : "Unable to explain this regex. Please try again.",
       );
       setStatus("AI summary unavailable.");
-      if (document.activeElement === activeElementAtSubmission) {
-        patternInputRef.current?.focus();
-      }
     } finally {
       if (requestGenerationRef.current === requestGeneration) {
         setIsLoading(false);

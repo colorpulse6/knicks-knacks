@@ -141,6 +141,7 @@ describe("RegexWorkbench", () => {
       await user.click(screen.getByRole("button", { name: "Explain regex" }));
 
       expect(screen.getByRole("status")).toHaveTextContent(message);
+      expect(screen.getByRole("textbox", { name: "Pattern" })).toHaveFocus();
       expect(fetchMock).not.toHaveBeenCalled();
     },
   );
@@ -253,6 +254,46 @@ describe("RegexWorkbench", () => {
       "Unable to explain this regex. Please try again.",
     );
     expect(sampleInput).toHaveFocus();
+  });
+
+  it("keeps focus on the submit button when the current AI request fails", async () => {
+    const user = userEvent.setup();
+    const request = deferred<Response>();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => request.promise),
+    );
+    render(<RegexWorkbench />);
+
+    const patternInput = screen.getByRole("textbox", { name: "Pattern" });
+    const flagsInput = screen.getByRole("textbox", { name: "Flags" });
+    const submitButton = screen.getByRole("button", { name: "Explain regex" });
+    await user.type(patternInput, "a");
+    await user.type(flagsInput, "i");
+    await user.click(submitButton);
+    expect(submitButton).toHaveFocus();
+
+    request.resolve(
+      jsonResponse(
+        {
+          error: {
+            code: "upstream_timeout",
+            message: "The explanation service timed out.",
+          },
+        },
+        { status: 504 },
+      ),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The explanation service timed out.",
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "AI summary unavailable.",
+    );
+    expect(submitButton).toHaveFocus();
+    expect(patternInput).toHaveValue("a");
+    expect(flagsInput).toHaveValue("i");
   });
 
   it("ignores a failed response after the pattern is edited", async () => {

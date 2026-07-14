@@ -40,6 +40,22 @@ function completionResponse(content: unknown): Response {
   );
 }
 
+function abortedBodyResponse(): Response {
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.error(
+          new DOMException("provider timeout detail", "AbortError"),
+        );
+      },
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+}
+
 async function captureError(action: () => Promise<unknown>) {
   try {
     await action();
@@ -170,6 +186,32 @@ describe("requestGroqSummary", () => {
   it("returns a typed safe timeout error for an aborted request", async () => {
     const aborted = new DOMException("provider timeout detail", "AbortError");
     const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(aborted);
+
+    const error = await captureError(() =>
+      requestGroqSummary(
+        {
+          pattern: "sensitive-pattern",
+          flags: "",
+          apiKey: "server-secret",
+        },
+        fetchMock,
+      ),
+    );
+
+    expect(error).toBeInstanceOf(GroqError);
+    expect(error).toMatchObject({
+      code: "upstream_timeout",
+      message: "The explanation service timed out.",
+    });
+    expect(String(error)).not.toContain("provider timeout detail");
+    expect(String(error)).not.toContain("sensitive-pattern");
+    expect(String(error)).not.toContain("server-secret");
+  });
+
+  it("classifies an abort while consuming the response body as a timeout", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(abortedBodyResponse());
 
     const error = await captureError(() =>
       requestGroqSummary(

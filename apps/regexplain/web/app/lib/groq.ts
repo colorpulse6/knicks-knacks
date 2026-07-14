@@ -144,7 +144,10 @@ export async function requestGroqSummary(
   let payload: unknown;
   try {
     payload = await response.json();
-  } catch {
+  } catch (error) {
+    if (signal.aborted || isAbortError(error)) {
+      throw new GroqError("upstream_timeout");
+    }
     throw new GroqError("invalid_upstream_response");
   }
 

@@ -35,6 +35,22 @@ function completionResponse(content: unknown): Response {
   );
 }
 
+function abortedBodyResponse(): Response {
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.error(
+          new DOMException("provider timeout detail", "AbortError"),
+        );
+      },
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+}
+
 function requestWithBody(body: string): Request {
   return new Request("http://localhost/api/explain", {
     method: "POST",
@@ -186,6 +202,30 @@ describe("POST /api/explain", () => {
       .mockRejectedValue(
         new DOMException("provider timeout detail", "AbortError"),
       );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      jsonRequest({ pattern: "sensitive-pattern", flags: "" }),
+    );
+    const body = JSON.stringify(await response.json());
+
+    expect(response.status).toBe(504);
+    expect(JSON.parse(body)).toEqual({
+      error: {
+        code: "upstream_timeout",
+        message: "The explanation service timed out.",
+      },
+    });
+    expect(body).not.toContain("provider timeout detail");
+    expect(body).not.toContain("sensitive-pattern");
+    expect(body).not.toContain("server-secret");
+  });
+
+  it("maps an abort while consuming the upstream body to a safe 504", async () => {
+    process.env.GROQ_API_KEY = "server-secret";
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(abortedBodyResponse());
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await POST(

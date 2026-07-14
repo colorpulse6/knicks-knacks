@@ -1,7 +1,7 @@
 # BotBattle SEO and Support Design
 
-**Date:** 2026-07-14  
-**Status:** Approved design, pending implementation plan  
+**Date:** 2026-07-14
+**Status:** Approved design, pending implementation plan
 **Production URL:** `https://www.botbattle.cc/`
 
 ## Goal

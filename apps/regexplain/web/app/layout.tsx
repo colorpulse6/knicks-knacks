@@ -1,5 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { buildRootMetadata } from "./lib/seo";
+import { terminalPalette } from "./lib/social-image";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +15,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Regexplain",
-  description:
-    "Regexplain - Explain, break down, and test regular expressions.",
+export const metadata: Metadata = buildRootMetadata();
+
+export const viewport: Viewport = {
+  colorScheme: "dark",
+  themeColor: terminalPalette.background,
 };
 
 export default function RootLayout({
@@ -26,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#07090c] text-slate-100 antialiased selection:bg-[#b8ff3d] selection:text-[#07090c]`}
       >
         {children}
       </body>

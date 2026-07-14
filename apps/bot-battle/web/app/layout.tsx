@@ -3,6 +3,7 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClientProviders } from "./providers/ClientProviders";
+import { SupportLink } from "./components/SupportLink";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { SITE, SITE_URL } from "./config/site";
 
@@ -51,16 +52,19 @@ export default function RootLayout({
             Placed here (not <head>) to avoid Next.js App Router hydration warnings about manual head tags. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <ClientProviders>
-          <div className="max-w-[1100px] mx-auto px-7">
-            <header className="flex justify-between items-baseline pt-5 pb-4 border-b border-rule">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-7">
+            <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 pt-5 pb-4 border-b border-rule">
               <Link href="/" className="font-serif text-[22px] font-bold tracking-tight no-underline text-ink">
                 BotBattle<span className="text-rust">.</span>
               </Link>
-              <nav className="flex gap-5 text-xs uppercase tracking-[0.08em] text-ink-soft">
+              <nav className="order-3 flex w-full gap-5 text-xs uppercase tracking-[0.08em] text-ink-soft sm:order-none sm:w-auto">
                 <Link href="/" className="pb-1 no-underline text-inherit hover:text-ink">Benchmark</Link>
                 <Link href="/settings" className="pb-1 no-underline text-inherit hover:text-ink">API Keys</Link>
               </nav>
-              <ThemeToggle />
+              <div className="flex items-center gap-2">
+                <SupportLink />
+                <ThemeToggle />
+              </div>
             </header>
             <main className="py-6">{children}</main>
           </div>

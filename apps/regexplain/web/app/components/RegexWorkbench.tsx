@@ -19,6 +19,7 @@ export default function RegexWorkbench() {
   const [status, setStatus] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const patternInputRef = React.useRef<HTMLInputElement>(null);
+  const requestGenerationRef = React.useRef(0);
 
   React.useEffect(() => {
     const exampleSlug = new URLSearchParams(window.location.search).get(
@@ -34,16 +35,17 @@ export default function RegexWorkbench() {
   }, []);
 
   const resetRemoteState = () => {
+    requestGenerationRef.current += 1;
     setSummary(null);
     setError(null);
     setStatus("");
+    setIsLoading(false);
   };
 
   const selectExample = (example: RegexExample) => {
     setPattern(example.pattern);
     setFlags(example.flags);
     resetRemoteState();
-    patternInputRef.current?.focus();
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -51,13 +53,15 @@ export default function RegexWorkbench() {
 
     const validation = validateRegexInput({ pattern, flags });
     if (!validation.ok) {
-      setSummary(null);
-      setError(null);
+      resetRemoteState();
       setStatus(validation.error.message);
       patternInputRef.current?.focus();
       return;
     }
 
+    const requestGeneration = requestGenerationRef.current + 1;
+    requestGenerationRef.current = requestGeneration;
+    const activeElementAtSubmission = document.activeElement;
     setIsLoading(true);
     setSummary(null);
     setError(null);
@@ -65,18 +69,26 @@ export default function RegexWorkbench() {
 
     try {
       const nextSummary = await requestRegexSummary(validation.value);
+      if (requestGenerationRef.current !== requestGeneration) return;
+
       setSummary(nextSummary);
       setStatus("AI summary ready.");
     } catch (requestError) {
+      if (requestGenerationRef.current !== requestGeneration) return;
+
       setError(
         requestError instanceof Error
           ? requestError.message
           : "Unable to explain this regex. Please try again.",
       );
       setStatus("AI summary unavailable.");
-      patternInputRef.current?.focus();
+      if (document.activeElement === activeElementAtSubmission) {
+        patternInputRef.current?.focus();
+      }
     } finally {
-      setIsLoading(false);
+      if (requestGenerationRef.current === requestGeneration) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -104,11 +116,7 @@ export default function RegexWorkbench() {
       <div role="status" aria-live="polite" className="min-h-5 text-sm">
         {status}
       </div>
-      <ExplanationDisplay
-        summary={summary}
-        loading={isLoading}
-        error={error}
-      />
+      <ExplanationDisplay summary={summary} loading={isLoading} error={error} />
       <RegexBreakdown pattern={pattern} flags={flags} />
       <RegexTester pattern={pattern} flags={flags} />
     </section>

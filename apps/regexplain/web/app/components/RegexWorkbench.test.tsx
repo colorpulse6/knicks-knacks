@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,6 +19,17 @@ function jsonResponse(body: unknown, init?: ResponseInit): Response {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+
+  return { promise, reject, resolve };
 }
 
 describe("RegexWorkbench", () => {
@@ -34,7 +51,9 @@ describe("RegexWorkbench", () => {
     expect(patternInput).toBeVisible();
     expect(screen.getByRole("textbox", { name: "Flags" })).toBeVisible();
     expect(
-      screen.getByText(/enter the pattern without surrounding slash delimiters/i),
+      screen.getByText(
+        /enter the pattern without surrounding slash delimiters/i,
+      ),
     ).toBeVisible();
     expect(
       screen.getByText(/slashes typed in the pattern field remain literal/i),
@@ -50,9 +69,7 @@ describe("RegexWorkbench", () => {
     render(<RegexWorkbench />);
 
     await user.type(screen.getByRole("textbox", { name: "Flags" }), "i");
-    await user.click(
-      screen.getByRole("button", { name: emailExample?.name }),
-    );
+    await user.click(screen.getByRole("button", { name: emailExample?.name }));
 
     expect(screen.getByRole("textbox", { name: "Pattern" })).toHaveValue(
       emailExample?.pattern,
@@ -164,6 +181,122 @@ describe("RegexWorkbench", () => {
     expect(within(aiPanel).queryByRole("list")).not.toBeInTheDocument();
   });
 
+  it("ignores a successful response after a different example is selected", async () => {
+    const user = userEvent.setup();
+    const request = deferred<Response>();
+    const fetchMock = vi.fn(() => request.promise);
+    const hexExample = getExample("hex-color-regex");
+    vi.stubGlobal("fetch", fetchMock);
+    render(<RegexWorkbench />);
+
+    await user.type(screen.getByRole("textbox", { name: "Pattern" }), "a");
+    await user.click(screen.getByRole("button", { name: "Explain regex" }));
+    await user.click(screen.getByRole("button", { name: hexExample?.name }));
+
+    request.resolve(jsonResponse({ summary: "Stale summary for a." }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Explain regex" }),
+      ).toBeEnabled();
+    });
+    expect(screen.getByRole("textbox", { name: "Pattern" })).toHaveValue(
+      hexExample?.pattern,
+    );
+    expect(screen.getByRole("textbox", { name: "Flags" })).toHaveValue(
+      hexExample?.flags,
+    );
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    expect(
+      screen.getByRole("region", { name: "AI summary" }),
+    ).not.toHaveTextContent("Stale summary for a.");
+  });
+
+  it("keeps focus on an example control that invalidates a pending request", async () => {
+    const user = userEvent.setup();
+    const request = deferred<Response>();
+    const hexExample = getExample("hex-color-regex");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => request.promise),
+    );
+    render(<RegexWorkbench />);
+
+    await user.type(screen.getByRole("textbox", { name: "Pattern" }), "a");
+    await user.click(screen.getByRole("button", { name: "Explain regex" }));
+    const exampleButton = screen.getByRole("button", {
+      name: hexExample?.name,
+    });
+    await user.click(exampleButton);
+
+    expect(exampleButton).toHaveFocus();
+  });
+
+  it("does not steal tester focus when the current request fails", async () => {
+    const user = userEvent.setup();
+    const request = deferred<Response>();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => request.promise),
+    );
+    render(<RegexWorkbench />);
+
+    await user.type(screen.getByRole("textbox", { name: "Pattern" }), "a");
+    await user.click(screen.getByRole("button", { name: "Explain regex" }));
+    const sampleInput = screen.getByRole("textbox", { name: "Sample string" });
+    await user.type(sampleInput, "A a");
+    expect(sampleInput).toHaveFocus();
+
+    request.reject(new Error("offline"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Unable to explain this regex. Please try again.",
+    );
+    expect(sampleInput).toHaveFocus();
+  });
+
+  it("ignores a failed response after the pattern is edited", async () => {
+    const user = userEvent.setup();
+    const request = deferred<Response>();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => request.promise),
+    );
+    render(<RegexWorkbench />);
+
+    const patternInput = screen.getByRole("textbox", { name: "Pattern" });
+    await user.type(patternInput, "a");
+    await user.click(screen.getByRole("button", { name: "Explain regex" }));
+    await user.type(patternInput, "b");
+
+    request.reject(new Error("offline"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Explain regex" }),
+      ).toBeEnabled();
+    });
+    expect(patternInput).toHaveValue("ab");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("does not submit twice while the current request is pending", async () => {
+    const user = userEvent.setup();
+    const request = deferred<Response>();
+    const fetchMock = vi.fn(() => request.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<RegexWorkbench />);
+
+    const patternInput = screen.getByRole("textbox", { name: "Pattern" });
+    await user.type(patternInput, "a");
+    await user.click(screen.getByRole("button", { name: "Explain regex" }));
+    patternInput.focus();
+    await user.keyboard("{Enter}");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("retains local tools and editable input when the AI request fails", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue(
@@ -191,7 +324,9 @@ describe("RegexWorkbench", () => {
     );
     expect(patternInput).toHaveValue("a");
     expect(flagsInput).toHaveValue("i");
-    expect(screen.getByRole("region", { name: "Local syntax map" })).toBeVisible();
+    expect(
+      screen.getByRole("region", { name: "Local syntax map" }),
+    ).toBeVisible();
 
     const sampleInput = screen.getByRole("textbox", { name: "Sample string" });
     await user.type(sampleInput, "A a");

@@ -47,8 +47,11 @@ type PromptSelectorProps = {
 export function PromptSelector({ value, onChange }: PromptSelectorProps) {
   return (
     <div className="mb-4">
-      <label className="block font-medium mb-1">Prompt Template</label>
+      <label htmlFor="prompt-template" className="block font-medium mb-1">
+        Prompt Template
+      </label>
       <select
+        id="prompt-template"
         className="w-full border rounded px-3 py-2 bg-paper"
         value={value}
         onChange={(e) => onChange(e.target.value)}

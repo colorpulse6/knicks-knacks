@@ -29,6 +29,13 @@ describe("ApiKeyInput — Test connection", () => {
     expect(screen.getByRole("button", { name: /test/i })).toBeInTheDocument();
   });
 
+  it("labels the password input with the provider name", () => {
+    render(<ApiKeyInput provider="openai" label="OpenAI" />);
+
+    const input = screen.getByLabelText(/openai api key/i);
+    expect(input).toHaveAttribute("type", "password");
+  });
+
   it("shows success after POSTing to /api/providers/test-key and receiving ok:true", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -38,7 +45,7 @@ describe("ApiKeyInput — Test connection", () => {
     render(<ApiKeyInput provider="openai" label="OpenAI" />);
 
     // Type a key value so the button does something meaningful
-    const input = screen.getByPlaceholderText(/enter your openai api key/i);
+    const input = screen.getByLabelText(/openai api key/i);
     fireEvent.change(input, { target: { value: "sk-test-key" } });
 
     fireEvent.click(screen.getByRole("button", { name: /test/i }));
@@ -56,7 +63,7 @@ describe("ApiKeyInput — Test connection", () => {
 
     render(<ApiKeyInput provider="openai" label="OpenAI" />);
 
-    const input = screen.getByPlaceholderText(/enter your openai api key/i);
+    const input = screen.getByLabelText(/openai api key/i);
     fireEvent.change(input, { target: { value: "sk-bad-key" } });
 
     fireEvent.click(screen.getByRole("button", { name: /test/i }));

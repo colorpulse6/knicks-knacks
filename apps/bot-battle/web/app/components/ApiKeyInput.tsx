@@ -25,6 +25,7 @@ export function ApiKeyInput({
   const setApiKey = useApiKeyStore((state) => state.setApiKey);
   const clearApiKey = useApiKeyStore((state) => state.clearApiKey);
   const apiKey = useApiKeyStore((state) => state.getApiKey(provider));
+  const inputId = `${provider}-api-key`;
 
   // Check if persistence is enabled
   const isPersistenceEnabled =
@@ -190,7 +191,11 @@ export function ApiKeyInput({
         </p>
       )}
       <form onSubmit={handleSubmit} className="space-y-3">
+        <label htmlFor={inputId} className="sr-only">
+          {label} API Key
+        </label>
         <input
+          id={inputId}
           type="password"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

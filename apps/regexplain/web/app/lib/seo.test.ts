@@ -88,7 +88,7 @@ describe("createPageMetadata", () => {
             url: "/opengraph-image",
             width: 1200,
             height: 630,
-            alt: "Practical email address regex explained | Regexplain",
+            alt: siteConfig.title,
           },
         ],
       },

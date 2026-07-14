@@ -83,7 +83,7 @@ If the Google property is verified, use Bing's **Import from Google Search Conso
 
 ## 5. Submit and inspect in Bing
 
-1. Open **Sitemaps** and submit exactly `https://www.regexplain.cc/sitemap.xml`, even if the Google import already discovered it. Confirm that processing completes without crawl or parse errors; see Bing's [Sitemaps guide](https://www4.bing.com/webmasters/help/sitemaps-3b5cf6ed).
+1. Open **Sitemaps** and submit exactly `https://www.regexplain.cc/sitemap.xml`, even if the Google import already discovered it. Confirm that processing completes without crawl or parse errors; see Bing's [Sitemaps guide](https://www.bing.com/webmasters/help/sitemaps-3b5cf6ed).
 2. Use **URL Inspection** for `https://www.regexplain.cc/`, then for `https://www.regexplain.cc/examples/email-regex`. Review crawl, index, SEO, and markup results.
 3. If Bing offers **Request indexing** for either URL, it is optional to use it. The action is subject to Bing's quota and does not guarantee indexing or ranking. See Bing's [URL Inspection guide](https://www.bing.com/webmasters/help/URL-Inspection-55a30305).
 

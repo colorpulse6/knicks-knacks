@@ -191,6 +191,9 @@ git commit -m "feat(regexplain): define examples and regex input contract"
 - Create: `app/lib/groq.ts`
 - Create: `app/api/explain/route.test.ts`
 - Create: `app/api/explain/route.ts`
+- Create: `app/utils/explain.test.ts`
+- Create: `app/utils/explain.ts`
+- Modify: `app/page.tsx`
 - Modify: `.env.example`
 - Delete: `app/utils/groq.ts`
 
@@ -212,21 +215,25 @@ Call `POST(new Request(...))` directly. Cover malformed JSON, wrong-type/missing
 { "error": { "code": "invalid_flags", "message": "Use unique JavaScript flags: d, g, i, m, s, u, v, y." } }
 ```
 
-- [ ] **Step 3: Run RED**
+- [ ] **Step 3: Write the failing browser-wrapper tests**
 
-Run: `yarn test app/lib/groq.test.ts app/api/explain/route.test.ts`
+Define the wished-for `requestRegexSummary({ pattern, flags }, fetchImpl?)` API. Test that it posts exactly `{ pattern, flags }` to `/api/explain`, returns the summary on success, and turns the complete stable API error shape into a safe client error without accepting or reading an API key.
 
-Expected: FAIL because neither server module exists.
+- [ ] **Step 4: Run RED**
 
-- [ ] **Step 4: Implement the server-only Groq client**
+Run: `yarn test app/lib/groq.test.ts app/api/explain/route.test.ts app/utils/explain.test.ts`
+
+Expected: FAIL because the server route/client and browser wrapper do not exist.
+
+- [ ] **Step 5: Implement the server-only Groq client**
 
 Use `https://api.groq.com/openai/v1/chat/completions`, `GROQ_API_KEY`, default model `openai/gpt-oss-20b`, a 15-second abort signal, low reasoning effort, and JSON Schema structured output. Request one concise contextual summary; do not request token breakdowns. Accept a fetch implementation in the internal function signature so tests do not make network calls.
 
-- [ ] **Step 5: Implement the route**
+- [ ] **Step 6: Implement the route and browser wrapper**
 
-Validate before reading/calling Groq. Map validation to `400`, missing configuration to `503`, timeout to `504`, and safe upstream failures to `502`. Do not log the submitted pattern, API key, provider body, or stack trace.
+Validate before reading/calling Groq. Map validation to `400`, missing configuration to `503`, timeout to `504`, and safe upstream failures to `502`. Do not log the submitted pattern, API key, provider body, or stack trace. The browser wrapper knows only the local route contract and accepts a fetch implementation for direct behavior tests.
 
-- [ ] **Step 6: Replace the public environment contract**
+- [ ] **Step 7: Replace the public environment contract and keep the intermediate app working**
 
 Set `.env.example` to:
 
@@ -239,16 +246,18 @@ BING_SITE_VERIFICATION=
 
 Delete `app/utils/groq.ts` after no import references remain.
 
-- [ ] **Step 7: Run GREEN**
+Before the larger Task 5 workbench refactor, minimally update the existing `app/page.tsx` to use `requestRegexSummary({ pattern: regex, flags: "" })`. Adapt the returned summary into the legacy display shape with an empty AI breakdown. This intermediate bridge prevents a broken import/build and removes all browser API-key access without pre-implementing the new workbench UI.
 
-Run: `yarn test app/lib/groq.test.ts app/api/explain/route.test.ts && npx tsc --noEmit`
+- [ ] **Step 8: Run GREEN**
+
+Run: `yarn test app/lib/groq.test.ts app/api/explain/route.test.ts app/utils/explain.test.ts && npx tsc --noEmit`
 
 Expected: PASS and `rg "NEXT_PUBLIC_GROQ|apiKey" app .env.example` finds no browser credential path.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add apps/regexplain/web/app/api apps/regexplain/web/app/lib/groq.ts apps/regexplain/web/app/lib/groq.test.ts apps/regexplain/web/.env.example apps/regexplain/web/app/utils/groq.ts
+git add apps/regexplain/web/app/api apps/regexplain/web/app/lib/groq.ts apps/regexplain/web/app/lib/groq.test.ts apps/regexplain/web/app/utils/explain.ts apps/regexplain/web/app/utils/explain.test.ts apps/regexplain/web/app/utils/groq.ts apps/regexplain/web/app/page.tsx apps/regexplain/web/.env.example
 git commit -m "feat(regexplain): secure AI explanations behind server route"
 ```
 

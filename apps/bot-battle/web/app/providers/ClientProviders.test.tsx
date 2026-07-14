@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
-import { hydrateRoot, type Root } from "react-dom/client";
+import { createRoot, hydrateRoot, type Root } from "react-dom/client";
 import { ClientProviders } from "./ClientProviders";
 import { useApiKeyStore } from "./ApiKeyProvider";
+import { getClientApiKey } from "../utils/llm/api-keys";
 
 function KeyProbe() {
   const apiKey = useApiKeyStore((state) => state.getApiKey("openai"));
@@ -28,6 +30,8 @@ describe("ClientProviders", () => {
     localStorage.clear();
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   it("server-renders its children instead of a loading shell", () => {
@@ -100,5 +104,60 @@ describe("ClientProviders", () => {
       .join("\n");
     expect(hydrationErrors).not.toMatch(/hydration|did not match|server html/i);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not restore a stale key after its provider unmounts", async () => {
+    vi.useFakeTimers();
+    vi.stubEnv("NEXT_PUBLIC_PERSIST_API_KEYS", "true");
+    localStorage.setItem(
+      "botbattle_apikeys",
+      JSON.stringify({ openai: "sk-stale" }),
+    );
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    await act(async () => {
+      root = createRoot(container!);
+      root.render(
+        <StrictMode>
+          <ClientProviders>
+            <KeyProbe />
+          </ClientProviders>
+        </StrictMode>,
+      );
+    });
+
+    expect(getClientApiKey("openai")).toBe("sk-stale");
+
+    await act(async () => root?.unmount());
+    root = undefined;
+    container.remove();
+    container = undefined;
+    localStorage.clear();
+
+    expect(getClientApiKey("openai")).toBeNull();
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    await act(async () => {
+      root = createRoot(container!);
+      root.render(
+        <StrictMode>
+          <ClientProviders>
+            <KeyProbe />
+          </ClientProviders>
+        </StrictMode>,
+      );
+    });
+
+    expect(container.textContent).toContain("key-absent");
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(getClientApiKey("openai")).toBeNull();
   });
 });

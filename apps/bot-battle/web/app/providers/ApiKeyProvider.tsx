@@ -58,7 +58,7 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
     });
 
     // After a short delay, check if keys were properly set
-    setTimeout(() => {
+    const initialSyncTimeout = setTimeout(() => {
       const clientKeys = getClientApiKeys();
 
       // If any key in Zustand isn't in clientKeys, try to set it again
@@ -75,6 +75,7 @@ export function ApiKeyProvider({ children }: ApiKeyProviderProps) {
 
     // Cleanup when component unmounts
     return () => {
+      clearTimeout(initialSyncTimeout);
       console.log("🧹 ApiKeyProvider unmounting - cleaning up keys");
       Object.keys(apiKeys).forEach((provider) => {
         setClientApiKey(provider, null);

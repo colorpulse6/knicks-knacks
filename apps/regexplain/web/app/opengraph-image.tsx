@@ -47,8 +47,24 @@ export default function OpenGraphImage() {
               padding: "0 30px",
             }}
           >
-            <span style={{ color: palette.primary }}>●</span>
-            <span style={{ color: palette.secondary }}>●</span>
+            <span
+              style={{
+                width: "12px",
+                height: "12px",
+                background: palette.primary,
+                borderRadius: "50%",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                width: "12px",
+                height: "12px",
+                background: palette.secondary,
+                borderRadius: "50%",
+                flexShrink: 0,
+              }}
+            />
             <span>regexplain://terminal</span>
           </div>
           <div

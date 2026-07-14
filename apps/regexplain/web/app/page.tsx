@@ -1,46 +1,6 @@
-"use client";
-import React from "react";
-import RegexTester from "./components/RegexTester";
-import { requestRegexSummary } from "./utils/explain";
-import RegexBreakdown from "./components/RegexBreakdown";
-import RegexInput from "./components/RegexInput";
-import ExplanationDisplay from "./components/ExplanationDisplay";
-import CommonPatterns from "./components/CommonPatterns";
+import RegexWorkbench from "./components/RegexWorkbench";
 
 export default function Home() {
-  const [regex, setRegex] = React.useState("");
-  const [explanation, setExplanation] = React.useState<{
-    summary: string;
-    breakdown: { part: string; explanation: string }[];
-    error: boolean;
-    suggestion: string;
-    notRegex?: boolean;
-  } | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  // Handler for submitting regex
-  const handleExplain = async () => {
-    setIsLoading(true);
-    setExplanation(null);
-    setError(null);
-    try {
-      const summary = await requestRegexSummary({ pattern: regex, flags: "" });
-      setExplanation({
-        summary,
-        breakdown: [],
-        error: false,
-        suggestion: "",
-      });
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch explanation",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-b from-white to-gray-100 dark:from-black dark:to-gray-900 transition-colors">
       <h1 className="text-4xl font-bold mb-2 text-center">Regexplain</h1>
@@ -49,26 +9,7 @@ export default function Home() {
         breakdown.
       </p>
       <div className="w-full max-w-xl flex flex-col gap-6">
-        <CommonPatterns onSelect={setRegex} />
-        <RegexInput
-          value={regex}
-          onChange={setRegex}
-          onExplain={handleExplain}
-          disabled={isLoading}
-        />
-        <ExplanationDisplay explanation={explanation} loading={isLoading} />
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-        {/* Show a warning if explanation indicates not a regex */}
-        {explanation?.notRegex && !isLoading && (
-          <div className="text-yellow-700 bg-yellow-50 border border-yellow-300 rounded px-3 py-2 text-sm mt-2">
-            <b>Notice:</b> The input does not appear to be a regular expression.
-            <br />
-            Please enter a valid regex pattern (e.g., <code>^\d+$</code> for
-            numbers, <code>^[a-z]+$</code> for lowercase letters).
-          </div>
-        )}
-        <RegexBreakdown regex={regex} />
-        <RegexTester regex={regex} />
+        <RegexWorkbench />
       </div>
     </main>
   );

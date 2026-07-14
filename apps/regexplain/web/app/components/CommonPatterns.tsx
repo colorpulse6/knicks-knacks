@@ -1,38 +1,13 @@
 import React from "react";
 
-const EXAMPLES = [
-  {
-    name: "Email Address",
-    pattern: "^[\\w-.]+@[\\w-.]+\\.\\w{2,}$",
-    description: "Basic email validation",
-  },
-  {
-    name: "Secure Password",
-    pattern:
-      "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()_+={}\\[\\]:;\"'<>,.?/\\-]).{8,}$",
-    description: "At least 8 chars, upper, lower, digit, special",
-  },
-  {
-    name: "US Phone Number",
-    pattern: "^\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$",
-    description: "Matches (123) 456-7890, 123-456-7890, etc.",
-  },
-  {
-    name: "Hex Color",
-    pattern: "^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$",
-    description: "Matches #fff, #123abc, etc.",
-  },
-  {
-    name: "URL",
-    pattern: "^https?://[\\w.-]+(?:\\.[\\w\\.-]+)+[/#?]?.*$",
-    description: "Basic http(s) URL",
-  },
-];
+import type { RegexExample } from "../data/examples";
 
 export default function CommonPatterns({
+  examples,
   onSelect,
 }: {
-  onSelect: (pattern: string) => void;
+  examples: readonly RegexExample[];
+  onSelect: (example: RegexExample) => void;
 }) {
   return (
     <div className="mb-4">
@@ -40,15 +15,15 @@ export default function CommonPatterns({
         Common Patterns:
       </div>
       <div className="flex flex-wrap gap-2">
-        {EXAMPLES.map((ex) => (
+        {examples.map((example) => (
           <button
-            key={ex.name}
+            key={example.slug}
             className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-xs hover:bg-blue-200 dark:hover:bg-blue-900 transition"
-            title={ex.description}
-            onClick={() => onSelect(ex.pattern)}
+            title={example.description}
+            onClick={() => onSelect(example)}
             type="button"
           >
-            {ex.name}
+            {example.name}
           </button>
         ))}
       </div>

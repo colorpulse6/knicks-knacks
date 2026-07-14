@@ -1,12 +1,13 @@
 import React from "react";
 
+import { compileGlobalRegex } from "../lib/regex";
+
 interface RegexTesterProps {
-  regex: string;
+  pattern: string;
+  flags: string;
 }
 
-const highlightMatches = (input: string, regex: RegExp) => {
-  if (!input) return input;
-  const matches = [...input.matchAll(regex)];
+const highlightMatches = (input: string, matches: RegExpMatchArray[]) => {
   if (matches.length === 0) return input;
   let lastIndex = 0;
   const parts: React.ReactNode[] = [];
@@ -30,30 +31,28 @@ const highlightMatches = (input: string, regex: RegExp) => {
   return parts;
 };
 
-const RegexTester: React.FC<RegexTesterProps> = ({ regex }) => {
+const RegexTester: React.FC<RegexTesterProps> = ({ pattern, flags }) => {
   const [sample, setSample] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
-  const [matches, setMatches] = React.useState<RegExpMatchArray[] | null>(null);
+  const result = React.useMemo<{
+    matches: RegExpMatchArray[] | null;
+    error: string | null;
+  }>(() => {
+    if (!pattern || !sample) {
+      return { matches: null, error: null };
+    }
 
-  React.useEffect(() => {
-    setError(null);
-    setMatches(null);
-    if (!regex || !sample) return;
     try {
-      const re = new RegExp(regex, "g");
-      const found = [...sample.matchAll(re)];
-      setMatches(found);
-    } catch (e: any) {
-      setError(e.message);
+      return {
+        matches: [...sample.matchAll(compileGlobalRegex(pattern, flags))],
+        error: null,
+      };
+    } catch (error) {
+      return {
+        matches: null,
+        error: error instanceof Error ? error.message : "Invalid regex",
+      };
     }
-  }, [regex, sample]);
-
-  let highlighted: React.ReactNode = sample;
-  try {
-    if (regex && sample) {
-      highlighted = highlightMatches(sample, new RegExp(regex, "g"));
-    }
-  } catch {}
+  }, [flags, pattern, sample]);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700 flex flex-col gap-2">
@@ -69,11 +68,13 @@ const RegexTester: React.FC<RegexTesterProps> = ({ regex }) => {
         aria-label="Sample string"
       />
       <div className="mt-2 min-h-[2em] text-base text-gray-900 dark:text-gray-100">
-        {sample && regex ? (
-          error ? (
-            <span className="text-red-500">Invalid regex: {error}</span>
+        {sample && pattern ? (
+          result.error ? (
+            <span className="text-red-500">
+              Invalid regex: {result.error}
+            </span>
           ) : (
-            <span>{highlighted}</span>
+            <span>{highlightMatches(sample, result.matches ?? [])}</span>
           )
         ) : (
           <span className="text-gray-400">
@@ -81,10 +82,13 @@ const RegexTester: React.FC<RegexTesterProps> = ({ regex }) => {
           </span>
         )}
       </div>
-      {matches && matches.length > 0 && (
+      {result.matches && (
         <div className="text-xs text-gray-500 mt-2">
-          {matches.length} match{matches.length > 1 ? "es" : ""} found.
-          {matches[0].length > 1 && <> (Groups: {matches[0].length - 1})</>}
+          {result.matches.length} match
+          {result.matches.length === 1 ? "" : "es"} found.
+          {result.matches[0] && result.matches[0].length > 1 && (
+            <> (Groups: {result.matches[0].length - 1})</>
+          )}
         </div>
       )}
     </div>

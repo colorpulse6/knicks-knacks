@@ -11,7 +11,104 @@ function renderedTokenSource(): string {
     .join("");
 }
 
+function expectSourceFallbackNotice(): void {
+  expect(
+    screen.getByText(
+      /valid in javascript.*detailed local semantics are unavailable.*source-preserving/i,
+    ),
+  ).toBeVisible();
+}
+
 describe("RegexBreakdown", () => {
+  it("discloses when a valid pattern is shown in source-fallback mode", () => {
+    const pattern = "[a&&b]";
+    expect(() => new RegExp(pattern, "v")).not.toThrow();
+
+    render(<RegexBreakdown pattern={pattern} flags="v" />);
+
+    expectSourceFallbackNotice();
+    expect(renderedTokenSource()).toBe(pattern);
+  });
+
+  it("labels v-mode intersection as source-preserving instead of literal ampersands", async () => {
+    const user = userEvent.setup();
+    const pattern = "[a&&b]";
+    expect(() => new RegExp(pattern, "v")).not.toThrow();
+
+    render(<RegexBreakdown pattern={pattern} flags="v" />);
+
+    expect(renderedTokenSource()).toBe(pattern);
+    const ampersand = screen.getAllByRole("button", {
+      name: /token \d+: &$/i,
+    })[0];
+    await user.click(ampersand);
+    const description = screen.getByRole("region", {
+      name: "Selected token description",
+    });
+    expect(description).not.toHaveTextContent("Literal: &");
+    expect(description).toHaveTextContent(
+      /source fragment: &.*detailed local semantics are unavailable/i,
+    );
+    expectSourceFallbackNotice();
+  });
+
+  it("does not describe v-mode set subtraction as a generic hyphen range", async () => {
+    const user = userEvent.setup();
+    const pattern = "[\\p{ASCII}--\\p{Letter}]";
+    expect(() => new RegExp(pattern, "v")).not.toThrow();
+
+    render(<RegexBreakdown pattern={pattern} flags="v" />);
+
+    expect(renderedTokenSource()).toBe(pattern);
+    const hyphen = screen.getAllByRole("button", {
+      name: /token \d+: -$/i,
+    })[0];
+    await user.click(hyphen);
+    const description = screen.getByRole("region", {
+      name: "Selected token description",
+    });
+    expect(description).not.toHaveTextContent("Range or literal hyphen");
+    expect(description).toHaveTextContent(
+      /source fragment: -.*detailed local semantics are unavailable/i,
+    );
+    expectSourceFallbackNotice();
+  });
+
+  it("does not guess escape semantics for a v-mode string-set member", async () => {
+    const user = userEvent.setup();
+    const pattern = "[\\q{ab|cd}]";
+    expect(() => new RegExp(pattern, "v")).not.toThrow();
+
+    render(<RegexBreakdown pattern={pattern} flags="v" />);
+
+    expect(renderedTokenSource()).toBe(pattern);
+    const stringSetEscape = screen.getByRole("button", {
+      name: /token \d+: \\q$/i,
+    });
+    await user.click(stringSetEscape);
+    const description = screen.getByRole("region", {
+      name: "Selected token description",
+    });
+    expect(description).not.toHaveTextContent("Escaped character");
+    expect(description).toHaveTextContent(
+      /source fragment: \\q.*detailed local semantics are unavailable/i,
+    );
+    expectSourceFallbackNotice();
+  });
+
+  it("keeps semantic descriptions for patterns supported by the AST parser", async () => {
+    const user = userEvent.setup();
+    render(<RegexBreakdown pattern="^a+$" flags="i" />);
+
+    expect(
+      screen.queryByText(/detailed local semantics are unavailable/i),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Token 1: ^" }));
+    expect(
+      screen.getByRole("region", { name: "Selected token description" }),
+    ).toHaveTextContent("^: Start of string");
+  });
+
   it.each([
     ["indices flag", "a", "d"],
     ["Unicode sets flag", "[a&&b]", "v"],

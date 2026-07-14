@@ -12,6 +12,14 @@ interface RegexToken {
   description: string;
 }
 
+type AnalysisMode = "semantic" | "sourceFallback";
+
+interface RegexAnalysis {
+  tokens: RegexToken[];
+  error: string | null;
+  mode: AnalysisMode;
+}
+
 const REGEX_TOKENS: Record<string, string> = {
   "^": "Start of string",
   $: "End of string",
@@ -48,13 +56,17 @@ const REGEX_TOKENS: Record<string, string> = {
 function sourceTokenize(pattern: string): RegexToken[] {
   const tokens: RegexToken[] = [];
 
+  const pushSourceFragment = (raw: string) => {
+    tokens.push({
+      raw,
+      description: `Source fragment: ${raw}. Detailed local semantics are unavailable.`,
+    });
+  };
+
   for (let index = 0; index < pattern.length; index += 1) {
     const character = pattern[index];
     if (character === "(" && pattern.slice(index, index + 3) === "(?:") {
-      tokens.push({
-        raw: "(?:",
-        description: REGEX_TOKENS["(?:"],
-      });
+      pushSourceFragment("(?:");
       index += 2;
       continue;
     }
@@ -65,31 +77,19 @@ function sourceTokenize(pattern: string): RegexToken[] {
         const propertyEnd = pattern.indexOf("}", index + 3);
         if (propertyEnd !== -1) {
           const property = pattern.slice(index, propertyEnd + 1);
-          tokens.push({
-            raw: property,
-            description:
-              propertyPrefix === "\\P{"
-                ? "Negated Unicode property escape"
-                : "Unicode property escape",
-          });
+          pushSourceFragment(property);
           index = propertyEnd;
           continue;
         }
       }
 
       const sequence = pattern.slice(index, index + 2);
-      tokens.push({
-        raw: sequence,
-        description: REGEX_TOKENS[sequence] ?? `Escaped character: ${sequence}`,
-      });
+      pushSourceFragment(sequence);
       index += 1;
       continue;
     }
 
-    tokens.push({
-      raw: character,
-      description: REGEX_TOKENS[character] ?? `Literal: ${character}`,
-    });
+    pushSourceFragment(character);
   }
 
   return tokens;
@@ -199,38 +199,48 @@ function astTokenize(regex: RegExp): RegexToken[] {
   return tokens;
 }
 
+function analyzePattern(pattern: string, flags: string): RegexAnalysis {
+  if (!pattern) {
+    return { tokens: [], error: null, mode: "semantic" };
+  }
+
+  let regex: RegExp;
+  try {
+    regex = new RegExp(pattern, flags);
+  } catch (error) {
+    return {
+      tokens: sourceTokenize(pattern),
+      error: error instanceof Error ? error.message : "Invalid regex",
+      mode: "sourceFallback",
+    };
+  }
+
+  try {
+    const astTokens = astTokenize(regex);
+    const astSource = astTokens.map((token) => token.raw).join("");
+    if (astSource === pattern) {
+      return { tokens: astTokens, error: null, mode: "semantic" };
+    }
+  } catch {
+    // A runtime-valid pattern can exceed regexp-tree's syntax support.
+  }
+
+  return {
+    tokens: sourceTokenize(pattern),
+    error: null,
+    mode: "sourceFallback",
+  };
+}
+
 export default function RegexBreakdown({
   pattern,
   flags,
 }: RegexBreakdownProps) {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
-  const result = React.useMemo<{
-    tokens: RegexToken[];
-    error: string | null;
-  }>(() => {
-    if (!pattern) return { tokens: [], error: null };
-
-    let regex: RegExp;
-    try {
-      regex = new RegExp(pattern, flags);
-    } catch (error) {
-      return {
-        tokens: sourceTokenize(pattern),
-        error: error instanceof Error ? error.message : "Invalid regex",
-      };
-    }
-
-    try {
-      const astTokens = astTokenize(regex);
-      const astSource = astTokens.map((token) => token.raw).join("");
-      return {
-        tokens: astSource === pattern ? astTokens : sourceTokenize(pattern),
-        error: null,
-      };
-    } catch {
-      return { tokens: sourceTokenize(pattern), error: null };
-    }
-  }, [flags, pattern]);
+  const result = React.useMemo(
+    () => analyzePattern(pattern, flags),
+    [flags, pattern],
+  );
 
   React.useEffect(() => {
     setActiveIndex(null);
@@ -249,6 +259,12 @@ export default function RegexBreakdown({
       {result.error && (
         <div className="terminal-notice terminal-notice--error">
           <b>Invalid regex:</b> {result.error}
+        </div>
+      )}
+      {result.mode === "sourceFallback" && !result.error && (
+        <div className="terminal-notice" role="note">
+          This pattern is valid in JavaScript, but detailed local semantics are
+          unavailable. Showing a source-preserving token view.
         </div>
       )}
       <div className="syntax-map__tokens">

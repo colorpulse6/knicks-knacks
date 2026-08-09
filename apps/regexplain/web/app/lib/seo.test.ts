@@ -137,3 +137,18 @@ describe("homepageJsonLd", () => {
     );
   });
 });
+
+describe("author entity", () => {
+  it("attributes the app to the canonical person shared across every site", () => {
+    const graph = homepageJsonLd()["@graph"];
+    const app = graph.find((node) => node["@type"] === "WebApplication");
+    const person = graph.find((node) => node["@type"] === "Person");
+
+    // One identifier, reused everywhere, so engines resolve a single author
+    // rather than a separate "Nic Barnes" per domain.
+    expect(person?.["@id"]).toBe("https://nichalasbarnes.com/#person");
+    expect(app?.author).toEqual({ "@id": person?.["@id"] });
+    expect(person?.alternateName).toBe("Nic Barnes");
+    expect(person?.sameAs).toContain("https://github.com/colorpulse6");
+  });
+});

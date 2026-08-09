@@ -149,11 +149,23 @@ export function homepageJsonLd() {
         applicationCategory: "DeveloperApplication",
         operatingSystem: "Any",
         isAccessibleForFree: true,
+        author: { "@id": siteConfig.creatorId },
         offers: {
           "@type": "Offer",
           price: "0",
           priceCurrency: "USD",
         },
+      },
+      {
+        "@type": "Person",
+        "@id": siteConfig.creatorId,
+        name: siteConfig.creatorLegalName,
+        alternateName: siteConfig.creator,
+        url: siteConfig.creatorUrl,
+        sameAs: [
+          "https://github.com/colorpulse6",
+          "https://www.linkedin.com/in/nic-barnes-a3297217/",
+        ],
       },
     ],
   } as const;

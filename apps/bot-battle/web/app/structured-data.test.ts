@@ -16,6 +16,19 @@ describe("homepage structured data", () => {
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
       isAccessibleForFree: true,
+      author: {
+        "@type": "Person",
+        // One identifier shared by every site this person builds, so engines
+        // resolve a single author rather than one "Nic Barnes" per domain.
+        "@id": "https://nichalasbarnes.com/#person",
+        name: SITE.creatorLegalName,
+        alternateName: SITE.creator,
+        url: SITE.creatorUrl,
+        sameAs: [
+          "https://github.com/colorpulse6",
+          "https://www.linkedin.com/in/nic-barnes-a3297217/",
+        ],
+      },
       offers: {
         "@type": "Offer",
         price: "0",

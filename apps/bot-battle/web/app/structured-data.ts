@@ -9,6 +9,17 @@ export const WEB_APPLICATION_JSON_LD = {
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web",
   isAccessibleForFree: true,
+  author: {
+    "@type": "Person",
+    "@id": SITE.creatorId,
+    name: SITE.creatorLegalName,
+    alternateName: SITE.creator,
+    url: SITE.creatorUrl,
+    sameAs: [
+      "https://github.com/colorpulse6",
+      "https://www.linkedin.com/in/nic-barnes-a3297217/",
+    ],
+  },
   offers: {
     "@type": "Offer",
     price: "0",

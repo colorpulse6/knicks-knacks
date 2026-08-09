@@ -27,6 +27,7 @@ export default function SiteFooter() {
           </p>
         </div>
         <div className="site-footer__links">
+          <a href={siteConfig.creatorUrl}>Built by {siteConfig.creator}</a>
           <a href={siteConfig.sourceUrl}>View source</a>
           <a
             className="support-link"

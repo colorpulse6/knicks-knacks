@@ -27,7 +27,19 @@ export default function SiteFooter() {
           </p>
         </div>
         <div className="site-footer__links">
-          <a href={siteConfig.creatorUrl}>Built by {siteConfig.creator}</a>
+          <a className="creator-link" href={siteConfig.creatorUrl}>
+            {/* The shared maker's mark, the same one on every site this person
+                builds. Regexplain keeps its own favicon. */}
+            <img
+              className="creator-mark"
+              src="/nb-mark.png"
+              alt=""
+              width={20}
+              height={20}
+              loading="lazy"
+            />
+            <span>Built by {siteConfig.creator}</span>
+          </a>
           <a href={siteConfig.sourceUrl}>View source</a>
           <a
             className="support-link"

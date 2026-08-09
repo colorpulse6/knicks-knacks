@@ -189,6 +189,27 @@ a {
   text-decoration-color: currentColor;
 }
 
+/* The maker's mark, shared across every site this person builds. Dimmed so it
+   accompanies Regexplain's identity rather than competing with it. */
+.creator-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.creator-mark {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  opacity: 0.75;
+  transition: opacity 160ms ease;
+}
+
+.creator-link:hover .creator-mark {
+  opacity: 1;
+}
+
 .site-main {
   min-width: 0;
 }

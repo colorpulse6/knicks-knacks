@@ -67,6 +67,24 @@ export default function RootLayout({
               </div>
             </header>
             <main className="py-6">{children}</main>
+            <footer className="flex items-center justify-end gap-2 border-t border-rule py-5 text-xs uppercase tracking-[0.08em] text-ink-soft">
+              <a
+                href={SITE.creatorUrl}
+                className="flex items-center gap-2 no-underline text-inherit hover:text-ink"
+              >
+                {/* The shared maker's mark, the same one on every site this
+                    person builds. BotBattle keeps its own favicon. */}
+                <img
+                  src="/nb-mark.png"
+                  alt=""
+                  width={20}
+                  height={20}
+                  loading="lazy"
+                  className="h-5 w-5 shrink-0 rounded-full opacity-75"
+                />
+                Built by {SITE.creator}
+              </a>
+            </footer>
           </div>
         </ClientProviders>
       </body>
